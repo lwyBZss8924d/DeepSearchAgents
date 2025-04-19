@@ -1,0 +1,75 @@
+[project]
+name = "DeepSearch-AgentTeam"
+version = "0.2.3"
+description = "Default template for uv package"
+authors = [
+    {name = "ArthurWang", email = "deepsearchagent4dev@gpt4coursera.com"},
+]
+dependencies = [
+    "fastapi",
+    "httpx>=0.27.0",
+    "uvicorn[standard]>=0.29.0",
+    "starlette",
+    "pydantic>=2.11.3",
+    "pydantic_core>=2.33.1",
+    "PyYAML>=6.0",
+    "requests",
+    "python-dotenv",
+    "jsonschema>=4.0.0,<5.0.0",
+    "smolagents>=1.13.0",
+    "litellm>=1.65.4",
+    "openai>=1.72.0",
+    "langchain>=0.3.19",
+    "torch",
+    "jina",
+    "wikipedia-api>=0.8.1",
+    "wolframalpha",
+    "rich>=13.0.0",
+    "loguru",
+    "nest_asyncio",
+    "click>=8.0",
+    "typing_extensions",
+    "typing-inspection",
+    "annotated_types",
+    "anyio",
+    "sniffio",
+    "rich>=14.0.0",
+    "prompt-toolkit>=3.0.0",
+]
+requires-python = ">=3.13"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.uv]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agents"]
+
+[project.optional-dependencies]
+dev = [
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.8.0",
+]
+test = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+]
+cli = [
+    "rich>=14.0.0",
+    "prompt-toolkit>=3.0.0", 
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+asyncio_mode = "auto"
