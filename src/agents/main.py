@@ -222,7 +222,7 @@ app = FastAPI(
     version="0.2.3",
 )
 
-# 添加CORS中间件，允许所有来源访问
+# CORS Middleware: Allow all origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

@@ -16,7 +16,7 @@ dependencies = [
     "requests",
     "python-dotenv",
     "jsonschema>=4.0.0,<5.0.0",
-    "smolagents>=1.13.0",
+    "smolagents>=1.14.0",
     "litellm>=1.65.4",
     "openai>=1.72.0",
     "langchain>=0.3.19",
