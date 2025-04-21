@@ -21,9 +21,6 @@ It supports a Command Line Interface (CLI) and a standard FastAPI service, makin
 
 ## 2. ✨ Features
 
-NXET TODO:
-1.  MCP (Model Context Protocol) Server for MCP tool server support
-
 - 🔍 **Deep Research Capability**: Performs multi-step search, reading, and reasoning across web content to answer complex queries
 - 🧩 **Dual Agent Modes**: Supports both ReAct (tool calling) and CodeAct (Python execution) paradigms, configurable via `config.yaml` or environment variables
 - 🔧 **Extensible Toolchain**: Includes tools for web search, content retrieval, text processing, semantic ranking, and computation
