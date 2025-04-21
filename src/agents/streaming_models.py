@@ -1,27 +1,156 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# src/agents/streaming_models.py
+
 """
-流式输出的模型实现，扩展 smolagents.models 中的模型类。
+Streaming output model implementation, extending the model class in smolagents.models.
+
+Current version is so so so, like "monkey code", need to be improved and optimized.
 """
 from typing import List, Dict, Optional, Any, Union
 import logging
 from smolagents import LiteLLMModel, Tool, ChatMessage
+import uuid
 
 logger = logging.getLogger(__name__)
 
 
-class StreamingLiteLLMModel(LiteLLMModel):
-    """扩展 LiteLLMModel 以支持在最终答案生成时返回原始流对象。
+class StreamResponseAdapter:
+    """
+    Adapter class providing compatibility interfaces for streaming response objects.
 
-    当作为 final_answer 生成时传入 stream=True 参数，此模型将返回
-    litellm.completion 的原始流对象，而不是将其转换为 ChatMessage。
-    对于其他步骤的调用，它会正常返回 ChatMessage。
-    
+    The smolagents library requires objects to have a content attribute, but
+    CustomStreamWrapper and other streaming objects do not have it. This adapter
+    class will wrap the streaming object and provide the required content attribute.
+
+    Attributes:
+        stream_obj: The original streaming object
+        content: The content string provided to smolagents
+    """
+
+    def __init__(self, stream_obj):
+        self.stream_obj = stream_obj
+        self._content = self._get_content_from_stream()
+        self._tool_calls = self._get_tool_calls_from_stream()
+
+    def _get_content_from_stream(self):
+        """
+        Try to get content from the streaming object.
+        For CustomStreamWrapper and other special streaming objects, we return a special mark.
+        """
+        try:
+            # Check if there is a get_chunk_text method
+            if hasattr(self.stream_obj, 'get_chunk_text'):
+                return "[Streaming object - content will be processed during iteration]"
+
+            # Check if there is a content attribute
+            if hasattr(self.stream_obj, 'content'):
+                return self.stream_obj.content
+
+            # Default return a mark
+            return "[Streaming content is unavailable]"
+        except Exception as e:
+            logger.warning(f"Error getting content from stream: {e}")
+            return "[Streaming content is unavailable]"
+
+    def _get_tool_calls_from_stream(self):
+        """
+        Try to get tool_calls from the streaming object.
+        Handle the case where the naming is inconsistent: some objects use tool_call,
+        some use tool_calls.
+        """
+        try:
+            # First check if there is a tool_calls attribute
+            if hasattr(self.stream_obj, 'tool_calls'):
+                return self.stream_obj.tool_calls
+
+            # Check if there is a tool_call attribute (singular form)
+            if hasattr(self.stream_obj, 'tool_call'):
+                # Convert tool_call to tool_calls format
+                tool_call = self.stream_obj.tool_call
+                return [tool_call] if tool_call else []
+
+            # Check if there is a tool_call attribute (singular form)
+            if hasattr(self.stream_obj, 'choices') and self.stream_obj.choices:
+                choice = self.stream_obj.choices[0]
+                if hasattr(choice, 'message'):
+                    message = choice.message
+                    if hasattr(message, 'tool_calls') and message.tool_calls:
+                        return message.tool_calls
+                    if hasattr(message, 'tool_call') and message.tool_call:
+                        return [message.tool_call]
+
+            # Check if there is a tool_call attribute (singular form)
+            if hasattr(self.stream_obj, 'message'):
+                message = self.stream_obj.message
+                if hasattr(message, 'tool_calls') and message.tool_calls:
+                    return message.tool_calls
+                if hasattr(message, 'tool_call') and message.tool_call:
+                    return [message.tool_call]
+
+            # If the streaming object itself seems to be a tool call
+            if hasattr(self.stream_obj, 'function'):
+                tool_call = {
+                    'id': getattr(self.stream_obj, 'id', str(uuid.uuid4())),
+                    'type': getattr(self.stream_obj, 'type', 'function'),
+                    'function': self.stream_obj.function
+                }
+                return [tool_call]
+
+            # If none of the above, return an empty list
+            return []
+        except Exception as e:
+            logger.warning(f"Error getting tool_calls from stream: {e}")
+            return []
+
+    @property
+    def content(self):
+        """Provide the content attribute"""
+        return self._content
+
+    @property
+    def tool_calls(self):
+        """Provide the tool_calls attribute, compatible with smolagents interface requirements"""
+        return self._tool_calls
+
+    def __iter__(self):
+        """Delegate to the original streaming object iterator"""
+        return iter(self.stream_obj)
+
+    def __next__(self):
+        """Delegate to the original streaming object next method"""
+        return next(self.stream_obj)
+
+    def __getattr__(self, name):
+        """
+        Delegate all other attributes to the original streaming object,
+        and handle the naming differences of special attributes
+        """
+        # Special handling for tool_calls/tool_call attributes
+        if name == 'tool_calls' and not hasattr(self.stream_obj, 'tool_calls'):
+            if hasattr(self.stream_obj, 'tool_call'):
+                tool_call = getattr(self.stream_obj, 'tool_call')
+                return [tool_call] if tool_call else []
+            return []
+
+        return getattr(self.stream_obj, name)
+
+
+class StreamingLiteLLMModel(LiteLLMModel):
+    """Extend LiteLLMModel to support returning the original stream object for final answer generation.
+
+    When the stream=True parameter is passed in for final answer generation,
+    this model will return the original litellm.completion stream object,
+    rather than converting it to a ChatMessage. For other step calls, it will
+    return a ChatMessage as usual.
+
     Args:
-        model_id (str): LiteLLM 模型标识符
-        api_base (str, 可选): API 基础 URL
-        api_key (str, 可选): API 密钥
-        custom_role_conversions (dict, 可选): 自定义角色转换映射
-        flatten_messages_as_text (bool, 可选): 是否将消息扁平化为文本
-        **kwargs: 传递给 LiteLLM API 的其他参数
+        model_id (str): LiteLLM model identifier
+        api_base (str, optional): API base URL
+        api_key (str, optional): API key
+        custom_role_conversions (dict, optional): Custom role conversion mapping
+        flatten_messages_as_text (bool, optional): Whether to flatten messages as text
+        **kwargs: Additional parameters passed to LiteLLM API
     """
 
     def __init__(
@@ -41,7 +170,6 @@ class StreamingLiteLLMModel(LiteLLMModel):
             flatten_messages_as_text=flatten_messages_as_text,
             **kwargs,
         )
-        # 记录初始化的日志，便于调试
         logger.debug(
             f"初始化 StreamingLiteLLMModel: "
             f"model_id={model_id}, api_base={api_base}"
@@ -55,27 +183,137 @@ class StreamingLiteLLMModel(LiteLLMModel):
         tools_to_call_from: Optional[List[Tool]] = None,
         **kwargs,
     ) -> Union[Any, ChatMessage]:
-        """处理输入消息并返回模型响应或原始流对象。
+        """Process input messages and return model response or original stream object.
 
-        特别注意，当 kwargs 中包含 stream=True 时，此方法返回原始流对象
-        而不是标准的 ChatMessage 对象，调用者需要相应地处理。
+        Note: When the stream=True parameter is passed in kwargs, this method
+        returns the original litellm.completion stream object rather than a
+        ChatMessage. Callers need to handle this appropriately.
 
         Args:
-            messages (List[Dict[str, str]]): 要处理的消息列表
-            stop_sequences (List[str], 可选): 终止序列列表
-            grammar (str, 可选): 格式化规则
-            tools_to_call_from (List[Tool], 可选): 模型可使用的工具列表
-            **kwargs: 额外的关键字参数
+            messages (List[Dict[str, str]]): The list of messages to process
+            stop_sequences (List[str], optional): The list of stop sequences
+            grammar (str, optional): The formatting rules
+            tools_to_call_from (List[Tool], optional): The list of tools the model can use
+            **kwargs: Additional keyword arguments
 
         Returns:
-            Union[Any, ChatMessage]: 如果 stream=True，返回原始流对象；
-                                    否则返回 ChatMessage 对象
+            Union[Any, ChatMessage]: If stream=True, return the original stream object;
+                                     otherwise return a ChatMessage object
         """
-        # 获取 stream 参数，默认为 False
-        stream_mode = kwargs.pop("stream", False)  # 从kwargs中移除stream参数
-        # 如果是最终流式输出模式
-        if stream_mode:
-            # 准备完整的参数，不在kwargs中包含stream
+        stream_mode = kwargs.pop("stream", False)
+
+        # Check if it is a planning related call, if so, force non-streaming mode
+        is_planning_call = False
+        is_code_generation_call = False
+        is_final_answer_call = False
+
+        # Check the message content to determine the type of current call
+        for message in messages:
+            if isinstance(message, dict) and message.get("role") == "user":
+                content = message.get("content", "")
+
+                # Check the string content
+                if isinstance(content, str):
+                    # Check if it is a planning call
+                    if any(
+                        planning_keyword in content.lower()
+                        for planning_keyword in [
+                            "plan your action", "planning step",
+                            "create a plan", "update your plan"
+                        ]
+                    ):
+                        is_planning_call = True
+                        break
+
+                    # Check if it is a code generation call
+                    if any(
+                        code_keyword in content.lower()
+                        for code_keyword in [
+                            "write code", "generate python",
+                            "implement the following", "write a function",
+                            "code to solve", "python code"
+                        ]
+                    ):
+                        is_code_generation_call = True
+                        break
+
+                    # Check if it is a final answer call
+                    if any(
+                        final_answer_keyword in content.lower()
+                        for final_answer_keyword in [
+                            "final answer", "comprehensive answer",
+                            "provide final", "synthesize findings"
+                        ]
+                    ):
+                        is_final_answer_call = True
+                        break
+
+                # Check the content list
+                elif isinstance(content, list):
+                    for item in content:
+                        if (isinstance(item, dict) and
+                                item.get("type") == "text"):
+                            text = item.get("text", "")
+
+                            # Check if it is a planning call
+                            if any(
+                                planning_keyword in text.lower()
+                                for planning_keyword in [
+                                    "plan your action", "planning step",
+                                    "create a plan", "update your plan"
+                                ]
+                            ):
+                                is_planning_call = True
+                                break
+
+                            # Check if it is a code generation call
+                            if any(
+                                code_keyword in text.lower()
+                                for code_keyword in [
+                                    "write code", "generate python",
+                                    "implement the following",
+                                    "write a function", "code to solve",
+                                    "python code"
+                                ]
+                            ):
+                                is_code_generation_call = True
+                                break
+
+                            # Check if it is a final answer call
+                            if any(
+                                final_answer_keyword in text.lower()
+                                for final_answer_keyword in [
+                                    "final answer", "comprehensive answer",
+                                    "provide final", "synthesize findings"
+                                ]
+                            ):
+                                is_final_answer_call = True
+                                break
+
+        # Determine if streaming mode is used
+        use_streaming = stream_mode and not is_code_generation_call
+
+        # For planning calls or code generation calls, always use non-streaming mode
+        if is_planning_call or is_code_generation_call:
+            logger.debug(
+                f"{'Planning' if is_planning_call else 'Code generation'}"
+                f" call detected, using non-streaming mode"
+            )
+            return super().__call__(
+                messages=messages,
+                stop_sequences=stop_sequences,
+                grammar=grammar,
+                tools_to_call_from=tools_to_call_from,
+                **kwargs,
+            )
+
+        # If it is a final answer call and requests streaming mode, use streaming response
+        if is_final_answer_call and stream_mode:
+            logger.debug("Final answer call detected, using streaming mode")
+
+        # If final answer streaming mode
+        if use_streaming:
+            # Prepare complete parameters, not including stream in kwargs
             completion_kwargs = self._prepare_completion_kwargs(
                 messages=messages,
                 stop_sequences=stop_sequences,
@@ -86,20 +324,27 @@ class StreamingLiteLLMModel(LiteLLMModel):
                 api_key=self.api_key,
                 convert_images_to_image_urls=True,
                 custom_role_conversions=self.custom_role_conversions,
-                stream=True,  # 显式设置stream参数
+                stream=True,
                 **kwargs,
             )
-            
-            logger.debug(f"在流式模式下调用 LiteLLM API: {completion_kwargs}")
-            
-            # 直接返回流对象，不进行处理
-            return self.client.completion(**completion_kwargs)
+
+            logger.debug(f"Calling LiteLLM API in streaming mode: {completion_kwargs}")
+
+            # Get the original stream object
+            response = self.client.completion(**completion_kwargs)
+
+            # Use the adapter to wrap the stream object, providing content attribute compatibility
+            adapted_response = StreamResponseAdapter(response)
+
+            # Return the wrapped stream object
+            return adapted_response
         else:
-            # 对于非流式调用，使用父类的标准行为，确保不传递stream参数
+            # For non-streaming calls, use the standard behavior of the parent class,
+            # ensuring that the stream parameter is not passed
             return super().__call__(
                 messages=messages,
                 stop_sequences=stop_sequences,
                 grammar=grammar,
                 tools_to_call_from=tools_to_call_from,
                 **kwargs,
-            ) 
+            )

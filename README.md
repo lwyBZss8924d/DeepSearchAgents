@@ -2,12 +2,12 @@
 
 Build with 💖 for Humanity with AI
 
-![Smolagents](https://img.shields.io/badge/Smolagents-1.13.0+-yellow.svg)
+![Smolagents](https://img.shields.io/badge/Smolagents-1.14.0+-yellow.svg)
 ![LiteLLM](https://img.shields.io/badge/LiteLLM-1.65.4+-orange.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.00+-009688.svg?logo=fastapi&logoColor=white)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![version](https://img.shields.io/badge/version-0.2.3-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.3)
+[![version](https://img.shields.io/badge/version-0.2.4-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.4)
 
 > **Come From Open Source, This is the Way**
 
@@ -21,7 +21,8 @@ It supports a Command Line Interface (CLI) and a standard FastAPI service, makin
 
 ## 2. ✨ Features
 
-TODO: MCP (Model Context Protocol) Server for MCP tool server support
+NXET TODO:
+1.  MCP (Model Context Protocol) Server for MCP tool server support
 
 - 🔍 **Deep Research Capability**: Performs multi-step search, reading, and reasoning across web content to answer complex queries
 - 🧩 **Dual Agent Modes**: Supports both ReAct (tool calling) and CodeAct (Python execution) paradigms, configurable via `config.yaml` or environment variables
@@ -32,9 +33,32 @@ TODO: MCP (Model Context Protocol) Server for MCP tool server support
 - 🖥️ **Multiple Interfaces**: Offers a rich CLI experience and a standard FastAPI service
 - 📝 **Traceable References**: Provides sources and references for generated answers
 - 🔄 **Iterative Refinement**: Continuously improves search and analysis strategy based on initial findings
+- 📺 **Streaming Output**: Supports real-time streaming of agent steps and final answers with rich formatting
+- 🔍 **JSON/Markdown Rendering**: Automatically detects and renders structured outputs in a user-friendly format
+- 🧠 **Periodic Planning**: Implements strategic reassessment during execution to optimize search paths
 
 **Reference Case**
-[GPT-4.1 Model Comparison Example](docs/examples/codact-gpt-4.1-example.md)
+- **CodeAct Mode Example**: Full CLI run showing multi-step deep search process.
+  - Start:
+    ![CodeAct Start](docs/examples/codact-model-tests-250421-022/001-SEART.png)
+  - End:
+    ![CodeAct End](docs/examples/codact-model-tests-250421-022/008-END.png)
+- **ReAct Mode Example**: Full CLI run demonstrating the ReAct agent's process.
+  - Start:
+    ![ReAct Start](docs/examples/react-model-tests-250421-022/001-START.png)
+  - End:
+    ![ReAct End](docs/examples/react-model-tests-250421-022/007-END.png)
+
+**The ongoing intensive development plan:**
+1. CLI integration supports Docker containerization for rapid deployment;
+2. Encapsulate various FastAPI Agents as MCP (Model Context Protocol) Servers, providing MCP tools services;
+3. DeepSearchAgents' ToolCollection adds MCP Client/MCP tools HUB, supporting MCP Tools configuration and invocation;
+4. Deep search strategies offer more strategy parameters, supporting Tokens budget parameters;
+5. Experimentally add DeepSearchAgents' Agent Runs evaluator (independent evaluation of DeepSearchAgents' deep search paths & result evaluation Agent);
+6. Adapt to code_sandbox Docker automated configuration, adding more remote code_sandbox secure environment SDK support;
+7. Integrate full-process agent runs telemetry adaptation (Langfuse);
+8. Human-in-the-loop tentative & multi-path branch backtracking for agent runs;
+9. Agent runs in concurrent arena mode;
 
 ## 3. 🚀 Quick Start (CLI & FastAPI)
 
@@ -110,20 +134,24 @@ agents:
   # Settings specific to the ReAct agent
   react:
     max_steps: 25                       # Max number of reasoning steps
+    enable_streaming: true              # Enable streaming output for final answer
+    planning_interval: 7                # Interval for agent planning steps
 
   # Settings specific to the CodeAct agent
   codact:
     executor_type: "local"              # local or lambda (for AWS Lambda execution)
     max_steps: 25                       # Max number of steps in execution
     verbosity_level: 1                  # 0=minimal, 1=normal, 2=verbose
+    enable_streaming: true              # Enable streaming response (CLI priority)
     executor_kwargs: {}                 # Additional kwargs for executor
     additional_authorized_imports: []   # Additional Python modules to allow importing
+    planning_interval: 5                # Interval for agent planning steps
 
 # Service configuration
 service:
   host: "0.0.0.0"
   port: 8000
-  version: "0.2.3"
+  version: "0.2.4"
   deepsearch_agent_mode: "codact"       # "react" or "codact"
 ```
 
@@ -143,6 +171,14 @@ uv run python -m src.agents.cli
 make cli ARGS="--agent-type react"
 # or directly:
 uv run python -m src.agents.cli --agent-type react
+
+# Enable or disable streaming output
+uv run python -m src.agents.cli --enable-streaming  # Enable streaming
+uv run python -m src.agents.cli --no-streaming      # Disable streaming
+
+# Configure planning intervals
+uv run python -m src.agents.cli --planning-interval 5  # For CodeAct
+uv run python -m src.agents.cli --react-planning-interval 7  # For ReAct
 
 # Run with a single query (non-interactive)
 uv run python -m src.agents.cli --query "Search the latest news about OpenAI's new GPT-4.1 API."
@@ -183,9 +219,11 @@ curl -X POST http://localhost:8000/run_deepsearch_agent \
 The core system architecture consists of:
 
 1.  **Core Agents (`src/agents/agent.py`, `src/agents/codact_agent.py`)**: Implement the ReAct and CodeAct logic based on `smolagents`.
-2.  **Tools (`src/agents/tools/`)**: Functions the agents can call (web search, read URL, etc.).
-3.  **FastAPI Service (`src/agents/main.py`)**: Exposes the agent functionality via a REST API.
-4.  **Configuration Loader (`src/agents/config_loader.py`)**: Manages loading settings from `config.yaml` and `.env`.
+2.  **Streaming Support (`src/agents/streaming_agents.py`, `src/agents/streaming_models.py`)**: Provides real-time streaming output capabilities for both agent types.
+3.  **Tools (`src/agents/tools/`)**: Functions the agents can call (web search, read URL, etc.).
+4.  **FastAPI Service (`src/agents/main.py`)**: Exposes the agent functionality via a REST API.
+5.  **CLI Interface (`src/agents/cli.py`)**: Provides an interactive command-line interface with rich formatting.
+6.  **Configuration Loader (`src/agents/config_loader.py`)**: Manages loading settings from `config.yaml` and `.env`.
 
 ```mermaid
 ---
@@ -218,12 +256,15 @@ flowchart TB
         CoreAgents{{"Core Agents
 (Handles Mode Selection)"}}
         ConfigLoader["Config Loader (yaml, .env)"]
+        StreamingSupport["Streaming Support"]
         subgraph Agents["Agent Logic"]
             direction LR
             ToolAgent[["ToolCallingAgent
 (Normal-ReAct)"]]
             CodeAgent[["CodeAgent
 (CodeAct-ReAct)"]]
+            StreamingReactAgent[["StreamingReactAgent"]]
+            StreamingCodeAgent[["StreamingCodeAgent"]]
         end
     end
     subgraph ToolCollection["Tool Collection"]
@@ -247,7 +288,13 @@ Environment (for CodeAct)")]
     FastAPI -- "API Request" --> CoreAgents
     CoreAgents -- "Select Mode: ReAct" --> ToolAgent
     CoreAgents -- "Select Mode: CodeAct" --> CodeAgent
+    CoreAgents -- "Select Mode: StreamingReAct" --> StreamingReactAgent
+    CoreAgents -- "Select Mode: StreamingCodeAct" --> StreamingCodeAgent
     CoreAgents -- "Uses Config" --> ConfigLoader
+    StreamingReactAgent -- "Inherits From" --> ToolAgent
+    StreamingCodeAgent -- "Inherits From" --> CodeAgent
+    StreamingReactAgent -- "Uses" --> StreamingSupport
+    StreamingCodeAgent -- "Uses" --> StreamingSupport
 
     ToolAgent == "Calls Tools" ==> SearchLinks
     ToolAgent == "Calls Tools" ==> ReadURL
@@ -277,6 +324,8 @@ Environment (for CodeAct)")]
 
     ToolAgent -. "Final Answer" .-> CoreAgents
     CodeAgent -. "Final Answer" .-> CoreAgents
+    StreamingReactAgent -. "Streaming Output" .-> CLI
+    StreamingCodeAgent -. "Streaming Output" .-> CLI
     CoreAgents -. "Response" .-> Interfaces
 
     classDef default fill:#1a1a2e,stroke:#7700ff,stroke-width:2px,color:#00fff9
@@ -287,12 +336,16 @@ Environment (for CodeAct)")]
     classDef environment fill:#0f0f1a,stroke:#00fff9,stroke-width:2px,color:#ff00f7
     classDef external fill:#1a1a2e,stroke:#00fff9,stroke-width:2px,color:#ff00f7
     classDef config fill:#0f0f1a,stroke:#7700ff,stroke-width:1px,color:#00fff9
+    classDef streaming fill:#16213e,stroke:#00fff9,stroke-width:3px,color:#ff00f7
 
     CLI:::interface
     FastAPI:::interface
     CoreAgents:::manager
     ToolAgent:::agent
     CodeAgent:::agent
+    StreamingReactAgent:::agent
+    StreamingCodeAgent:::agent
+    StreamingSupport:::streaming
     SearchLinks:::tool
     ReadURL:::tool
     ChunkText:::tool
@@ -308,6 +361,8 @@ Environment (for CodeAct)")]
 ## 5. ⚙️ Agent Modes (ReAct vs CodeAct)
 
 DeepSearchAgent supports two modes of agent operation: the ReAct tool-calling mode and the CodeAct code-execution mode. The default mode used by the `/run_deepsearch_agent` endpoint is configured in `config.yaml` (`service.deepsearch_agent_mode`) or via the `DEEPSEARCH_AGENT_MODE` environment variable.
+
+Both modes now support streaming output, providing real-time visibility into the agent's reasoning and execution process.
 
 ### ReAct Mode (Tool Calling)
 
@@ -334,6 +389,14 @@ content = read_url(results[0]["link"])
 final_answer("The result is...")
 ```
 
+### Streaming Mode
+
+New in version 0.2.4, both ReAct and CodeAct agent types now support streaming output. When enabled:
+
+- ReAct agents (StreamingReactAgent) stream each thinking step, tool call, and final answer
+- CodeAct agents (StreamingCodeAgent) stream the final answer while maintaining standard execution for code steps
+- CLI renders special formats (JSON/Markdown) in real-time with rich formatting
+
 ### Comparison and Use Cases
 
 | Differences | ReAct Mode | CodeAct Mode |
@@ -343,6 +406,8 @@ final_answer("The result is...")
 | **Model Requirements** | General conversational ability | Requires code generation capability |
 | **Debugging & Interpretability** | Human-readable thoughts and actions | Code traces with error feedback |
 | **Best For** | Simple queries, fixed workflows | Complex tasks, flexible tool orchestration |
+| **Streaming Support** | Full streaming (all steps) | Final answer streaming |
+| **Planning Capability** | Periodic planning every N steps | Periodic planning every N steps |
 
 ## 6. 🔧 Toolchain Mechanism
 
@@ -358,7 +423,33 @@ DeepSearchAgent comes with an extensible toolchain that helps the agent retrieve
 
 In a typical sequence, the agent first uses `search_links` to find information sources, then `read_url` to obtain content. For complex content, it can use `chunk_text`, `embed_texts`, and `rerank_texts` to identify key passages. When calculations are needed, it calls `wolfram`. This cycle continues until the agent determines it has sufficient information to call `final_answer`.
 
-## 7. 💡 Theoretical Foundations
+## 7. 📺 Streaming and Rendering Features
+
+New in version 0.2.4, DeepSearchAgent now includes comprehensive streaming and rendering capabilities:
+
+### Streaming Output
+
+- **Real-time Responses**: See the agent's thinking process and results as they occur
+- **Token-by-token Generation**: Watch as the answer is built piece by piece
+- **Progress Visualization**: Track search progress, visited URLs, and query execution
+- **Planning Steps Display**: View periodic planning steps as the agent reassesses its strategy
+
+### Rich Rendering
+
+- **JSON Structure Detection**: Automatically identifies and parses JSON outputs
+- **Markdown Formatting**: Renders Markdown content with proper formatting
+- **Structured Reports**: Creates well-organized panels for easy information consumption
+- **Source Attribution**: Clearly displays reference sources used in the final answer
+- **Statistics Display**: Shows token counts, generation speed, and search metrics
+
+### CLI Experience Enhancements
+
+- **Interactive Controls**: Use slash commands like `/exit`, `/quit`, and `/multiline`
+- **Error Handling**: Robust error recovery keeps the session running even if issues occur
+- **Task Display Management**: Prevents duplicate task displays in streaming mode
+- **Format Auto-detection**: Recognizes and renders final outputs in the most appropriate format
+
+## 8. 💡 Theoretical Foundations
 
 ### ReAct Paradigm Principles
 
@@ -372,7 +463,16 @@ CodeAct refers to approaches that have the agent generate and execute actions in
 
 Compared to static instructions, code as an action representation offers greater expressiveness and flexibility: it can combine multiple tool calls, use programming logic to handle complex data structures, and even reuse previously defined functions, vastly expanding the agent's action space.
 
-## 8. 📦 Installation
+### Periodic Planning and Adaptive Search
+
+New in version 0.2.4, both agent modes implement periodic planning intervals, allowing agents to reassess their strategy every N steps. This enables more effective search paths by:
+
+- Evaluating progress against the original task
+- Identifying gaps in information collection
+- Adjusting search directions based on what's been discovered
+- Prioritizing new search avenues when current ones become less productive
+
+## 9. 📦 Installation
 
 ### Requirements
 
@@ -386,24 +486,27 @@ Compared to static instructions, code as an action representation offers greater
   - `LITELLM_BASE_URL` (optional, if using a custom LiteLLM endpoint)
   - `LOG_LEVEL` (optional, e.g., `debug`, `info`, `warning`, `error`)
 
-## 9. 🤝 Contributing
+## 10. 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 10. 📄 License
+## 11. 📄 License
 
 This project is licensed under the MIT License
 
-## 11. 📝 Acknowledgements Open Source Projects
+## 12. 📝 Acknowledgements Open Source Projects
 
-Special thanks to the following projects and individuals who made this project possible:
+Very special thanks to the following projects and individuals who made this project possible:
 
-- [smolagents](https://github.com/huggingface/smolagents)
-- [Litellm](https://github.com/BerriAI/litellm)
-- [Jina AI](https://github.com/jina-ai)
+- [Hugging Face](https://huggingface.co/) 🤗
+- [smolagents](https://github.com/huggingface/smolagents) <img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/smolagents/smolagents.png" alt="Smol Pingu" height="15">
+- [Litellm](https://github.com/BerriAI/litellm) 🚅
 - [FastAPI](https://github.com/tiangolo/fastapi)
+- [Jina AI](https://github.com/jina-ai)
+- [Langchain](https://github.com/langchain-ai/langchain)
+- [Langgraph](https://github.com/langchain-ai/langgraph)
 
-## 12. Theoretical Foundations & References
+## 13. Theoretical Foundations & References
 
 > - [ReAct: Synergizing Reasoning and Acting in Language Models](https://react-lm.github.io/) `arXiv:2210.03629v3`
 > - [Executable Code Actions Elicit Better LLM Agents](https://arxiv.org/html/2402.01030v4) `arXiv:2402.01030v4`

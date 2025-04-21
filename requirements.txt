@@ -350,7 +350,7 @@ six==1.17.0
     #   ecdsa
     #   markdownify
     #   python-dateutil
-smolagents==1.13.0
+smolagents==1.14.0
     # via deepsearch-agentteam (pyproject.toml)
 sniffio==1.3.1
     # via

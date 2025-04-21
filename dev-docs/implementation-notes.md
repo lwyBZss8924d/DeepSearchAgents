@@ -1,5 +1,12 @@
 # DeepSearchAgents 技术实现笔记
 
+`{{April 20th, 2025}}`
+
+重要经验:
+
+- MUST use English for all code comments.
+- Codeing non-code style: comments & Print content & Prompt MUST use English.
+
 ## 流式输出实现
 
 ### 问题分析
@@ -210,4 +217,4 @@
        "content": "MarkItDown 是微软开源的轻量级 Python 工具...",  # 中文内容
        # 其他字段
    }, ensure_ascii=False))
-   ``` 
+   ```

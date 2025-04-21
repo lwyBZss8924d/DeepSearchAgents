@@ -2,12 +2,12 @@
 
 与 💖 构建 | 人与 AI
 
-![Smolagents](https://img.shields.io/badge/Smolagents-1.13.0+-yellow.svg)
+![Smolagents](https://img.shields.io/badge/Smolagents-1.14.0+-yellow.svg)
 ![LiteLLM](https://img.shields.io/badge/LiteLLM-1.65.4+-orange.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.00+-009688.svg?logo=fastapi&logoColor=white)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![version](https://img.shields.io/badge/version-0.2.3-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.3)
+[![version](https://img.shields.io/badge/version-0.2.4-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.4)
 
 > 自开源 正是此道
 
@@ -21,8 +21,6 @@ DeepSearchAgent 项目是一个结合 ReAct（Reasoning + Acting）推理行动�
 
 ## 2. ✨ 特性 | Features
 
-TODO: MCP (Model Context Protocol) Server for MCP tool server support
-
 - 🔍 **深度研究能力**：通过多步搜索、阅读和推理过程，处理网络内容以回答复杂问题
 - 🧩 **双模式智能体**：同时支持 ReAct（工具调用）和 CodeAct（Python代码执行）模式，可通过 `config.yaml` 或环境变量配置
 - 🔧 **可扩展工具链**：内置网络搜索、内容获取、文本处理、语义排序和计算功能的工具集
@@ -32,9 +30,32 @@ TODO: MCP (Model Context Protocol) Server for MCP tool server support
 - 🖥️ **多种接口**：提供丰富的命令行体验和标准的 FastAPI 服务
 - 📝 **可追溯引用**：为生成的答案提供来源和参考
 - 🔄 **迭代优化**：基于初步发现持续改进搜索和分析策略
+- 📺 **流式输出**: 支持智能体步骤和最终答案的实时流式传输，并提供富文本格式
+- 🔍 **JSON/Markdown 渲染**: 自动检测并以用户友好的格式呈现结构化输出
+- 🧠 **周期性规划**: 在执行过程中实施战略性重评以优化搜索路径
 
 **参考用例**
-[GPT-4.1 Model Comparison Example](docs/examples/codact-gpt-4.1-example.md)
+- **CodeAct Mode Example**: Full CLI run showing multi-step deep search process.
+  - Start:
+    ![CodeAct Start](docs/examples/codact-model-tests-250421-022/001-SEART.png)
+  - End:
+    ![CodeAct End](docs/examples/codact-model-tests-250421-022/008-END.png)
+- **ReAct Mode Example**: Full CLI run demonstrating the ReAct agent's process.
+  - Start:
+    ![ReAct Start](docs/examples/react-model-tests-250421-022/001-START.png)
+  - End:
+    ![ReAct End](docs/examples/react-model-tests-250421-022/007-END.png)
+
+**正在紧张迭代中的开发计划:**
+1. CLI 集成版本支持 Docker 容器化快速部署;
+2. 封装 FastAPI 各种 Agents 为 MCP (Model Context Protocol) Server, 提供 MCP tools 服务;
+3. DeepSearchAgents 的 ToolCollection 增加 MCP Client/MCP tools HUB, 支持 MCP Tools 配置和调用;
+4. 深度搜索策略提供更多策略参数, 支持 Tokens 预算参数;
+5. 实验性增加 DeepSearchAgents 的 Agent Runs 评估器(独立评估DeepSearchAgents 的 深度搜索路径&结果评估Agent);
+6. 适配 code_sandbox Docker 自动化配置, 增加更多远程 code_sandbox 安全环境 SDK支持;
+7. 集成全流程 agent runs 遥测适配(Langfuse);
+8. human-in-the-loop 暂定& agent runs 多路径分支回溯;
+9. agent runs 并发竞技场模式;
 
 ## 3. 🚀 快速开始 (CLI, FastAPI) | Quick Start
 
@@ -110,20 +131,24 @@ agents:
   # ReAct 智能体特定设置
   react:
     max_steps: 25                       # 最大推理步骤数
+    enable_streaming: true              # 为最终答案启用流式输出
+    planning_interval: 7                # 智能体规划步骤的间隔
 
   # CodeAct 智能体特定设置
   codact:
     executor_type: "local"              # local 或 lambda（用于 AWS Lambda 执行）
     max_steps: 25                       # 最大执行步骤数
     verbosity_level: 1                  # 0=最小, 1=正常, 2=详细
+    enable_streaming: true              # 启用流式响应 (CLI 优先)
     executor_kwargs: {}                 # 执行器的额外参数
     additional_authorized_imports: []   # 允许导入的额外 Python 模块
+    planning_interval: 5                # 智能体规划步骤的间隔
 
 # 服务配置
 service:
   host: "0.0.0.0"
   port: 8000
-  version: "0.2.3"
+  version: "0.2.4"
   deepsearch_agent_mode: "codact"       # "react" 或 "codact"
 ```
 
@@ -144,8 +169,16 @@ make cli ARGS="--agent-type react"
 # 或直接使用:
 uv run python -m src.agents.cli --agent-type react
 
+# 启用或禁用流式输出
+uv run python -m src.agents.cli --enable-streaming  # 启用流式
+uv run python -m src.agents.cli --no-streaming      # 禁用流式
+
+# 配置规划间隔
+uv run python -m src.agents.cli --planning-interval 5  # 用于 CodeAct
+uv run python -m src.agents.cli --react-planning-interval 7  # 用于 ReAct
+
 # 使用单一查询（非交互式）
-uv run python -m src.agents.cli --query "搜索关于2024年AI研究的最新新闻"
+uv run python -m src.agents.cli --query "搜索关于 OpenAI 的新 GPT-4.1 API 的最新消息。"
 ```
 
 CLI 参数将覆盖 `config.yaml` 中定义的设置。
@@ -183,9 +216,11 @@ curl -X POST http://localhost:8000/run_deepsearch_agent \
 核心系统架构包括：
 
 1.  **核心智能体（`src/agents/agent.py`、`src/agents/codact_agent.py`）**：基于 `smolagents` 实现 ReAct 和 CodeAct 逻辑。
-2.  **工具（`src/agents/tools/`）**：智能体可以调用的函数（网络搜索、读取 URL 等）。
-3.  **FastAPI 服务（`src/agents/main.py`）**：通过 REST API 暴露智能体功能。
-4.  **配置加载器（`src/agents/config_loader.py`）**：管理从 `config.yaml` 和 `.env` 加载设置。
+2.  **流式支持 (`src/agents/streaming_agents.py`, `src/agents/streaming_models.py`)**: 为两种智能体类型提供实时流式输出能力。
+3.  **工具（`src/agents/tools/`）**：智能体可以调用的函数（网络搜索、读取 URL 等）。
+4.  **FastAPI 服务（`src/agents/main.py`）**：通过 REST API 暴露智能体功能。
+5.  **CLI 接口 (`src/agents/cli.py`)**: 提供具有丰富格式的交互式命令行界面。
+6.  **配置加载器（`src/agents/config_loader.py`）**：管理从 `config.yaml` 和 `.env` 加载设置。
 
 ```mermaid
 ---
@@ -211,22 +246,25 @@ flowchart TB
     subgraph Interfaces["Interfaces"]
         direction LR
         CLI{{"CLI"}}
-        FastAPI{{"FastAPI 服务"}}
+        FastAPI{{"FastAPI Service"}}
     end
-    subgraph DeepSearchAgentSystem["DeepSearch Agents 系统"]
+    subgraph DeepSearchAgentSystem["DeepSearch Agents System"]
         direction TB
-        CoreAgents{{"核心智能体
-(处理模式选择)"}}
-        ConfigLoader["配置加载器 (yaml, .env)"]
-        subgraph Agents["智能体逻辑"]
+        CoreAgents{{"Core Agents
+(Handles Mode Selection)"}}
+        ConfigLoader["Config Loader (yaml, .env)"]
+        StreamingSupport["Streaming Support"]
+        subgraph Agents["Agent Logic"]
             direction LR
             ToolAgent[["ToolCallingAgent
 (Normal-ReAct)"]]
             CodeAgent[["CodeAgent
 (CodeAct-ReAct)"]]
+            StreamingReactAgent[["StreamingReactAgent"]]
+            StreamingCodeAgent[["StreamingCodeAgent"]]
         end
     end
-    subgraph ToolCollection["工具集合"]
+    subgraph ToolCollection["Tool Collection"]
         direction TB
         SearchLinks[/search_links/]
         ReadURL[/read_url/]
@@ -235,49 +273,57 @@ flowchart TB
         RerankTexts[/rerank_texts/]
         Wolfram[/"wolfram computational"/]
         FinalAnswer[/final_answer/]
-        ExternalAPIs{{外部 API
+        ExternalAPIs{{External APIs
 Serper, Jina, Wolfram...}}
     end
-    subgraph Execution["执行"]
-        PythonEnv[("Python 执行
-环境 (用于 CodeAct)")]
+    subgraph Execution["Execution"]
+        PythonEnv[("Python Execution
+Environment (for CodeAct)")]
     end
 
-    CLI -- "用户查询" --> CoreAgents
-    FastAPI -- "API 请求" --> CoreAgents
-    CoreAgents -- "选择模式: ReAct" --> ToolAgent
-    CoreAgents -- "选择模式: CodeAct" --> CodeAgent
-    CoreAgents -- "使用配置" --> ConfigLoader
+    CLI -- "User Query" --> CoreAgents
+    FastAPI -- "API Request" --> CoreAgents
+    CoreAgents -- "Select Mode: ReAct" --> ToolAgent
+    CoreAgents -- "Select Mode: CodeAct" --> CodeAgent
+    CoreAgents -- "Select Mode: StreamingReAct" --> StreamingReactAgent
+    CoreAgents -- "Select Mode: StreamingCodeAct" --> StreamingCodeAgent
+    CoreAgents -- "Uses Config" --> ConfigLoader
+    StreamingReactAgent -- "Inherits From" --> ToolAgent
+    StreamingCodeAgent -- "Inherits From" --> CodeAgent
+    StreamingReactAgent -- "Uses" --> StreamingSupport
+    StreamingCodeAgent -- "Uses" --> StreamingSupport
 
-    ToolAgent == "调用工具" ==> SearchLinks
-    ToolAgent == "调用工具" ==> ReadURL
-    ToolAgent == "调用工具" ==> ChunkText
-    ToolAgent == "调用工具" ==> EmbedTexts
-    ToolAgent == "调用工具" ==> RerankTexts
-    ToolAgent == "调用工具" ==> Wolfram
-    ToolAgent == "调用工具" ==> FinalAnswer
+    ToolAgent == "Calls Tools" ==> SearchLinks
+    ToolAgent == "Calls Tools" ==> ReadURL
+    ToolAgent == "Calls Tools" ==> ChunkText
+    ToolAgent == "Calls Tools" ==> EmbedTexts
+    ToolAgent == "Calls Tools" ==> RerankTexts
+    ToolAgent == "Calls Tools" ==> Wolfram
+    ToolAgent == "Calls Tools" ==> FinalAnswer
 
-    CodeAgent == "生成代码" ==> PythonEnv
-    PythonEnv[("Python 执行
-环境 (用于 CodeAct)")]
-    PythonEnv -- "通过代码调用工具" --> SearchLinks
-    PythonEnv -- "通过代码调用工具" --> ReadURL
-    PythonEnv -- "通过代码调用工具" --> ChunkText
-    PythonEnv -- "通过代码调用工具" --> EmbedTexts
-    PythonEnv -- "通过代码调用工具" --> RerankTexts
-    PythonEnv -- "通过代码调用工具" --> Wolfram
-    PythonEnv -- "通过代码调用工具" --> FinalAnswer
+    CodeAgent == "Generates Code" ==> PythonEnv
+    PythonEnv[("Python Execution
+Environment (for CodeAct)")]
+    PythonEnv -- "Calls Tools via Code" --> SearchLinks
+    PythonEnv -- "Calls Tools via Code" --> ReadURL
+    PythonEnv -- "Calls Tools via Code" --> ChunkText
+    PythonEnv -- "Calls Tools via Code" --> EmbedTexts
+    PythonEnv -- "Calls Tools via Code" --> RerankTexts
+    PythonEnv -- "Calls Tools via Code" --> Wolfram
+    PythonEnv -- "Calls Tools via Code" --> FinalAnswer
 
-    SearchLinks -- "使用外部 API" --> ExternalAPIs
-    ReadURL -- "使用外部 API" --> ExternalAPIs
-    EmbedTexts -- "使用外部 API" --> ExternalAPIs
-    RerankTexts -- "使用外部 API" --> ExternalAPIs
-    Wolfram -- "使用外部 API" --> ExternalAPIs
+    SearchLinks -- "Uses External API" --> ExternalAPIs
+    ReadURL -- "Uses External API" --> ExternalAPIs
+    EmbedTexts -- "Uses External API" --> ExternalAPIs
+    RerankTexts -- "Uses External API" --> ExternalAPIs
+    Wolfram -- "Uses External API" --> ExternalAPIs
     ExternalAPIs -.-> ToolCollection
 
-    ToolAgent -. "最终答案" .-> CoreAgents
-    CodeAgent -. "最终答案" .-> CoreAgents
-    CoreAgents -. "响应" .-> Interfaces
+    ToolAgent -. "Final Answer" .-> CoreAgents
+    CodeAgent -. "Final Answer" .-> CoreAgents
+    StreamingReactAgent -. "Streaming Output" .-> CLI
+    StreamingCodeAgent -. "Streaming Output" .-> CLI
+    CoreAgents -. "Response" .-> Interfaces
 
     classDef default fill:#1a1a2e,stroke:#7700ff,stroke-width:2px,color:#00fff9
     classDef interface fill:#16213e,stroke:#ff00f7,stroke-width:3px,color:#00fff9
@@ -287,12 +333,16 @@ Serper, Jina, Wolfram...}}
     classDef environment fill:#0f0f1a,stroke:#00fff9,stroke-width:2px,color:#ff00f7
     classDef external fill:#1a1a2e,stroke:#00fff9,stroke-width:2px,color:#ff00f7
     classDef config fill:#0f0f1a,stroke:#7700ff,stroke-width:1px,color:#00fff9
+    classDef streaming fill:#16213e,stroke:#00fff9,stroke-width:3px,color:#ff00f7
 
     CLI:::interface
     FastAPI:::interface
     CoreAgents:::manager
     ToolAgent:::agent
     CodeAgent:::agent
+    StreamingReactAgent:::agent
+    StreamingCodeAgent:::agent
+    StreamingSupport:::streaming
     SearchLinks:::tool
     ReadURL:::tool
     ChunkText:::tool
@@ -308,6 +358,8 @@ Serper, Jina, Wolfram...}}
 ## 5. ⚙️ 代理模式 (ReAct vs CodeAct) | Agent Modes
 
 DeepSearchAgent 支持两种智能体工作模式：ReAct 工具调用模式和 CodeAct 代码执行模式。`/run_deepsearch_agent` 端点使用的默认模式由 `config.yaml`（`service.deepsearch_agent_mode`）或 `DEEPSEARCH_AGENT_MODE` 环境变量配置。
+
+现在两种模式都支持流式输出，可以实时查看智能体的推理和执行过程。
 
 ### ReAct 模式（工具调用）| ReAct Mode (Tool Calling)
 
@@ -334,6 +386,14 @@ content = read_url(results[0]["link"])
 final_answer("结果是...")
 ```
 
+### 流式模式 | Streaming Mode
+
+版本 0.2.4 的新特性，ReAct 和 CodeAct 两种类型的智能体现在都支持流式输出。启用时：
+
+- ReAct 智能体 (StreamingReactAgent) 会流式传输每个思考步骤、工具调用和最终答案
+- CodeAct 智能体 (StreamingCodeAgent) 会流式传输最终答案，同时保持代码步骤的标准执行方式
+- CLI 会实时渲染特殊格式（JSON/Markdown），并带有富文本格式
+
 ### 对比与使用场景 | Comparison and Use Cases
 
 | 差异 | ReAct 模式 | CodeAct 模式 |
@@ -343,6 +403,8 @@ final_answer("结果是...")
 | **模型要求** | 通用对话能力 | 需要代码生成能力 |
 | **调试与可解释性** | 易读的思考和动作记录 | 代码追踪与错误反馈 |
 | **最适合** | 简单查询，固定工作流 | 复杂任务，灵活工具编排 |
+| **流式支持** | 完全流式（所有步骤） | 最终答案流式 |
+| **规划能力** | 每 N 步周期性规划 | 每 N 步周期性规划 |
 
 ## 6. 🔧 工具链机制 | Toolchain Mechanism
 
@@ -358,7 +420,33 @@ DeepSearchAgent 拥有一套可扩展的工具链，用于辅助智能体检索�
 
 在典型的工作流程中，智能体首先使用 `search_links` 查找信息源，然后使用 `read_url` 获取内容。对于复杂内容，可以使用 `chunk_text`、`embed_texts` 和 `rerank_texts` 识别关键段落。当需要计算时，它会调用 `wolfram`。这个循环会持续直到智能体确定已有足够信息调用 `final_answer`。
 
-## 7. 💡 理论基础 | Theoretical Foundations
+## 7. 📺 流式传输和渲染功能 | Streaming and Rendering Features
+
+版本 0.2.4 新增，DeepSearchAgent 现在包含全面的流式传输和渲染功能：
+
+### 流式输出 | Streaming Output
+
+- **实时响应**: 实时查看智能体的思考过程和结果
+- **逐 Token 生成**: 观察答案是如何逐个 Token 构建的
+- **进度可视化**: 跟踪搜索进度、访问过的 URL 和查询执行情况
+- **规划步骤显示**: 查看智能体重新评估其策略时的周期性规划步骤
+
+### 富文本渲染 | Rich Rendering
+
+- **JSON 结构检测**: 自动识别和解析 JSON 输出
+- **Markdown 格式化**: 使用正确的格式渲染 Markdown 内容
+- **结构化报告**: 创建组织良好的面板以便于信息查阅
+- **来源归属**: 清晰显示最终答案中使用的参考来源
+- **统计数据显示**: 显示 Token 计数、生成速度和搜索指标
+
+### CLI 体验增强 | CLI Experience Enhancements
+
+- **交互式控制**: 使用斜杠命令如 `/exit`、`/quit` 和 `/multiline`
+- **错误处理**: 健壮的错误恢复机制即使出现问题也能保持会话运行
+- **任务显示管理**: 防止在流式模式下重复显示任务
+- **格式自动检测**: 识别并以最合适的格式渲染最终输出
+
+## 8. 💡 理论基础 | Theoretical Foundations
 
 ### ReAct 框架原理 | ReAct Paradigm Principles
 
@@ -372,7 +460,16 @@ CodeAct 指的是让智能体以代码形式生成并执行动作的方法。核
 
 与静态指令相比，代码作为行动表示具有更强的表达能力和灵活性：它可以组合多个工具调用，使用编程逻辑处理复杂数据结构，甚至重用先前定义的函数，极大地扩展了智能体的行动空间。
 
-## 8. 📦 安装 | Installation
+### 周期性规划与自适应搜索 | Periodic Planning and Adaptive Search
+
+版本 0.2.4 新增，两种智能体模式都实现了周期性规划间隔，允许智能体每 N 步重新评估其策略。这通过以下方式实现更有效的搜索路径：
+
+- 评估相对于原始任务的进展
+- 识别信息收集中的差距
+- 根据已发现的内容调整搜索方向
+- 当当前途径效果不佳时，优先考虑新的搜索途径
+
+## 9. 📦 安装 | Installation
 
 ### 要求 | Requirements
 
@@ -386,24 +483,27 @@ CodeAct 指的是让智能体以代码形式生成并执行动作的方法。核
   - `LITELLM_BASE_URL`（可选，如果使用自定义 LiteLLM 端点）
   - `LOG_LEVEL`（可选，例如 `debug`, `info`, `warning`, `error`）
 
-## 9. 🤝 贡献 | Contributing
+## 10. 🤝 贡献 | Contributing
 
 欢迎贡献！请随时提交 Pull Request。
 
-## 10. 📄 许可证 | License
+## 11. 📄 许可证 | License
 
 本项目使用 MIT 许可证
 
-## 11. 📝 致谢 | Acknowledgements 开源项目
+## 12. 📝 致谢 | Acknowledgements 开源项目
 
 特别感谢以下项目和个人，他们使本项目成为可能：
 
-- [smolagents](https://github.com/huggingface/smolagents)
-- [Litellm](https://github.com/BerriAI/litellm)
-- [Jina AI](https://github.com/jina-ai)
+- [Hugging Face](https://huggingface.co/) 🤗
+- [smolagents](https://github.com/huggingface/smolagents) <img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/smolagents/smolagents.png" alt="Smol Pingu" height="15">
+- [Litellm](https://github.com/BerriAI/litellm) 🚅
 - [FastAPI](https://github.com/tiangolo/fastapi)
+- [Jina AI](https://github.com/jina-ai)
+- [Langchain](https://github.com/langchain-ai/langchain)
+- [Langgraph](https://github.com/langchain-ai/langgraph)
 
-## 12. 理论基础与参考文献 | Theoretical Foundations & References
+## 13. 理论基础与参考文献 | Theoretical Foundations & References
 
 > - [ReAct: Synergizing Reasoning and Acting in Language Models](https://react-lm.github.io/) `arXiv:2210.03629v3`
 > - [Executable Code Actions Elicit Better LLM Agents](https://arxiv.org/html/2402.01030v4) `arXiv:2402.01030v4`

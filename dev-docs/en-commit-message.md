@@ -21,4 +21,4 @@ feat(agents): Enhance streaming output and state management
 
 5. Add multilingual support:
    - English search queries, user language output
-   - Multilingual prompt templates 
+   - Multilingual prompt templates

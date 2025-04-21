@@ -1,4 +1,11 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# src/agents/main.py
+
+"""
+DeepSearch Agents FastAPI
+
+"""
 import os
 import uvicorn
 import traceback
@@ -37,6 +44,16 @@ RERANKER_TYPE = get_config_value(
 VERBOSE_TOOL_CALLBACKS = get_config_value(
     APP_CONFIG, 'agents.common.verbose_tool_callbacks', True
 )
+REACT_MAX_STEPS = get_config_value(
+    APP_CONFIG, 'agents.react.max_steps', 25
+)
+REACT_ENABLE_STREAMING = get_config_value(
+    APP_CONFIG, 'agents.react.enable_streaming', True
+)
+REACT_PLANNING_INTERVAL = get_config_value(
+    APP_CONFIG, 'agents.react.planning_interval', 7
+)
+# CodeAct specific configuration
 CODACT_EXECUTOR_TYPE = get_config_value(
     APP_CONFIG, 'agents.codact.executor_type', "local"
 )
@@ -52,6 +69,12 @@ CODACT_EXECUTOR_KWARGS = get_config_value(
 CODACT_ADDITIONAL_IMPORTS = get_config_value(
     APP_CONFIG, 'agents.codact.additional_authorized_imports', []
 )
+CODACT_ENABLE_STREAMING = get_config_value(
+    APP_CONFIG, 'agents.codact.enable_streaming', True
+)
+CODACT_PLANNING_INTERVAL = get_config_value(
+    APP_CONFIG, 'agents.codact.planning_interval', 5
+)
 
 # Output configuration information only in non-standalone mode
 if True:
@@ -64,10 +87,20 @@ if True:
         f"Agent configuration: Mode={DEEPSEARCH_AGENT_MODE}, "
         f"VerboseTools={VERBOSE_TOOL_CALLBACKS}"
     )
-    print(
-        f"CodeAct configuration: Executor={CODACT_EXECUTOR_TYPE}, "
-        f"MaxSteps={CODACT_MAX_STEPS}, Verbosity={CODACT_VERBOSITY_LEVEL}"
-    )
+    if DEEPSEARCH_AGENT_MODE == "react":
+        print(
+            f"React configuration: MaxSteps={REACT_MAX_STEPS}, "
+            f"Streaming={REACT_ENABLE_STREAMING}, "
+            f"PlanningInterval={REACT_PLANNING_INTERVAL}"
+        )
+    else:
+        print(
+            f"CodeAct configuration: Executor={CODACT_EXECUTOR_TYPE}, "
+            f"MaxSteps={CODACT_MAX_STEPS}, "
+            f"Verbosity={CODACT_VERBOSITY_LEVEL}, "
+            f"Streaming={CODACT_ENABLE_STREAMING}, "
+            f"PlanningInterval={CODACT_PLANNING_INTERVAL}"
+        )
 
 
 class SmolReactAgentRunner:
@@ -95,7 +128,8 @@ class SmolReactAgentRunner:
                 jina_api_key=jina_api_key,
                 wolfram_app_id=wolfram_app_id,
                 # cli_console is None in service mode
-                cli_console=None
+                cli_console=None,
+                enable_streaming=REACT_ENABLE_STREAMING
             )
 
             if self.react_agent is None:
@@ -164,7 +198,8 @@ class CodeAgentRunner:
                 jina_api_key=jina_api_key,
                 wolfram_app_id=wolfram_app_id,
                 # cli_console is None in service mode
-                cli_console=None
+                cli_console=None,
+                enable_streaming=CODACT_ENABLE_STREAMING
             )
 
             if self.code_agent is None:

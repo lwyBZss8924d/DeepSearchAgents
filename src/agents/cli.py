@@ -1,3 +1,19 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# src/agents/cli.py
+
+"""
+DeepSearchAgent CLI
+
+This module provides a command-line interface for development Inspecting runs
+telemetry of DeepSearchAgent, allowing for interactive exploration and testing
+of the agent's capabilities.
+
+Current version is so so so, like "monkey code", need to be improved and optimized.
+Meanwhile, the core Agent components will be added to the agent inspecting run
+pugins(Langfuse or other telemetry tools) in the future iterations.
+
+"""
 import os
 import argparse
 import traceback
@@ -5,7 +21,7 @@ import asyncio
 import time
 import json
 from pathlib import Path
-from typing import List, Dict, Optional, Any, Union
+from typing import List
 from dotenv import load_dotenv
 
 from .agent import create_react_agent
@@ -17,11 +33,10 @@ try:
     from rich.markdown import Markdown
     from rich.panel import Panel
     from rich.live import Live
-    from rich.status import Status
     from rich.text import Text
     from rich.console import Group
     from rich.progress import (
-        Progress, SpinnerColumn, TextColumn, 
+        Progress, SpinnerColumn, TextColumn,
         BarColumn, TimeElapsedColumn
     )
     from prompt_toolkit import PromptSession
@@ -37,6 +52,26 @@ except ImportError as e:
     exit(1)
 
 load_dotenv()
+
+# --- Load React specific config for planning interval ---
+REACT_PLANNING_INTERVAL = get_config_value(
+    APP_CONFIG, 'agents.react.planning_interval', 7
+)
+
+# --- Load CodeAct specific config for streaming and planning ---
+CODACT_ENABLE_STREAMING = get_config_value(
+    APP_CONFIG, 'agents.codact.enable_streaming', True  # Default to True
+)
+CODACT_PLANNING_INTERVAL = get_config_value(
+    APP_CONFIG, 'agents.codact.planning_interval', 5
+)
+# add additional CodeAct configuration
+CODACT_EXECUTOR_KWARGS = get_config_value(
+    APP_CONFIG, 'agents.codact.executor_kwargs', {}
+)
+CODACT_ADDITIONAL_IMPORTS = get_config_value(
+    APP_CONFIG, 'agents.codact.additional_authorized_imports', []
+)
 
 
 # --- CLI Helper Functions ---
@@ -156,6 +191,51 @@ CODACT_ENABLE_STREAMING = get_config_value(
 )
 
 
+def render_json_as_markdown(final_result_str, console):
+    """
+    Check if the output is JSON format, if so, extract and render its content as Markdown
+    Return a flag indicating whether rendering was successful
+    """
+    if not final_result_str or not isinstance(final_result_str, str):
+        return False
+
+    if final_result_str.strip().startswith('{') and final_result_str.strip().endswith('}'):
+        try:
+            json_data = json.loads(final_result_str)
+            if isinstance(json_data, dict) and 'content' in json_data:
+                # Extract Markdown content
+                markdown_content = json_data.get('content', '')
+
+                # Prepare title
+                title = "[bold green]Markdown Content[/bold green]"
+                if 'title' in json_data and json_data['title']:
+                    title = f"[bold green]{json_data['title']}[/bold green]"
+
+                # Display Markdown rendering content
+                console.print("\n[bold cyan]Final Formatted Output:[/bold cyan]")
+                console.print(Panel(
+                    Markdown(markdown_content),
+                    title=title,
+                    border_style="green"
+                ))
+
+                # Display sources (if any)
+                if 'sources' in json_data and json_data['sources']:
+                    sources_text = Text()
+                    sources_text.append("Sources: ", style="cyan")
+                    sources_text.append(", ".join(json_data['sources']), style="blue underline")
+                    console.print(sources_text)
+
+                return True
+        except json.JSONDecodeError:
+            # If JSON parsing fails, continue with normal process
+            pass
+        except Exception as e:
+            console.print(f"[yellow]Warning: Error rendering Markdown: {e}[/yellow]")
+
+    return False
+
+
 async def process_query_async(
     query: str,
     agent_instance,
@@ -167,87 +247,99 @@ async def process_query_async(
     Asynchronously process the query and display the result, supporting
     streaming.
     """
-    # 创建状态显示
+    # Create status display
     spinner = SpinnerColumn()
     task_description = TextColumn("[bold blue]{task.description}")
     bar_column = BarColumn(bar_width=None)
     status_column = TextColumn("[cyan]{task.fields[status]}")
     time_column = TimeElapsedColumn()
-    
+
     last_response_md.clear()  # Clear previous response
     final_result_str = None  # Initialize final result string
-    
-    # 收集流式输出的统计数据
+
+    # Collect streaming output statistics
     token_count = 0
     start_time = None
-    
-    # 跟踪规划阶段和状态变量
+
+    # Track planning steps and state variables
     planning_counter = 0
-    last_planning_step = None
-    
-    # 状态变量跟踪数据
+
+    # State variable tracking data
     state_summary = {
         "visited_urls": 0,
         "search_queries": 0,
         "search_depth": 0
     }
 
-    # 检查代理是否是流式类型
+    # Check if the agent is a streaming type
+    agent_class_name = ""
+    if hasattr(agent_instance, '__class__'):
+        agent_class_name = agent_instance.__class__.__name__
+
     is_streaming_agent = (
-        hasattr(agent_instance, '__class__') and
-        (agent_instance.__class__.__name__ == 'StreamingCodeAgent' or
-         agent_instance.__class__.__name__ == 'StreamingReactAgent' or
-         agent_instance.__class__.__name__ == 'StreamingFinalAnswerWrapper')
+        agent_class_name == 'StreamingCodeAgent' or
+        agent_class_name == 'StreamingReactAgent' or
+        agent_class_name == 'StreamingFinalAnswerWrapper'
     )
-    
-    # 只有是流式代理类型的情况下才启用流式模式
+
+    # Only enable streaming mode if the agent is a streaming type
     use_stream = is_streaming_agent and CODACT_ENABLE_STREAMING
 
+    # Process task_displayed logic - set the flag early to prevent duplicate task display
+    # If the agent object has the task_displayed attribute, set it to True (this applies to StreamingReactAgent and StreamingCodeAgent)
+    if hasattr(agent_instance, 'task_displayed'):
+        agent_instance.task_displayed = True
+
+    # Also maintain a flag in the function to ensure local display control has the same setting
+    task_displayed = True
+
     try:
-        # 使用Progress显示思考和处理阶段
+        # Use Progress to display thinking and processing stages
         with Progress(
-            spinner, task_description, bar_column, 
+            spinner, task_description, bar_column,
             status_column, time_column,
             console=console, transient=True,
             expand=True
         ) as progress:
-            # 显示思考状态
+            # Display thinking status
             thinking_task_id = progress.add_task(
-                "[bold cyan]Thinking...", 
-                total=None, 
+                "[bold cyan]🤔 Thinking...",
+                total=None,
                 status="Processing your query"
             )
-            
+
             # Use run_in_executor for the potentially blocking agent.run call
             loop = asyncio.get_running_loop()
 
             if use_stream:
-                # 更新状态文本
+                # Update status text
                 progress.update(
-                    thinking_task_id, 
-                    description="[bold cyan]Processing...", 
+                    thinking_task_id,
+                    description="[bold cyan]⚙️ Processing...",
                     status="Executing agent steps"
                 )
-                
+
                 # Get the synchronous generator from the executor
                 try:
                     sync_generator = await loop.run_in_executor(
                         None, agent_instance.run, query, True
                     )
-                    
-                    # 走到这里说明思考阶段已经完成，关闭Progress显示，准备显示流式结果
+
+                    # Reached here means the thinking stage is complete,
+                    # stop the Progress display, and prepare to show streaming results
                     progress.stop()
-                    
-                    # 检查返回类型是同步或异步迭代器还是普通字符串
+
+                    # Check if the return type is a synchronous or asynchronous iterator
+                    # or a normal string
                     if isinstance(sync_generator, str):
-                        # 如果是字符串，直接作为最终结果
+                        # If it's a string, use it directly as the final result
                         final_result_str = sync_generator
                     elif (hasattr(sync_generator, '__iter__') and
                           not hasattr(sync_generator, '__aiter__')):
-                        # 流式处理
+                        # Streaming processing
                         console.print("\n[bold green]Generating Final Answer...[/bold green]")
-                        
-                        # 使用Live组件进行实时流式更新
+
+                        # Use Live component for real-time streaming updates
                         with Live(
                             console=console,
                             refresh_per_second=15,
@@ -258,8 +350,8 @@ async def process_query_async(
                             collected_text = ""
                             markdown_panel = None
                             start_time = time.time()
-                            
-                            # 定义一个安全的获取生成器下一个值的函数
+
+                            # Define a safe function to get the next value of the generator
                             async def get_next_safely():
                                 try:
                                     def safe_next(gen):
@@ -267,40 +359,48 @@ async def process_query_async(
                                             return next(gen), True
                                         except StopIteration:
                                             return None, False
-                                    
+                                        except Exception as e:
+                                            console.print(f"[yellow]Iteration error: {e}[/yellow]")
+                                            return None, False
+
                                     result, has_next = await loop.run_in_executor(
                                         None, safe_next, sync_generator
                                     )
                                     return result, has_next
                                 except Exception as e:
-                                    console.print(f"[yellow]获取值时出错: {e}[/yellow]")
+                                    console.print(f"[yellow]Error getting value: {e}[/yellow]")
                                     return None, False
-                            
-                            # 使用while循环和安全函数处理生成器
+
+                            # Use a while loop and a safe function to process the generator
                             while True:
-                                chunk, has_next = await get_next_safely()
-                                if not has_next:
-                                    break
-                                
+                                # Safe iteration with custom error handling
+                                try:
+                                    chunk, has_next = await get_next_safely()
+                                    if not has_next:
+                                        break
+                                except Exception as e:
+                                    console.print(f"[yellow]Safe iteration error: {e}[/yellow]")
+                                    # Try to continue with next chunk if possible
+                                    continue
+
                                 chunks.append(chunk)
-                                
-                                # 检查是否是规划步骤
+
+                                # Check if it's a planning step
                                 if hasattr(chunk, 'plan') and chunk.plan:
                                     planning_counter += 1
-                                    last_planning_step = chunk
-                                    # 显示规划阶段
+                                    # Display planning step
                                     planning_panel = Panel(
                                         Markdown(chunk.plan),
-                                        title=f"[bold orange]规划阶段 #{planning_counter}[/bold orange]",
+                                        title=f"[bold orange]Planning Step #{planning_counter}[/bold orange]",
                                         border_style="orange",
                                         expand=True
                                     )
                                     live_display.update(planning_panel)
-                                    # 短暂暂停，让用户注意到规划阶段
+                                    # Brief pause to allow user to notice the planning step
                                     await asyncio.sleep(0.5)
                                     continue
-                                
-                                # 尝试更新状态变量
+
+                                # Try to update state variables
                                 if hasattr(agent_instance, 'state'):
                                     state = agent_instance.state
                                     if isinstance(state, dict):
@@ -310,122 +410,351 @@ async def process_query_async(
                                             state_summary['search_queries'] = len(state['search_queries'])
                                         if 'search_depth' in state:
                                             state_summary['search_depth'] = state['search_depth']
-                                            
-                                # 尝试从chunk中提取内容
-                                try:
-                                    # 提取内容 - litellm的stream chunk格式
-                                    content = chunk.choices[0].delta.content
-                                    if content:
-                                        token_count += 1
-                                        collected_text += content
-                                        
-                                        # 尝试解析JSON结构化输出
-                                        try:
-                                            # 检查是否是JSON结构
-                                            if collected_text.strip().startswith('{') and collected_text.strip().endswith('}'):
+
+                                # Check if there is a special format block (Final Answer in React mode)
+                                if (isinstance(chunk, str) and 
+                                    chunk.startswith("\n<Final Answer>\n") and
+                                    "</Final Answer>" in chunk):
+                                    # This is the Final Answer block in React mode, need to extract content
+                                    final_answer_content = (
+                                        chunk.split("\n<Final Answer>\n")[1]
+                                        .split("\n</Final Answer>")[0]
+                                    )
+                                    # Update collected text
+                                    collected_text = final_answer_content
+                                    content = final_answer_content
+                                elif (isinstance(chunk, str) and
+                                     chunk.startswith("<Final Answer>") and
+                                     "</Final Answer>" in chunk):
+                                    # Another possible format
+                                    final_answer_content = (
+                                        chunk.split("<Final Answer>")[1]
+                                        .split("</Final Answer>")[0]
+                                    )
+                                    collected_text = final_answer_content
+                                    content = final_answer_content
+                                else:
+                                    # Try to extract content from chunk
+                                    try:
+                                        # Extract content - litellm's format
+                                        content = None
+                                        # Try multiple ways to get content
+                                        if (hasattr(chunk, 'choices') and
+                                            chunk.choices):
+                                            delta = chunk.choices[0].delta
+                                            if (hasattr(delta, 'content') and
+                                                delta.content is not None):
+                                                content = delta.content
+                                        # Process other possible formats
+                                        elif hasattr(chunk, 'text'):
+                                            content = chunk.text
+                                        # StreamingAgentMixin output data format
+                                        elif hasattr(chunk, 'text_chunk'):
+                                            content = chunk.text_chunk
+                                        elif (hasattr(chunk, 'delta') and
+                                              hasattr(chunk.delta, 'content')):
+                                            content = chunk.delta.content
+                                        elif hasattr(chunk, 'get_chunk_text'):
+                                            # CustomStreamWrapper method
+                                            try:
+                                                # Correct call: do not pass the object itself as an argument
+                                                # to its own method
+                                                content = chunk.get_chunk_text()
+                                            except TypeError:
+                                                # If the method requires parameters, try different cases
                                                 try:
-                                                    json_data = json.loads(collected_text)
-                                                    # 如果成功解析JSON，创建表格显示
-                                                    if isinstance(json_data, dict) and 'title' in json_data and 'content' in json_data:
-                                                        from rich.table import Table
-                                                        
-                                                        table = Table(show_header=True, header_style="bold green")
-                                                        table.add_column("字段", style="cyan", no_wrap=True)
-                                                        table.add_column("内容", style="green")
-                                                        
-                                                        # 添加标题和内容行
-                                                        table.add_row("标题", json_data.get('title', ''))
-                                                        table.add_row("内容", Text(json_data.get('content', '')[:200] + 
-                                                                                "..." if len(json_data.get('content', '')) > 200 else ''))
-                                                        
-                                                        # 添加来源行
-                                                        if 'sources' in json_data and json_data['sources']:
-                                                            table.add_row("来源", "\n".join(json_data['sources'][:3]) + 
-                                                                        ("..." if len(json_data['sources']) > 3 else ''))
-                                                        
-                                                        # 添加置信度行
-                                                        if 'confidence' in json_data:
-                                                            confidence_text = f"{json_data['confidence']:.2f}"
-                                                            table.add_row("置信度", confidence_text)
-                                                        
-                                                        # 创建包含表格的面板
-                                                        structured_panel = Panel(
-                                                            Group(
-                                                                table,
-                                                                Text("\n原始JSON输出:", style="dim"),
-                                                                Markdown("```json\n" + json.dumps(json_data, indent=2, ensure_ascii=False) + "\n```")
-                                                            ),
-                                                            title="[bold green]结构化输出[/bold green]",
-                                                            border_style="green",
-                                                            expand=True
-                                                        )
-                                                        live_display.update(structured_panel)
-                                                        continue
-                                                except json.JSONDecodeError:
-                                                    # 不是完整的JSON，继续常规显示
-                                                    pass
-                                        except Exception:
-                                            # JSON处理出错，忽略并继续常规显示
-                                            pass
-                                        
-                                        # 更新流式显示
+                                                    # Some cases may require passing the current block
+                                                    content = (
+                                                        chunk
+                                                        .get_chunk_text(chunk)
+                                                    )
+                                                except Exception:
+                                                    content = ""
+
+                                        # If all methods fail, try string representation
+                                        if content is None:
+                                            content = str(chunk)
+                                            if (content == "None" or
+                                                "<object" in content):
+                                                content = ""
+
+                                        if content:
+                                            token_count += 1
+                                            collected_text += content
+                                    except (AttributeError, KeyError, IndexError):
+                                        # Non-standard format, try other ways to extract content
+                                        pass
+
+                                # Check if there is a specific format for Markdown report
+                                is_markdown_report = False
+                                if collected_text and (
+                                    "# " in collected_text or 
+                                    "## " in collected_text or
+                                    "```" in collected_text
+                                ):
+                                    is_markdown_report = True
+
+                                # Try to parse JSON structured output
+                                try:
+                                    # Check if it's a JSON structure
+                                    if (collected_text.strip().startswith('{') and 
+                                        collected_text.strip().endswith('}')):
                                         try:
-                                            # 添加状态概览
-                                            status_text = Text()
-                                            if any(state_summary.values()):
-                                                status_text.append("\n\n状态概览: ", style="bold cyan")
-                                                if state_summary["visited_urls"] > 0:
-                                                    status_text.append(f"已访问URL: {state_summary['visited_urls']} | ", style="cyan")
-                                                if state_summary["search_queries"] > 0:
-                                                    status_text.append(f"搜索查询: {state_summary['search_queries']} | ", style="cyan")
-                                                if state_summary["search_depth"] > 0:
-                                                    status_text.append(f"搜索深度: {state_summary['search_depth']}", style="cyan")
-                                                                                                    
-                                            # 使用Markdown组件渲染
-                                            markdown_panel = Panel(
-                                                Group(
-                                                    Markdown(collected_text),
-                                                    status_text
-                                                ),
-                                                title="[bold green]Final Answer (Streaming...)[/bold green]",
-                                                border_style="green",
-                                                expand=True
-                                            )
-                                            live_display.update(markdown_panel)
-                                        except Exception:
-                                            # 如果渲染失败，使用纯文本显示
-                                            text_panel = Panel(
-                                                collected_text,
-                                                title="[bold green]Final Answer (Streaming...)[/bold green]",
-                                                border_style="green",
-                                                expand=True
-                                            )
-                                            live_display.update(text_panel)
-                                except (AttributeError, KeyError, IndexError):
-                                    # 如果不是标准格式，尝试其他方式提取内容
+                                            json_data = json.loads(collected_text)
+                                            # If successful JSON parsing
+                                            if (isinstance(json_data, dict) and
+                                                'title' in json_data and
+                                                'content' in json_data):
+                                                from rich.table import Table
+
+                                                # Create a panel with table and markdown
+                                                markdown_content = (
+                                                    json_data.get('content', '')
+                                                )
+
+                                                table = Table(
+                                                    show_header=True,
+                                                    header_style="bold green"
+                                                )
+                                                table.add_column(
+                                                    "Field",
+                                                    style="cyan",
+                                                    no_wrap=True
+                                                )
+                                                table.add_column(
+                                                    "Content",
+                                                    style="green"
+                                                )
+
+                                                # Add title row
+                                                table.add_row(
+                                                    "Title",
+                                                    json_data.get('title', '')
+                                                )
+
+                                                # Add content preview row (shortened)
+                                                preview_length = 200
+                                                content_len = len(markdown_content)
+                                                is_truncated = content_len > preview_length
+                                                # Create preview text, determine if it is truncated
+                                                if is_truncated:
+                                                    preview_text = (
+                                                        markdown_content[:preview_length]
+                                                        + "..."
+                                                    )
+                                                else:
+                                                    preview_text = markdown_content
+
+                                                table.add_row(
+                                                    "Content",
+                                                    Text(preview_text)
+                                                )
+
+                                                # Add sources row
+                                                if ('sources' in json_data and
+                                                    json_data['sources']):
+                                                    sources = json_data['sources']
+                                                    max_sources = 3
+                                                    # Generate source data preview
+                                                    sources_preview = "\n".join(
+                                                        sources[:max_sources]
+                                                    )
+                                                    # Check if there are more sources to omit
+                                                    if len(sources) > max_sources:
+                                                        sources_preview += "..."
+
+                                                    table.add_row(
+                                                        "Sources",
+                                                        sources_preview
+                                                    )
+
+                                                # Add confidence row
+                                                if 'confidence' in json_data:
+                                                    confidence_text = (
+                                                        f"{json_data['confidence']:.2f}"
+                                                    )
+                                                    table.add_row(
+                                                        "Confidence", 
+                                                        confidence_text
+                                                    )
+
+                                                # Create grouped display
+                                                # Create component list
+                                                group_components = []
+
+                                                # Add table
+                                                group_components.append(table)
+
+                                                # Add Markdown content title
+                                                group_components.append(
+                                                    Text(
+                                                        "\n[Markdown Content]",
+                                                        style="bold cyan"
+                                                    )
+                                                )
+
+                                                # Add Markdown content
+                                                group_components.append(
+                                                    Markdown(markdown_content)
+                                                )
+
+                                                # Add original JSON title
+                                                group_components.append(
+                                                    Text(
+                                                        "\n[Raw JSON]",
+                                                        style="dim"
+                                                    )
+                                                )
+
+                                                # JSON formatting parameters
+                                                json_format_args = {
+                                                    "indent": 2,
+                                                    "ensure_ascii": False
+                                                }
+
+                                                # Generate formatted JSON string
+                                                json_str = json.dumps(
+                                                    json_data,
+                                                    **json_format_args
+                                                )
+
+                                                # Create formatted JSON display
+                                                json_formatted = (
+                                                    "```json\n" +
+                                                    json_str +
+                                                    "\n```"
+                                                )
+
+                                                # Add JSON formatting component
+                                                group_components.append(
+                                                    Markdown(json_formatted)
+                                                )
+
+                                                # Create panel title
+                                                panel_title = (
+                                                    "[bold green]Structured Output"
+                                                    "[/bold green]"
+                                                )
+
+                                                # Create final panel
+                                                structured_panel = Panel(
+                                                    Group(*group_components),
+                                                    title=panel_title,
+                                                    border_style="green",
+                                                    expand=True
+                                                )
+                                                live_display.update(structured_panel)
+                                                # JSON content is marked as processed
+                                                is_markdown_report = True
+                                        except json.JSONDecodeError:
+                                            # Not a complete JSON, continue with regular display
+                                            pass
+                                except Exception:
+                                    # JSON processing error, ignore and continue with regular display
                                     pass
-                            
-                            # 处理完成后设置最终结果
+
+                                # Only update streaming display if not processed
+                                if not is_markdown_report:
+                                    try:
+                                        # Add status overview
+                                        status_text = Text()
+                                        if any(state_summary.values()):
+                                            status_text.append("\n\nStatus Overview: ", style="bold cyan")
+                                            if state_summary["visited_urls"] > 0:
+                                                status_text.append(f"Visited URLs: {state_summary['visited_urls']} | ", style="cyan")
+                                            if state_summary["search_queries"] > 0:
+                                                status_text.append(f"Search Queries: {state_summary['search_queries']} | ", style="cyan")
+                                            if state_summary["search_depth"] > 0:
+                                                status_text.append(f"Search Depth: {state_summary['search_depth']}", style="cyan")
+
+                                        if not task_displayed and collected_text:
+                                            task_displayed = True
+
+                                            # Display task request
+                                            task_panel = Panel(
+                                                Text(query),
+                                                title="[bold blue]Task Request[/bold blue]",
+                                                border_style="blue",
+                                                expand=True
+                                            )
+                                            live_display.update(task_panel)
+                                            # Pause briefly to allow user to see the task
+                                            await asyncio.sleep(0.5)
+
+                                        # Use Markdown component to render
+                                        markdown_panel = Panel(
+                                            Group(
+                                                Markdown(collected_text),
+                                                status_text
+                                            ),
+                                            title="[bold green]Final Answer (Streaming...)[/bold green]",
+                                            border_style="green",
+                                            expand=True
+                                        )
+                                        live_display.update(markdown_panel)
+                                    except Exception:
+                                        # If rendering fails, use plain text display
+                                        text_panel = Panel(
+                                            collected_text,
+                                            title="[bold green]Final Answer (Streaming...)[/bold green]",
+                                            border_style="green",
+                                            expand=True
+                                        )
+                                        live_display.update(text_panel)
+
+                            # After processing, set the final result
                             final_result_str = collected_text
+
+                            # Try to render JSON content
+                            render_success = render_json_as_markdown(
+                                final_result_str,
+                                console
+                            )
+
+                            # If JSON rendering fails, but the content is Markdown, try rendering Markdown
+                            if not render_success:
+                                try:
+                                    # Check if it contains common Markdown features
+                                    is_likely_markdown = any([
+                                        '##' in final_result_str,  # Title
+                                        '*' in final_result_str,   # List or emphasis
+                                        '```' in final_result_str, # Code block
+                                        '>' in final_result_str,   # Quote
+                                        # Table
+                                        '|' in final_result_str and
+                                        '-|-' in final_result_str 
+                                    ])
+
+                                    if is_likely_markdown:
+                                        console.print(
+                                            "\n[bold cyan]Final Markdown Output:[/bold cyan]"
+                                        )
+                                        console.print(Panel(
+                                            Markdown(final_result_str),
+                                            title="[bold green]Markdown Content[/bold green]",
+                                            border_style="green"
+                                        ))
+                                except Exception as e:
+                                    console.print(f"[yellow]Error rendering Markdown: {e}[/yellow]")
                     else:
-                        # 其他情况（可能是FinalAnswerStep或其他类型）
+                        # Other cases (possibly FinalAnswerStep or other types)
                         type_name = type(sync_generator)
                         warn_msg = (
                             f"Warning: Unexpected return type from agent.run: "
                             f"{type_name}"
                         )
                         console.print(Text(warn_msg, style="yellow"))
-                        # 尝试转换为字符串
+                        # Try to convert to string
                         final_result_str = str(sync_generator)
-                        
+
                 except Exception as run_error:
                     console.print(f"[bold red]Error during run: {run_error}[/bold red]")
                     console.print(traceback.format_exc())
             else:
-                # 非流式模式下的进度显示
+                # Non-streaming mode progress display
                 progress.update(
-                    thinking_task_id, 
-                    description="[bold cyan]Thinking...", 
+                    thinking_task_id,
+                    description="[bold cyan]🤔 Thinking...", 
                     status="Processing your query"
                 )
                 final_result_str = await loop.run_in_executor(
@@ -438,34 +767,64 @@ async def process_query_async(
             Text(f"Error processing query '{query[:50]}...'", style="bold red")
         )
         console.print(Text(f"Error details: {e}", style="red"))
-        console.print(traceback.format_exc())  # 更详细的堆栈跟踪
+        console.print(traceback.format_exc())  # More detailed stack trace
         return
-   
-    # 最终输出显示
+
+    # Final output display
     if final_result_str:
         last_response_md.append(final_result_str)
-        
-        # 显示生成统计如果使用了流式模式
+
+        # Try to render JSON formatted results
+        rendered = render_json_as_markdown(final_result_str, console)
+
+        # If JSON rendering fails, but the content is Markdown, try rendering Markdown
+        if not rendered:
+            try:
+                # Check if it contains common Markdown features
+                is_likely_markdown = any([
+                    '##' in final_result_str,  # Title
+                    '*' in final_result_str,   # List or emphasis
+                    '```' in final_result_str, # Code block
+                    '>' in final_result_str,   # Quote
+                    # Table
+                    '|' in final_result_str and
+                    '-|-' in final_result_str
+                ])
+
+                if is_likely_markdown:
+                    console.print(
+                        "\n[bold cyan]Final Markdown Output:[/bold cyan]"
+                    )
+                    console.print(Panel(
+                        Markdown(final_result_str),
+                        title="[bold green]Markdown Content[/bold green]",
+                        border_style="green"
+                    ))
+                    rendered = True
+            except Exception as e:
+                console.print(f"[yellow]Error rendering Markdown: {e}[/yellow]")
+
+        # Display generation statistics if streaming mode is used
         if use_stream and start_time and token_count > 0:
             total_time = time.time() - start_time
             tokens_per_second = token_count / total_time if total_time > 0 else 0
-            
+
             stats_text = Text()
             stats_text.append("\n[Statistics] ", style="dim")
             stats_text.append(f"{token_count} tokens", style="cyan")
             stats_text.append(" generated in ", style="dim")
             stats_text.append(f"{total_time:.2f}s", style="yellow")
-            
+
             tokens_per_sec_text = f" ({tokens_per_second:.1f} tokens/sec)"
             stats_text.append(tokens_per_sec_text, style="green")
-            
-            # 如果有规划阶段，显示
+
+            # If there are planning steps, display
             if planning_counter > 0:
                 stats_text.append(f" | {planning_counter} planning steps", style="orange")
-            
+
             console.print(stats_text)
-            
-            # 显示状态概览（如果有）
+
+            # Display status overview (if any)
             if any(state_summary.values()):
                 status_text = Text("\n[State Summary] ", style="cyan")
                 if state_summary["visited_urls"] > 0:
@@ -475,66 +834,19 @@ async def process_query_async(
                 if state_summary["search_depth"] > 0:
                     status_text.append(f"Search depth: {state_summary['search_depth']}", style="cyan")
                 console.print(status_text)
-        
-        # 如果不是流式模式或者流式模式没有正确显示，则显示最终答案
-        if not use_stream:
+
+        # If not streaming mode or streaming mode not displayed correctly, display final answer
+        if not use_stream and not rendered:
             console.print("\n[bold green]Answer:[/bold green]")
-            
-            # 尝试解析结构化JSON输出
-            try:
-                # 检查是否是JSON结构
-                if final_result_str.strip().startswith('{') and final_result_str.strip().endswith('}'):
-                    try:
-                        json_data = json.loads(final_result_str)
-                        # 如果成功解析JSON，创建表格显示
-                        if isinstance(json_data, dict) and 'title' in json_data and 'content' in json_data:
-                            from rich.table import Table
-                            
-                            table = Table(show_header=True, header_style="bold green")
-                            table.add_column("Field", style="cyan", no_wrap=True)
-                            table.add_column("Content", style="green")
-                            
-                            # 添加标题和内容行
-                            table.add_row("Title", json_data.get('title', ''))
-                            table.add_row("Content", Text(json_data.get('content', '')[:200] + 
-                                                        "..." if len(json_data.get('content', '')) > 200 else ''))
-                            
-                            # 添加来源行
-                            if 'sources' in json_data and json_data['sources']:
-                                table.add_row("Sources", "\n".join(json_data['sources'][:3]) + 
-                                            ("..." if len(json_data['sources']) > 3 else ''))
-                            
-                            # 添加置信度行
-                            if 'confidence' in json_data:
-                                confidence_text = f"{json_data['confidence']:.2f}"
-                                table.add_row("Confidence", confidence_text)
-                            
-                            # 创建包含表格的面板
-                            console.print(Panel(
-                                Group(
-                                    table,
-                                    Text("\nRaw JSON output:", style="dim"),
-                                    Markdown("```json\n" + json.dumps(json_data, indent=2, ensure_ascii=False) + "\n```")
-                                ),
-                                title="[bold green]Structured Output[/bold green]",
-                                border_style="green"
-                            ))
-                            return
-                    except json.JSONDecodeError:
-                        # 不是完整的JSON，继续常规显示
-                        pass
-            except Exception:
-                # JSON处理出错，忽略并继续常规显示
-                pass
-            
-            # 标准Markdown显示
+
+            # Try to display with standard Markdown
             console.print(Panel(
                 Markdown(final_result_str),
                 title="Final Answer",
                 border_style="green"
             ))
     elif not use_stream:
-        # 仅在非流式模式下显示此错误
+        # Only display this error in non-streaming mode
         console.print(
             Text("Error: No final answer generated.", style="bold red")
         )
@@ -677,6 +989,28 @@ def main():
         help='Enable streaming mode for final answer generation'
     )
     parser.add_argument(
+        '--react-planning-interval',
+        type=int,
+        default=os.getenv(
+            "REACT_PLANNING_INTERVAL", 
+            get_config_value(
+                APP_CONFIG, 'agents.react.planning_interval', 7
+            )
+        ),
+        help='Interval for React agent planning steps'
+    )
+    parser.add_argument(
+        '--planning-interval',
+        type=int,
+        default=os.getenv(
+            "PLANNING_INTERVAL", 
+            get_config_value(
+                APP_CONFIG, 'agents.codact.planning_interval', 5
+            )
+        ),
+        help='Interval for CodeAct agent planning steps'
+    )
+    parser.add_argument(
         '--query',
         type=str,
         help='Run a single query directly without starting the interactive CLI'
@@ -746,16 +1080,21 @@ def main():
     wolfram_app_id = get_api_key("WOLFRAM_ALPHA_APP_ID")
     litellm_base_url = get_api_key("LITELLM_BASE_URL")
 
-    # 确保配置值与全局设置一致
+    # Ensure configuration value matches global setting
     global CODACT_ENABLE_STREAMING
     CODACT_ENABLE_STREAMING = args.enable_streaming
 
-    # 如果在命令行中没有使用 --no-interactive，并且没有指定单个查询，则提供交互式选择
+    # Update planning interval global variables
+    global REACT_PLANNING_INTERVAL, CODACT_PLANNING_INTERVAL
+    REACT_PLANNING_INTERVAL = args.react_planning_interval
+    CODACT_PLANNING_INTERVAL = args.planning_interval
+
+    # If not using --no-interactive and no single query specified, provide interactive selection
     if not args.no_interactive and not args.query:
-        # 如果命令行未明确指定代理类型，则执行交互式选择
+        # If command line does not explicitly specify agent type, execute interactive selection
         if args.agent_type == parser.get_default('agent_type'):
             args.agent_type = select_agent_type(console)
-            # 更新显示，让用户知道选择已生效
+            # Update display to inform user that selection has taken effect
             console.print(
                 f"[green]Selected:[/green] "
                 f"[cyan]{args.agent_type.upper()}[/cyan] agent mode"
@@ -780,7 +1119,7 @@ def main():
 
     # --- Create Agent --- #
     try:
-        # 仅在启用详细模式时传递 cli_console
+        # Only pass cli_console when verbose mode is enabled
         cli_console_for_agent = console if args.verbose else None
 
         if args.agent_type == 'react':
@@ -795,7 +1134,8 @@ def main():
                 serper_api_key=serper_api_key,
                 jina_api_key=jina_api_key,
                 wolfram_app_id=wolfram_app_id,
-                enable_streaming=args.enable_streaming,  # 传递流式参数
+                enable_streaming=args.enable_streaming,
+                planning_interval=args.react_planning_interval
             )
             if agent_instance is None:
                 console.print(
@@ -814,16 +1154,17 @@ def main():
                 executor_type=args.executor_type,
                 max_steps=args.max_steps,
                 verbosity_level=args.verbosity_level,
-                # 传递 executor_kwargs 和 imports（如果需要）
-                # executor_kwargs=...,
-                # additional_authorized_imports=...,
-                # 传递 API Keys
+                # Pass executor_kwargs and imports (if needed)
+                executor_kwargs=CODACT_EXECUTOR_KWARGS,
+                additional_authorized_imports=CODACT_ADDITIONAL_IMPORTS,
+                # Pass API Keys
                 litellm_master_key=litellm_master_key,
                 litellm_base_url=litellm_base_url,
                 serper_api_key=serper_api_key,
                 jina_api_key=jina_api_key,
                 wolfram_app_id=wolfram_app_id,
-                enable_streaming=args.enable_streaming,  # 传递流式参数
+                enable_streaming=args.enable_streaming,
+                planning_interval=args.planning_interval
             )
             if agent_instance is None:
                 console.print(
@@ -849,11 +1190,11 @@ def main():
     # --- Run Mode --- #
     if args.query:
         console.print(f"[yellow]Running single query:[/yellow] {args.query}")
-        # 存储单个查询模式的最后响应的列表
+        # Store list of last responses for single query mode
         last_response_md_single: List[str] = []
-        # 在事件循环中运行单个查询处理
+        # Run single query processing in event loop
         try:
-            # 使用 asyncio.run() 管理事件循环
+            # Use asyncio.run() to manage event loop
             asyncio.run(process_query_async(
                 args.query, agent_instance, args.verbose,
                 console, last_response_md_single
@@ -871,7 +1212,7 @@ def main():
         exit(exit_code)
 
     else:
-        # 启动交互式循环
+        # Start interactive loop
         try:
             exit_code = asyncio.run(
                 run_interactive_cli(agent_instance, args, console)

@@ -1,6 +1,6 @@
 [project]
 name = "DeepSearch-AgentTeam"
-version = "0.2.3"
+version = "0.2.4"
 description = "Default template for uv package"
 authors = [
     {name = "ArthurWang", email = "deepsearchagent4dev@gpt4coursera.com"},

@@ -194,3 +194,5 @@ config.yaml
 .cursor/
 mcp.json # If mcp.json can appear elsewhere
 ~/.cursor/mcp.json # Ignore if path is explicitly added (less likely)
+
+smolagents
