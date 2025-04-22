@@ -13,6 +13,7 @@ from typing import (
     Dict, List, Optional, Union, Iterator, Callable, Any
 )
 import collections
+import re
 
 from smolagents import (
     MessageRole,
@@ -40,6 +41,7 @@ class StepsAndFinalAnswerStreamingData:
         self.step = step
         self.text_chunk = text_chunk
         self.full_text = full_text
+
 
 logger = logging.getLogger(__name__)
 
@@ -363,7 +365,7 @@ class StreamingCodeAgent(CodeAgent, StreamingAgentMixin):
     Args:
         tools (List[Tool]): Tools available to the agent
         model (StreamingLiteLLMModel): Model generating agent behavior
-        prompt_templates (Dict, optional): Prompt templates
+        prompt_templates (Dict, optional): Prompt templates (recommended to use CODACT_ACTION_PROMPT)
         grammar (Dict[str, str], optional): Grammar for parsing LLM output
         additional_authorized_imports (List[str], optional): Additional
         authorized imports
@@ -520,11 +522,89 @@ class StreamingCodeAgent(CodeAgent, StreamingAgentMixin):
                 except Exception as e:
                     logger.error(f"Error extracting content from JSON: {e}")
                     # When an error occurs, return the original text
+            
+            # 特殊处理dict类型的final_answer，不用转换成生成器
+            if isinstance(final_answer, dict) and stream:
+                # 遵循smolagents的行为，直接返回dict
+                # CLI会有专门的错误捕获机制来处理dict
+                return final_answer
+                
             # For streaming output, return the original text
             return self._generate_streaming_final_answer(
                 self.task, final_answer
             )
         return "No final answer was produced"
+
+    def _generate_streaming_final_answer(self, task: str, final_answer: Any) -> Iterator[str]:
+        """
+        Generate a streaming final answer from a final answer object.
+        
+        This method wraps any final answer object (string, dictionary, etc.)
+        into an iterable stream for consumption by the CLI.
+        
+        Args:
+            task: The original task
+            final_answer: The final answer object (could be string, dict, etc.)
+            
+        Returns:
+            An iterator that yields the final answer content
+        """
+        # 关键修改：处理字典类型的final_answer
+        # 不再尝试将其转换为迭代器，而是作为单个值返回
+        if isinstance(final_answer, dict):
+            # 直接将dict转为JSON字符串，但不创建生成器
+            # 这样，调用方可以直接获取结果而不是迭代
+            import json
+            try:
+                # Ensure proper JSON formatting with ensure_ascii=False for better Unicode handling
+                json_str = json.dumps(final_answer, ensure_ascii=False)
+                # 只yield一次，与smolagents代码执行器的行为保持一致
+                yield json_str
+                return
+            except Exception as e:
+                logger.error(f"Error converting dictionary to JSON: {e}")
+                yield str(final_answer)
+                return
+        
+        # 如果是字符串类型的final_answer
+        if isinstance(final_answer, str):
+            # 如果是JSON格式字符串，直接返回
+            if final_answer.strip().startswith('{') and final_answer.strip().endswith('}'):
+                yield final_answer
+                return
+                
+            # 处理可能包含URL的普通文本
+            import re
+            url_pattern = r'https?://[^\s)>]+'
+            found_urls = re.findall(url_pattern, final_answer)
+            
+            # 如果包含URL，格式化为标准JSON结构
+            if found_urls:
+                import json
+                formatted_json = {
+                    "title": "Final Answer",
+                    "content": final_answer,
+                    "sources": found_urls
+                }
+                yield json.dumps(formatted_json, ensure_ascii=False)
+                return
+                
+            # 普通文本，直接返回
+            yield final_answer
+            return
+            
+        # 处理其他可迭代对象(但不是字典)
+        if hasattr(final_answer, '__iter__') and not isinstance(final_answer, (str, dict)):
+            try:
+                for chunk in final_answer:
+                    yield str(chunk)
+            except Exception as e:
+                logger.error(f"Error iterating through final answer: {e}")
+                yield f"[Error processing stream: {str(e)}]"
+            return
+                
+        # 其他类型，转为字符串
+        yield str(final_answer)
 
     def _execute_step(self, task: str, memory_step: ActionStep) -> Union[None, Any]:
         """Override execute step method to ensure tools are available"""
@@ -845,7 +925,7 @@ class StreamingReactAgent(ToolCallingAgent, StreamingAgentMixin):
                     yield FINAL_ANSWER_PREFIX
 
                     # Process streaming response object
-                    if (isinstance(final_answer, collections.abc.Iterable) and 
+                    if (isinstance(final_answer, collections.abc.Iterable) and
                             not isinstance(final_answer, str)):
                         # This is a stream object, need to iterate processing
                         try:
@@ -861,8 +941,28 @@ class StreamingReactAgent(ToolCallingAgent, StreamingAgentMixin):
                             # Output original JSON string, let CLI handle formatting
                             yield final_answer
                         else:
-                            # Normal string or other objects
-                            yield str(final_answer)
+                            # Check if the answer is a string that should be converted to JSON format
+                            # for consistent formatting and URL handling
+                            if isinstance(final_answer, str) and not (final_answer.strip().startswith('{') and final_answer.strip().endswith('}')):
+                                # Extract URLs from final answer
+                                url_pattern = r'https?://[^\s)>]+'
+                                found_urls = re.findall(url_pattern, final_answer)
+                                
+                                if found_urls:
+                                    # Create properly formatted JSON with sources
+                                    formatted_json = {
+                                        "title": "Final Answer",
+                                        "content": final_answer,
+                                        "sources": found_urls
+                                    }
+                                    import json
+                                    yield json.dumps(formatted_json, ensure_ascii=False)
+                                else:
+                                    # Normal string without URLs
+                                    yield str(final_answer)
+                            else:
+                                # Normal string or other objects
+                                yield str(final_answer)
 
                     yield FINAL_ANSWER_SUFFIX
                     break
@@ -875,7 +975,7 @@ class StreamingReactAgent(ToolCallingAgent, StreamingAgentMixin):
                     yield THINKING_PREFIX
 
                     # Process streaming response of thinking process
-                    if (isinstance(step.thought, collections.abc.Iterable) and 
+                    if (isinstance(step.thought, collections.abc.Iterable) and
                             not isinstance(step.thought, str)):
                         try:
                             for text_chunk in self._convert_stream_to_iterator(

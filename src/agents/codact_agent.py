@@ -1,17 +1,13 @@
 from typing import List, Optional, Dict, Any
 from smolagents import (
-    CodeAgent, LiteLLMModel, Tool
+    LiteLLMModel, CodeAgent, Tool
 )
 from .tools import (
-    SearchLinksTool,
-    ReadURLTool,
-    ChunkTextTool,
-    EmbedTextsTool,
-    RerankTextsTool,
-    EnhancedWolframAlphaTool,
-    FinalAnswerTool
+    SearchLinksTool, ReadURLTool, ChunkTextTool,
+    EmbedTextsTool, RerankTextsTool,
+    EnhancedWolframAlphaTool, FinalAnswerTool
 )
-from .prompts import CODE_ACTION_SYSTEM_PROMPT
+from .prompt_templates import CODACT_ACTION_PROMPT
 import logging
 
 logger = logging.getLogger(__name__)
@@ -162,48 +158,14 @@ def create_codact_agent(
     # the other templates (planning, managed_agent, final_answer)
     # are less used but provide structure.
 
-    # Create a dictionary of prompt templates with key system_prompt
-    prompt_templates_dict = {
-        'system_prompt': CODE_ACTION_SYSTEM_PROMPT,
-        'planning': {
-            'initial_plan': (
-                'Based on the task, create a plan to search and gather '
-                'information using the available tools. Think about what '
-                'steps you need to take and in what order.\n\n{{task}}\n\n'
-                '<end_plan>'
-            ),
-            'update_plan_pre_messages': (
-                'Review your progress and update your plan based on what '
-                'you have learned so far. Consider what new information you '
-                'need and how to obtain it.'
-            ),
-            'update_plan_post_messages': (
-                'Update your plan based on the task and new information. '
-                'Decide what steps to take next to complete the task.\n\n'
-                '{{task}}\n\n<end_plan>'
-            )
-        },
-        'managed_agent': {
-            'task': '{{name}}: {{task}}',
-            'report': '{{name}} final report: {{final_answer}}'
-        },
-        'final_answer': {
-            'pre_messages': (
-                'You have been working on the following task. Review all '
-                'the information you have gathered and provide a '
-                'comprehensive final answer.'
-            ),
-            'post_messages': (
-                'Based on all the information you have gathered, provide a '
-                'final comprehensive answer to the task: {{task}}'
-            )
-        }
-    }
-
+    # Use the properly structured CODACT_ACTION_PROMPT
+    # 使用标准的PromptTemplates对象
+    
     # Set default allowed imports, including 'json' for tool output handling
     default_authorized_imports = [
         "json", "re", "collections", "datetime",
-        "time", "math", "itertools", "copy"
+        "time", "math", "itertools", "copy",
+        "requests", "bs4", "urllib", "html",  # 添加网络请求和HTML解析相关模块
     ]
     if additional_authorized_imports:
         # Merge and deduplicate allowed imports list
@@ -226,13 +188,14 @@ def create_codact_agent(
                     "content": {"type": "string"},
                     "sources": {"type": "array", "items": {"type": "string"}},
                     "confidence": {"type": "number"}
-                }
+                },
+                "required": ["title", "content"]
             }
         }
 
     # --- Set Planning Interval ---
     # Deep search requires periodic reassessment of search strategy
-    search_planning_interval = planning_interval  # Use the provided planning_interval parameter
+    search_planning_interval = planning_interval
 
     # --- Initialize State Management ---
     # Provide structured state tracking for the agent
@@ -259,7 +222,7 @@ def create_codact_agent(
     code_agent = CodeAgent(
         tools=agent_tools,
         model=standard_model,
-        prompt_templates=prompt_templates_dict,
+        prompt_templates=CODACT_ACTION_PROMPT,
         additional_authorized_imports=combined_authorized_imports,
         executor_type=executor_type,
         executor_kwargs=executor_kwargs or {},
@@ -290,7 +253,7 @@ def create_codact_agent(
         streaming_agent = StreamingCodeAgent(
             tools=agent_tools,
             model=streaming_model,
-            prompt_templates=prompt_templates_dict,
+            prompt_templates=CODACT_ACTION_PROMPT,
             additional_authorized_imports=combined_authorized_imports,
             executor_type=executor_type,
             executor_kwargs=executor_kwargs or {},

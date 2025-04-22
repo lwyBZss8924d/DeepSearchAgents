@@ -205,26 +205,58 @@ def render_json_as_markdown(final_result_str, console):
             if isinstance(json_data, dict) and 'content' in json_data:
                 # Extract Markdown content
                 markdown_content = json_data.get('content', '')
-
+                
+                # Get sources for rendering
+                sources = []
+                if 'sources' in json_data and json_data['sources']:
+                    sources = json_data['sources']
+                
+                # If markdown_content doesn't already contain a Sources section, add one
+                has_sources_section = '## Sources' in markdown_content
+                
+                # If there are sources and no Sources section, append one
+                if sources and not has_sources_section:
+                    # Add newlines to ensure proper spacing
+                    if not markdown_content.endswith('\n\n'):
+                        if markdown_content.endswith('\n'):
+                            markdown_content += '\n'
+                        else:
+                            markdown_content += '\n\n'
+                    
+                    # Add Sources section header
+                    markdown_content += "## Sources\n\n"
+                    
+                    # Add each source as a numbered reference
+                    for i, url in enumerate(sources):
+                        # Extract a title from the URL or use a generic one
+                        url_parts = url.split("/")
+                        title = ""
+                        # Try to get a meaningful title from the URL
+                        if len(url_parts) > 2:
+                            # Use last part of URL path, cleaned up
+                            raw_title = url_parts[-1] if url_parts[-1] else url_parts[-2]
+                            # Remove file extensions and clean up
+                            title = raw_title.split('.')[0].replace('-', ' ').replace('_', ' ').capitalize()
+                        
+                        # If we couldn't extract a meaningful title, use a generic one
+                        if not title:
+                            title = f"Source {i+1}"
+                            
+                        # Add the numbered reference
+                        markdown_content += f"{i+1}. [{title}]({url})\n"
+                
                 # Prepare title
-                title = "[bold green]Markdown Content[/bold green]"
+                title = "[bold green]Final Markdown Output[/bold green]"
                 if 'title' in json_data and json_data['title']:
                     title = f"[bold green]{json_data['title']}[/bold green]"
 
                 # Display Markdown rendering content
-                console.print("\n[bold cyan]Final Formatted Output:[/bold cyan]")
+                console.print("\n[bold cyan]Final Answer Report:[/bold cyan]")
                 console.print(Panel(
                     Markdown(markdown_content),
                     title=title,
                     border_style="green"
                 ))
-
-                # Display sources (if any)
-                if 'sources' in json_data and json_data['sources']:
-                    sources_text = Text()
-                    sources_text.append("Sources: ", style="cyan")
-                    sources_text.append(", ".join(json_data['sources']), style="blue underline")
-                    console.print(sources_text)
 
                 return True
         except json.JSONDecodeError:
@@ -331,10 +363,30 @@ async def process_query_async(
 
                     # Check if the return type is a synchronous or asynchronous iterator
                     # or a normal string
+                    continue_processing = True  # 控制是否继续处理流式输出
                     if isinstance(sync_generator, str):
                         # If it's a string, use it directly as the final result
                         final_result_str = sync_generator
-                    elif (hasattr(sync_generator, '__iter__') and
+                    elif isinstance(sync_generator, dict):
+                        # 特殊处理：如果返回的是字典类型，直接转为JSON字符串处理
+                        console.print("\n[bold green]处理返回数据...[/bold green]")
+                        import json
+                        try:
+                            final_result_str = json.dumps(sync_generator, ensure_ascii=False)
+                            render_success = render_json_as_markdown(final_result_str, console)
+                            if not render_success:
+                                console.print("\n[bold green]Final Answer Report:[/bold green]")
+                                console.print(Panel(
+                                    Text(str(sync_generator)),
+                                    title="[bold green]Structured Output[/bold green]",
+                                    border_style="green"
+                                ))
+                            continue_processing = False
+                        except Exception as e:
+                            console.print(f"[yellow]Error processing dict result: {e}[/yellow]")
+                            final_result_str = str(sync_generator)
+                    # 只有需要继续处理时才进入流式处理分支    
+                    elif continue_processing and (hasattr(sync_generator, '__iter__') and
                           not hasattr(sync_generator, '__aiter__')):
                         # Streaming processing
                         console.print("\n[bold green]Generating Final Answer...[/bold green]")
@@ -379,6 +431,22 @@ async def process_query_async(
                                     if not has_next:
                                         break
                                 except Exception as e:
+                                    # 特别处理dict类型错误
+                                    if "'dict' object is not an iterator" in str(e):
+                                        console.print("[yellow]检测到字典对象无法迭代，尝试直接处理最终结果...[/yellow]")
+                                        # 如果是dict类型导致的错误，尝试直接访问sync_generator
+                                        if isinstance(sync_generator, dict):
+                                            # 直接将dict转换为JSON字符串
+                                            import json
+                                            try:
+                                                json_str = json.dumps(sync_generator, ensure_ascii=False)
+                                                collected_text = json_str
+                                                # 跳出循环，直接处理最终结果
+                                                break
+                                            except Exception as json_err:
+                                                console.print(f"[yellow]JSON转换错误: {json_err}[/yellow]")
+                                                collected_text = str(sync_generator)
+                                                break
                                     console.print(f"[yellow]Safe iteration error: {e}[/yellow]")
                                     # Try to continue with next chunk if possible
                                     continue
@@ -727,7 +795,7 @@ async def process_query_async(
 
                                     if is_likely_markdown:
                                         console.print(
-                                            "\n[bold cyan]Final Markdown Output:[/bold cyan]"
+                                            "\n[bold cyan]Final Answer Report:[/bold cyan]"
                                         )
                                         console.print(Panel(
                                             Markdown(final_result_str),
@@ -793,7 +861,7 @@ async def process_query_async(
 
                 if is_likely_markdown:
                     console.print(
-                        "\n[bold cyan]Final Markdown Output:[/bold cyan]"
+                        "\n[bold cyan]Final Answer Report:[/bold cyan]"
                     )
                     console.print(Panel(
                         Markdown(final_result_str),

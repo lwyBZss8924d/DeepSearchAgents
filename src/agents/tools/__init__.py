@@ -4,7 +4,7 @@ from .chunk import ChunkTextTool
 from .embed import EmbedTextsTool
 from .rerank import RerankTextsTool
 from .wolfram import EnhancedWolframAlphaTool
-from smolagents.default_tools import FinalAnswerTool
+from .final_answer import EnhancedFinalAnswerTool as FinalAnswerTool
 
 __all__ = [
     "SearchLinksTool",

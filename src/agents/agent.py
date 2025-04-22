@@ -7,7 +7,7 @@ from .tools import (
     EmbedTextsTool, RerankTextsTool,
     EnhancedWolframAlphaTool, FinalAnswerTool
 )
-from .prompts import REACT_PROMPT
+from .prompt_templates import REACT_PROMPT
 from .streaming_models import StreamingLiteLLMModel
 from .streaming_agents import StreamingReactAgent
 
