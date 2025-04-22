@@ -518,3 +518,77 @@ CodeAct 指的是让智能体以代码形式生成并执行动作的方法。核
 > - [Snippet Selection and URL Ranking in DeepSearch/DeepResearch](https://jina.ai/news/snippet-selection-and-url-ranking-in-deepsearch-deepresearch/)
 > - [LLM-as-SERP: Search Engine Result Pages from Large Language Models](https://jina.ai/news/llm-as-serp-search-engine-result-pages-from-large-language-models/)
 > - [A Practical Guide to Implementing DeepSearch/DeepResearch](https://jina.ai/news/a-practical-guide-to-implementing-deepsearch-deepresearch/)
+
+## 14. 👨‍💻 AI Coder 结对辅助开发参考
+
+DeepSearchAgent 项目在设计时考虑了现代 AI 工程师与人类工程师协作程序开发&编码的工作流程。我们已经整合了特殊的仓库工作区规则文件(`.cursor/rules/*.mdc`)，以促进 AI 辅助开发并确保代码库的一致性。
+
+### cursor-rules(`.mdc`) 等价于
+
+- `CLAUDE.md`: Claude Code best practices
+- Codex CLI prompts: Codex CLI prompts for DeepSearchAgent
+- etc.
+
+### 使用 .cursor/rules 文件
+
+本仓库在 `.cursor/rules/` 目录中包含特殊的文档文件，作为人类开发者和 AI 编码助手的上下文指南。这些文件类似于 [Claude Code 最佳实践](dev-docs/claude-code-best-practices.md) 中描述的 `CLAUDE.md` 概念，提供了关于项目架构、组件和约定的结构化信息。
+
+#### 可用的规则文件
+
+- **agent-architecture.mdc**: 记录了智能体设计模式（ReAct 和 CodeAct）及功能
+- **configuration.mdc**: 详细说明了定制化的配置系统选项
+- **interfaces.mdc**: 描述了可用接口（CLI、FastAPI、MCP Tool Server）
+- **jina-ai-api-rules.mdc**: 包含在代码库中使用 Jina AI 各种 API 的指南
+- **periodic-planning.mdc**: 解释了用于战略重新评估的周期性规划功能
+- **project-overview.mdc**: 提供全面的项目概述和结构
+- **tools.mdc**: 记录了用于网络搜索、内容处理和分析的专用工具集合的功能
+
+### 对开发者的好处
+
+这些规则文件为人类开发者和 AI 工程师结对协作提供了：
+
+1. **快速上手**: 可以帮助 AI 工程师迅速理解项目架构和设计决策
+2. **一致性开发**: 确保代码遵循既定模式和约定
+3. **AI 辅助开发**: 为 AI 工程师提供上下文，生成更准确和相关的代码
+4. **代码即文档**: 使文档与代码紧密结合，易于访问
+
+### AI 工程师协作最佳实践
+
+在使用 AI 协助开发这个项目时，我们建议以下工作流程：
+
+1. **了解规则**: 查看与您正在开发的组件相关的 `.cursor/rules/*.mdc` 文件
+2. **引用特定规则**: 与 AI 工程师合作时，明确引用相关规则文件
+3. **迭代改进**: 使用 AI 进行初始代码生成，然后根据项目约定完善解决方案
+4. **复杂变更规划**: 对于复杂功能，在生成实现代码前让 AI 概述计划
+5. **测试驱动方法**: 对关键组件，使用 AI 工程师帮助在实现代码前编写测试
+6. **更新规则**: 引入重大变更时，更新相关规则文件
+
+### 示例工作流
+
+#### 探索代码库
+
+与 AI 工程师结对探索代码库时，可以这样开始：
+
+```bash
+请帮我理解 DeepSearchAgent 架构。参考 .cursor/rules/project-overview.mdc 和 .cursor/rules/agent-architecture.mdc 获取详情。
+```
+
+#### 添加新功能
+
+当向工具集合添加新工具时：
+
+```bash
+我需要添加一个用于 YouTube 视频分析的新工具。请按照 .cursor/rules/tools.mdc 中的模式和 .cursor/rules/python-code-style-pep8.mdc 中的代码风格帮我实现。
+```
+
+#### 更新配置
+
+修改配置系统时：
+
+```bash
+我需要为深度搜索 Tokens预算&索引深度添加新的配置选项。请根据 .cursor/rules/configuration.mdc 建议如何扩展配置结构。
+```
+
+### 贡献规则
+
+随着项目的发展，我们鼓励贡献者更新和扩展这些规则文件。如果您添加了新的主要组件或更改了现有架构，请更新相关的 `.mdc` 文件以反映这些变化。这有助于将文档维护为准确反映代码库当前状态的活跃资源。

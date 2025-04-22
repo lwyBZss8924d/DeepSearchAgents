@@ -518,3 +518,78 @@ Very special thanks to the following projects and individuals who made this proj
 > - [Snippet Selection and URL Ranking in DeepSearch/DeepResearch](https://jina.ai/news/snippet-selection-and-url-ranking-in-deepsearch-deepresearch/)
 > - [LLM-as-SERP: Search Engine Result Pages from Large Language Models](https://jina.ai/news/llm-as-serp-search-engine-result-pages-from-large-language-models/)
 > - [A Practical Guide to Implementing DeepSearch/DeepResearch](https://jina.ai/news/a-practical-guide-to-implementing-deepsearch-deepresearch/)
+
+## 14. 👨‍💻 AI Coder Pair Programming Assistance Reference
+
+The DeepSearchAgent project is designed with modern AI engineers and human engineers collaborating in software development and coding workflows in mind. We have integrated special repository workspace rule files (`.cursor/rules/*.mdc`) to facilitate AI-assisted development and ensure consistency within the codebase.
+
+### Equivalent to cursor-rules (`.mdc`)
+
+- `CLAUDE.md`: Claude Code best practices
+- Codex CLI prompts: Codex CLI prompts for DeepSearchAgent
+- etc.
+
+### Using `.cursor/rules` Files
+
+This repository contains special documentation files in the `.cursor/rules/` directory, serving as contextual guidelines for human developers and AI coding assistants. These files are similar to the `CLAUDE.md` concept described in [Claude Code Best Practices](dev-docs/claude-code-best-practices.md), providing structured information about project architecture, components, and conventions.
+
+#### Available Rules Files
+
+- **agent-architecture.mdc**: Documents the agent design patterns (ReAct and CodeAct) and their functionalities
+
+- **configuration.mdc**: Provides detailed explanations of the customized configuration system options
+- **interfaces.mdc**: Describes the available interfaces (CLI, FastAPI, MCP Tool Server)
+- **jina-ai-api-rules.mdc**: Contains guidelines for using various Jina AI APIs within the codebase
+- **periodic-planning.mdc**: Explains the cyclical planning features used for strategic reassessment
+- **project-overview.mdc**: Offers a comprehensive overview and structure of the project
+- **tools.mdc**: Records the functionalities of dedicated tools used for web search, content processing, and analysis
+
+### Benefits for Developers
+
+These rules files facilitate collaboration between human developers and AI engineers by:
+
+1. **Quick Onboarding**: Helping AI engineers rapidly understand the project architecture and design decisions
+2. **Consistent Development**: Ensuring code adheres to established patterns and conventions
+3. **AI-Assisted Development**: Providing context to AI engineers for generating more accurate and relevant code
+4. **Code as Documentation**: Keeping documentation closely integrated with the code for easy access
+
+### Best Practices for AI Engineer Collaboration
+
+When using AI to assist in developing this project, we recommend the following workflow:
+
+1. **Understand the Rules**: Review the `.cursor/rules/*.mdc` files related to the component you are developing.
+2. **Reference Specific Rules**: When collaborating with AI engineers, explicitly cite the relevant rule files.
+3. **Iterative Improvement**: Use AI for initial code generation, then refine the solution according to project conventions.
+4. **Planning for Complex Changes**: For complex features, have AI outline the plan before generating implementation code.
+5. **Test-Driven Approach**: For key components, work with AI engineers to write tests before implementing the code.
+6. **Update Rules**: When making significant changes, update the relevant rule files.
+
+### Example Workflow
+
+#### Exploring the Codebase
+
+When pairing with AI engineers to explore the codebase, you can start like this:
+
+```bash
+Please help me understand the DeepSearchAgent architecture. Refer to .cursor/rules/project-overview.mdc and .cursor/rules/agent-architecture.mdc for details.
+```
+
+#### Add New Feature
+
+When adding a new tool to the tool collection:
+
+```bash
+I need to add a new tool for YouTube video analysis. Please implement it following the pattern in .cursor/rules/tools.mdc and the code style in .cursor/rules/python-code-style-pep8.mdc.
+```
+
+#### Update Configuration
+
+When modifying the configuration system:
+
+```bash
+I need to add new configuration options for depth search Tokens budget & index depth. Please advise on how to extend the configuration structure according to .cursor/rules/configuration.mdc.
+```
+
+### Contributing to Rules
+
+As the project evolves, we encourage contributors to update and expand these rules files. If you're adding a new major component or changing existing architecture, please update the relevant `.mdc` files to reflect these changes. This helps maintain the documentation as a living resource that accurately represents the current state of the codebase.
