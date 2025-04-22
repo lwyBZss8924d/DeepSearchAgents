@@ -1,0 +1,76 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# DeepSearchAgent Periodic Planning
+
+DeepSearchAgent v0.2.4 introduces periodic planning capability for both agent types, allowing strategic reassessment during complex search tasks.
+
+## Concept
+
+Periodic planning helps agents maintain focus and adapt their search strategy as they gather new information. Instead of blindly following an initial plan, agents reassess at regular intervals to:
+
+1. Evaluate progress on the current goal
+2. Identify gaps in the information collected
+3. Adjust search strategy based on discoveries
+4. Prioritize remaining sub-tasks
+
+## Implementation
+
+### ReAct Agent
+
+In [agent.py](mdc:src/agents/agent.py), the ReAct agent implements planning with:
+
+```python
+# Set planning interval (default: 7)
+planning_interval = planning_interval
+```
+
+The planning process involves:
+- Initial planning at the start of a task
+- Periodic planning every `planning_interval` steps
+- Sending special planning prompts to the LLM to reconsider its approach
+
+### CodeAct Agent
+
+In [codact_agent.py](mdc:src/agents/codact_agent.py), the CodeAct agent uses:
+
+```python
+# Set planning interval (default: 5)
+search_planning_interval = planning_interval
+```
+
+The CodeAct planning involves:
+- Detailed strategy assessment in Python code
+- State tracking for visited URLs, search queries, etc.
+- Python-based plan adjustments
+
+## Configuration
+
+Planning intervals can be configured in:
+
+1. [config.yaml](mdc:config.yaml):
+   ```yaml
+   agents:
+     react:
+       planning_interval: 7
+     codact:
+       planning_interval: 5
+   ```
+
+2. Command line:
+   ```bash
+   # For ReAct agent
+   python -m src.agents.cli --agent-type react --react-planning-interval 10
+   
+   # For CodeAct agent
+   python -m src.agents.cli --agent-type codact --planning-interval 8
+   ```
+
+## Benefits
+
+- More coherent search strategy over long tasks
+- Better adaptation to discovered information
+- Reduced "tunnel vision" where agent follows initial assumptions
+- Improved handling of complex, multi-part research questions

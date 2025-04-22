@@ -1,0 +1,43 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# DeepSearchAgent Interfaces
+
+DeepSearchAgent provides multiple interfaces for different usage scenarios:
+
+## Command-Line Interface (CLI)
+
+- **[cli.py](mdc:src/agents/cli.py)**: Command-line interface for interactive use
+  - Supports both interactive mode and single-query execution
+  - Allows overriding configuration parameters via command-line arguments
+  - Usage examples:
+    - Interactive mode: `python -m src.agents.cli`
+    - Single query: `python -m src.agents.cli --query "Search for something"`
+    - Override agent type: `python -m src.agents.cli --agent-type react`
+
+## FastAPI Service
+
+- **[main.py](mdc:src/agents/main.py)**: Web service based on FastAPI framework
+  - Exposes RESTful API endpoints for agent functionality
+  - Provides health checks and API documentation
+  - Main endpoints:
+    - `/run_react_agent`: Runs the ReAct agent
+    - `/run_deepsearch_agent`: Runs the configured agent (ReAct or CodeAct)
+    - `/`: API information and health check
+
+## MCP Tool Server
+
+- **[run_mcp_server.py](mdc:src/agents/run_mcp_server.py)**: MCP (Model Context Protocol) server
+  - Enables integration with other MCP-compatible agents and systems
+  - Exposes DeepSearchAgent functionality as MCP tools
+  - Implementation in [fastapi_mcp_server.py](mdc:src/agents/fastapi_mcp_server.py)
+
+## Deployment Methods
+
+All interfaces can be run using:
+- Direct Python execution (`python -m src.agents.cli`)
+- Through the make commands in the Makefile (`make cli`, `make run`, `make mcp`)
+- As a Docker container (build using provided Dockerfile)
+- With environment variables for configuration (`DEEPSEARCH_AGENT_MODE=react python -m src.agents.main`)

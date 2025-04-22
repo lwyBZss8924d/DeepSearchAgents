@@ -1,0 +1,78 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Agent Architecture
+
+DeepSearchAgent implements two agent paradigms: "CodeAct Agent" & normal "ReAct Agent".
+DeepSearchAgent v0.2.4 introduces comprehensive streaming capabilities for both ReAct and CodeAct agents, enabling real-time output during agent execution.
+
+## CodeAct Agent
+
+[codact_agent.py](mdc:src/agents/codact_agent.py) The mplements the Code Execution paradigm:
+- Generates executable Python code to perform actions
+- Offers more complex operations by combining multiple steps in one code execution
+- Uses programming logic to handle complex data structures
+- Streaming support via @StreamingCodeAgent
+
+### Key Features:
+- Flexible code execution for complex search strategies
+- Sophisticated state management within Python code
+- Advanced data processing with Python libraries
+- Planning steps at configurable intervals (`planning_interval`)
+
+## ReAct Agent
+
+[agent.py](mdc:src/agents/agent.py) The ent implements the Reasoning + Acting paradigm:
+- Uses structured JSON for tool calling
+- Performs reasoning in natural language followed by concrete actions
+- Main implementation based on smolagents' ToolCallingAgent
+- Streaming support via @StreamingReactAgent
+
+### Key Features:
+- Explicit thinking, action, observation cycles
+- Sequential tool usage with JSON-formatted parameters
+- Simplified debugging and tracing
+- Planning steps at configurable intervals (`react_planning_interval`)
+
+## Agent Prompts
+
+The [prompts.py](mdc:src/agents/prompts.py) file contains the prompts templates (REACT_PROMPT & CODE_ACTION_SYSTEM_PROMPT) for both agent types:
+- System prompts defining agent behavior
+- Tool descriptions and usage instructions
+
+## Creation Functions
+- `create_react_agent()`: Factory function to create ReAct or StreamingReactAgent
+- `create_codact_agent()`: Factory function to create CodeAct or StreamingCodeAgent
+
+## ReAct and CodeAct agents streaming
+
+### Streaming Agents
+- **@StreamingReactAgent**: Extends the standard ToolCallingAgent with streaming capabilities
+- **@StreamingCodeAgent**: Extends the standard CodeAgent with streaming capabilities
+
+### Streaming Models
+- **@StreamingLiteLLMModel**: Extends LiteLLMModel to return streaming responses
+- **@StreamResponseAdapter**: Adapter providing compatibility interfaces for streaming response objects
+
+### Common Functionality
+- **@StreamingAgentMixin**: Shared functionality for streaming agents
+- Output formatting with standardized markers (Thinking, Action, Observation, Final Answer)
+
+### Architecture Flow
+
+1. Agent receives user query
+2. Agent processes through standard reasoning steps
+3. For streaming mode:
+   - Each step's output is streamed in real-time
+   - Thinking, actions, observations, and final answers are streamed with appropriate markers
+4. For non-streaming mode:
+   - Only the final answer is returned after all processing is complete
+
+### CLI Integration
+
+The @CLI has been enhanced to support streaming output:
+- Real-time display of thinking steps
+- JSON/Markdown detection and rich rendering
+- Progress indicators and statistics display

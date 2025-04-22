@@ -1,0 +1,40 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# DeepSearchAgent Tools
+
+The DeepSearchAgent includes several specialized tools for web search, content processing, and analysis:
+
+## Search Tools
+
+- **[search.py](mdc:src/agents/tools/search.py)**: Implements web search functionality to retrieve links and snippets from search engines.
+  - Uses external APIs like Serper to fetch search results
+  - Returns structured data including titles, snippets, and URLs
+
+## Content Processing Tools
+
+- **[readurl.py](mdc:src/agents/tools/readurl.py)**: Fetches and processes web content from URLs.
+  - Extracts text content from web pages
+  - Uses Jina AI Reader API for parsing HTML content
+
+- **[chunk.py](mdc:src/agents/tools/chunk.py)**: Divides text into manageable segments for processing.
+  - Helps handle large documents by splitting them into smaller chunks
+  - Supports semantic chunking for better context preservation
+
+## Semantic Processing Tools
+
+- **[embed.py](mdc:src/agents/tools/embed.py)**: Converts text segments into vector embeddings.
+  - Creates vector representations of text for semantic operations
+  - Supports document similarity and retrieval operations
+
+- **[rerank.py](mdc:src/agents/tools/rerank.py)**: Ranks content segments by relevance to a query.
+  - Improves search relevance by reordering content based on semantic similarity
+  - Helps identify the most relevant information for a given query
+
+## Computational Tools
+
+- **[wolfram.py](mdc:src/agents/tools/wolfram.py)**: Interfaces with Wolfram Alpha for computational queries.
+  - Answers mathematical, scientific, and factual questions
+  - Processes computational problems that require specialized knowledge

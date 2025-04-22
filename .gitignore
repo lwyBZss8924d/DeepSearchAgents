@@ -192,6 +192,16 @@ config.yaml
 
 # Cursor specific files (often user-specific)
 .cursor/
+# allow tracking specific Cursor rules files
+!.cursor/rules/
+!.cursor/rules/agent-architecture.mdc
+!.cursor/rules/configuration.mdc
+!.cursor/rules/interfaces.mdc
+!.cursor/rules/jina-ai-api-rules.mdc
+!.cursor/rules/periodic-planning.mdc
+!.cursor/rules/project-overview.mdc
+!.cursor/rules/tools.mdc
+# other Cursor files are still ignored
 mcp.json # If mcp.json can appear elsewhere
 ~/.cursor/mcp.json # Ignore if path is explicitly added (less likely)
 

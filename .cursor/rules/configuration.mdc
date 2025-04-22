@@ -1,0 +1,86 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# DeepSearchAgent Configuration
+
+DeepSearchAgent uses a flexible configuration system with multiple options for customization.
+
+## Configuration Sources
+
+1. **@config.yay configuration file
+2. **Environment Variables**: Override config file setne Arguments**: Highest precedence overrides
+
+## Key Configuration Sections
+
+### Model Configuration
+
+```yaml
+models:
+  orchestrator_id: "openai/openrouter/openai/o4-mini-high"  # Main LLM orchestration
+  search_id: "openai/openrouter/openai/o4-mini-high"        # Search model (if different)
+  reranker_type: "jina-reranker-m         # Reranker model type
+```
+
+### Common Agent Settings
+
+```yaml
+agents:
+  common:
+    verbose_tool_callbacks: true  # Show full tool inputs/outputs
+```
+
+### ReAct Agent Settings
+
+```yaml
+agents:
+  react:
+    max_steps: 25                # Max reasoning steps
+    enable_streaming: true       # Enable streaming output
+    planning_interval: 7         # Interval for planning steps
+```
+
+### CodeAct Agent Settings
+
+```yaml
+agents:
+  codact:
+    executor_type: "local"       # Code execution environment
+    max_steps: 25                # Max execution steps
+    verbosity_level: 1           # 0=minimal, 1=normal, 2=verbose
+    enable_streaming: true       # Enable streaming response
+    planning_interval: 5         # Interval for planning steps
+    # Additional options
+    executor_kwargs: {}          # Additional executor parameters
+    additional_authorized_imports: []  # Additional allowed Python imports
+```
+
+### Service Configuration
+
+```yaml
+service:
+  host: "0.0.0.0"
+  port: 8000
+  version: "0.2.4"
+  deepsearch_agent_mode: "codact"  # Default agent type
+```
+
+## API Keys Management
+
+API keys are managed through environment variables or `.env` file:
+
+- `LITELLM_MASTER_KEY`: LLM API access
+- `LITELLM_BASE_URL`: LiteLLM proxy base URL
+- `SERPER_API_KEY`: Web search API
+- `JINA_API_KEY`: Content processing
+- `WOLFRAM_ALPHA_APP_ID`: Computational queries (optional)
+
+## Configuration Loading Logic
+
+The @config_loader.py handles loading and merging configuration from multiple sources with the following precedence:
+
+1. Command line arguments (highest priority)
+2. Environment variables
+3. Configuration file values 
+4. Default values (lowest priority)
