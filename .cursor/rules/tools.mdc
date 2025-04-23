@@ -3,38 +3,130 @@ description:
 globs: 
 alwaysApply: false
 ---
-# DeepSearchAgent Tools
+# DeepSearchAgent Tools System
 
-The DeepSearchAgent includes several specialized tools for web search, content processing, and analysis:
+DeepSearchAgent features a comprehensive toolchain for web search, content processing, and analysis. These tools are designed to work with both the CodeAct and ReAct agent paradigms.
 
-## Search Tools
+## Tool Interface System
 
-- **[search.py](mdc:src/agents/tools/search.py)**: Implements web search functionality to retrieve links and snippets from search engines.
-  - Uses external APIs like Serper to fetch search results
-  - Returns structured data including titles, snippets, and URLs
+- **[tools/__init__.py](mdc:src/agents/tools/__init__.py)**: Exports all tools with consistent naming:
+  - All tools inherit from `smolagents.Tool` base class
+  - Provides uniform interface across both agent paradigms
+  - Standardizes imports for agent initialization
 
-## Content Processing Tools
+## Search and Web Content Tools
 
-- **[readurl.py](mdc:src/agents/tools/readurl.py)**: Fetches and processes web content from URLs.
-  - Extracts text content from web pages
-  - Uses Jina AI Reader API for parsing HTML content
+### Search Tool
 
-- **[chunk.py](mdc:src/agents/tools/chunk.py)**: Divides text into manageable segments for processing.
-  - Helps handle large documents by splitting them into smaller chunks
-  - Supports semantic chunking for better context preservation
+- **[search.py](mdc:src/agents/tools/search.py)**: Performs web search via Serper API
+  - Core class: `SearchLinksTool` with standardized interface
+  - Returns JSON-formatted search results with titles, links, and snippets
+  - Configurable search location and result count
+  - Integrates with CLI for rich progress display
 
-## Semantic Processing Tools
+- **[serper.py](mdc:src/agents/core/search_engines/serper.py)**: Core search engine implementation
+  - `SerperAPI` class handles direct API communication
+  - Uses typed `SearchResult[T]` container for error handling
+  - Implements comprehensive field extraction and result processing
+  - Clean separation between tool interface and API implementation
 
-- **[embed.py](mdc:src/agents/tools/embed.py)**: Converts text segments into vector embeddings.
-  - Creates vector representations of text for semantic operations
-  - Supports document similarity and retrieval operations
+### URL Reader Tool
 
-- **[rerank.py](mdc:src/agents/tools/rerank.py)**: Ranks content segments by relevance to a query.
-  - Improves search relevance by reordering content based on semantic similarity
-  - Helps identify the most relevant information for a given query
+- **[readurl.py](mdc:src/agents/tools/readurl.py)**: Extracts content from web pages
+  - `ReadURLTool` class interfaces with Jina Reader API
+  - Supports different output formats (markdown, text)
+  - Implements asynchronous content scraping with robust error handling
+  - Uses context management for proper resource cleanup
 
-## Computational Tools
+## Text Processing Tools
 
-- **[wolfram.py](mdc:src/agents/tools/wolfram.py)**: Interfaces with Wolfram Alpha for computational queries.
-  - Answers mathematical, scientific, and factual questions
-  - Processes computational problems that require specialized knowledge
+### Text Chunking System
+
+- **[chunk.py](mdc:src/agents/tools/chunk.py)**: Tool interface for intelligent text segmentation
+  - `ChunkTextTool` class provides simple interface for agents
+  - Delegates chunking requests to the specialized segmenter implementation
+  - Optimized for error handling and clean result formatting
+  - Returns JSON-formatted string of chunked text segments
+
+- **[segmenter.py](mdc:src/agents/core/chunk/segmenter.py)**: Advanced text segmentation
+  - `JinaAISegmenter` class offers high-quality text chunking
+  - Implements both synchronous and asynchronous interfaces
+  - Features robust retry mechanisms and error handling
+  - `Chunker` wrapper class maintains backward compatibility
+  - Advanced asynchronous batch processing for multiple texts
+
+### Embedding Tool
+
+- **[embed.py](mdc:src/agents/tools/embed.py)**: Vector embedding generation
+  - `EmbedTextsTool` creates vector representations of text segments
+  - Utilizes Jina AI embedding models for high-quality vectors
+  - Supports different embedding models and configuration options
+  - Optimized for both query and document embedding types
+  - Returns JSON-formatted embedding vectors for further processing
+
+### Reranking Tool
+
+- **[rerank.py](mdc:src/agents/tools/rerank.py)**: Relevance-based content ranking
+  - `RerankTextsTool` ranks content by relevance to user queries
+  - Supports multiple reranker models (including multimodal ones)
+  - Processes both text-only and text-with-image documents
+  - Implements asynchronous processing for performance
+  - Returns JSON-formatted ranking of most relevant content
+
+## Computational and Answer Tools
+
+### Computational Tool
+
+- **[wolfram.py](mdc:src/agents/tools/wolfram.py)**: Advanced computation capabilities
+  - `EnhancedWolframAlphaTool` interfaces with Wolfram Alpha API
+  - Processes mathematical, scientific, and factual queries
+  - Implements intelligent result selection from multiple response formats
+  - Provides detailed logging for debugging and analysis
+  - Consistent with both agent paradigms for computational tasks
+
+### Final Answer Tool
+
+- **[final_answer.py](mdc:src/agents/tools/final_answer.py)**: Enhanced answer formatting
+  - `EnhancedFinalAnswerTool` ensures consistent output across agent types
+  - Standardizes JSON schema with title, content, and sources fields
+  - Intelligently processes various input formats (string, JSON, nested objects)
+  - Automatically extracts and formats sources from content
+  - Ensures properly structured markdown for final answers
+  - Provides unified formatting across streaming and non-streaming modes
+
+## Tool Integration Patterns
+
+Each tool implements a consistent interface pattern:
+
+1. **Class Definition**:
+   - Inherits from `smolagents.Tool`
+   - Defines `name`, `description`, `inputs`, and `output_type`
+
+2. **Initialization**:
+   - Accepts API keys, configuration options, and logging settings
+   - Handles missing dependencies gracefully
+
+3. **Forward Method**:
+   - Implements the core functionality in `forward()`
+   - Returns consistent output format (typically strings or JSON strings)
+   - Includes comprehensive error handling
+
+4. **Usage in Agents**:
+
+   **ReAct Agent** invokes tools via structured JSON:
+   ```json
+   {
+     "name": "tool_name",
+     "arguments": {
+       "param1": "value1",
+       "param2": "value2"
+     }
+   }
+   ```
+
+   **CodeAct Agent** calls tools directly as Python functions:
+   ```python
+   result = tool_name(param1="value1", param2="value2")
+   ```
+
+All tools include consistent error handling, logging capabilities, and integration with the CLI for rich progress displays and diagnostics.
