@@ -87,7 +87,7 @@ class JinaAIReranker:
         self,
         query: str,
         documents: List[Union[str, Dict[str, Any]]],
-        top_k: Optional[int] = None,
+        top_n: Optional[int] = None,
         batch_size: int = 100,  # batch size
         query_image_url: Optional[str] = None  # query image URL
     ) -> List[Dict[str, Union[str, float, int]]]:
@@ -107,7 +107,7 @@ class JinaAIReranker:
                     {'text': 'doc2', 'image_url': None},
                     ...
                 ]
-            top_k: Specify the number of most relevant documents to return.
+            top_n: Specify the number of most relevant documents to return.
             batch_size: Maximum number of documents per batch.
             query_image_url: URL of the query image (only for m0 model).
 
@@ -128,7 +128,7 @@ class JinaAIReranker:
         # if document number is less than batch size, process directly
         if len(processed_documents) <= batch_size:
             return await self._process_rerank_request_with_retry(
-                query, processed_documents, top_k, session,
+                query, processed_documents, top_n, session,
                 offset=0, query_image_url=query_image_url
             )
 
@@ -146,7 +146,7 @@ class JinaAIReranker:
             for batch in batches:
                 tasks.append(
                     self._process_batch_with_semaphore(
-                        session, semaphore, query, batch, top_k, offset,
+                        session, semaphore, query, batch, top_n, offset,
                         query_image_url
                     )
                 )
@@ -171,14 +171,14 @@ class JinaAIReranker:
             # return empty list when failed
             return []
 
-        # if top_k is specified, sort by relevance and truncate results
-        if top_k and len(all_results) > top_k:
+        # if top_n is specified, sort by relevance and truncate results
+        if top_n and len(all_results) > top_n:
             # sort by relevance score in descending order
             all_results.sort(
                 key=lambda x: x.get('relevance_score', 0),
                 reverse=True
             )
-            return all_results[:top_k]
+            return all_results[:top_n]
 
         return all_results
 
@@ -227,14 +227,14 @@ class JinaAIReranker:
         semaphore: asyncio.Semaphore,
         query: str,
         documents: List[Union[str, Dict[str, Any]]],
-        top_k: Optional[int],
+        top_n: Optional[int],
         offset: int = 0,
         query_image_url: Optional[str] = None
     ) -> List[Dict[str, Union[str, float, int]]]:
         """Use semaphore to process a single batch, control concurrency"""
         async with semaphore:
             return await self._process_batch(
-                session, query, documents, top_k, offset, query_image_url
+                session, query, documents, top_n, offset, query_image_url
             )
 
     async def _process_batch(
@@ -242,20 +242,20 @@ class JinaAIReranker:
         session: aiohttp.ClientSession,
         query: str,
         documents: List[Union[str, Dict[str, Any]]],
-        top_k: Optional[int],
+        top_n: Optional[int],
         offset: int = 0,  # original index offset
         query_image_url: Optional[str] = None
     ) -> List[Dict[str, Union[str, float, int]]]:
         """Process a single batch of reranking requests"""
         return await self._process_rerank_request_with_retry(
-            query, documents, top_k, session, offset, query_image_url
+            query, documents, top_n, session, offset, query_image_url
         )
 
     async def _process_rerank_request_with_retry(
         self,
         query: str,
         documents: List[Union[str, Dict[str, Any]]],
-        top_k: Optional[int] = None,
+        top_n: Optional[int] = None,
         session: Optional[aiohttp.ClientSession] = None,
         offset: int = 0,
         query_image_url: Optional[str] = None,
@@ -298,7 +298,7 @@ class JinaAIReranker:
                               "reranking request")
                         await asyncio.sleep(wait_time)
                         return await self._process_rerank_request_with_retry(
-                            query, documents, top_k, session, offset,
+                            query, documents, top_n, session, offset,
                             query_image_url, attempt + 1
                         )
 
@@ -350,7 +350,7 @@ class JinaAIReranker:
                       "seconds before retrying")
                 await asyncio.sleep(wait_time)
                 return await self._process_rerank_request_with_retry(
-                    query, documents, top_k, session, offset,
+                    query, documents, top_n, session, offset,
                     query_image_url, attempt + 1
                 )
             else:
@@ -365,14 +365,14 @@ class JinaAIReranker:
         self,
         query: str,
         documents: List[str],
-        top_k: Optional[int] = None
+        top_n: Optional[int] = None
     ) -> List[Dict[str, Union[str, float, int]]]:
         """Process single reranking request, no retry mechanism (deprecated)"""
         data = {
             "model": self.model,
             "query": query,
             "documents": documents,
-            "top_n": top_k if top_k is not None else len(documents),
+            "top_n": top_n if top_n is not None else len(documents),
             "return_documents": True
         }
 
@@ -410,7 +410,7 @@ class JinaAIReranker:
         self,
         query: str,
         documents: List[Union[str, Dict[str, Any]]],
-        top_k: Optional[int] = None,
+        top_n: Optional[int] = None,
         query_image_url: Optional[str] = None
     ) -> List[Dict[str, Union[str, float, int]]]:
         """
@@ -424,7 +424,7 @@ class JinaAIReranker:
             query: Query string for reranking.
             documents: List of documents to rerank (strings or dictionaries
                 containing text and image URLs).
-            top_k: Specify the number of most relevant documents to return.
+            top_n: Specify the number of most relevant documents to return.
             query_image_url: Query image URL (only for m0 model).
 
         Returns:
@@ -445,7 +445,7 @@ class JinaAIReranker:
 
         return loop.run_until_complete(
             self.rerank_async(
-                query, documents, top_k, query_image_url=query_image_url
+                query, documents, top_n, query_image_url=query_image_url
             )
         )
 
@@ -453,7 +453,7 @@ class JinaAIReranker:
         self,
         query: str,
         documents: List[Union[str, Dict[str, Any]]],
-        top_k: Optional[int] = None,
+        top_n: Optional[int] = None,
         query_image_url: Optional[str] = None
     ) -> List[str]:
         """
@@ -462,14 +462,14 @@ class JinaAIReranker:
         Args:
             query: Query string.
             documents: List of documents to rerank.
-            top_k: Return top k documents.
+            top_n: Return top n documents.
             query_image_url: Query image URL (only for m0 model).
 
         Returns:
             List of reranked document text, sorted by relevance.
         """
         reranked_results = await self.rerank_async(
-            query, documents, top_k, query_image_url=query_image_url
+            query, documents, top_n, query_image_url=query_image_url
         )
         return [result['document'] for result in reranked_results]
 
@@ -477,7 +477,7 @@ class JinaAIReranker:
         self,
         query: str,
         documents: List[Union[str, Dict[str, Any]]],
-        top_k: Optional[int] = None,
+        top_n: Optional[int] = None,
         query_image_url: Optional[str] = None
     ) -> List[str]:
         """
@@ -487,14 +487,14 @@ class JinaAIReranker:
         Args:
             query: Query string.
             documents: List of documents to rerank.
-            top_k: Return top k documents.
+            top_n: Return top n documents.
             query_image_url: Query image URL (only for m0 model).
 
         Returns:
             List of reranked document text, sorted by relevance.
         """
         reranked_results = self.rerank(
-            query, documents, top_k, query_image_url=query_image_url
+            query, documents, top_n, query_image_url=query_image_url
         )
         return [result['document'] for result in reranked_results]
 

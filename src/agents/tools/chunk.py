@@ -1,17 +1,17 @@
 import json
 from typing import List, Optional
 from smolagents import Tool
-from ..core.ranking.chunker import Chunker
+from ..core.chunk.segmenter import JinaAISegmenter
 
 
 class ChunkTextTool(Tool):
     """
-    Split long text into smaller, potentially overlapping chunks.
+    Split long text into smaller chunks using Jina AI Segmenter API.
     """
     name = "chunk_text"
     description = (
-        "Splits a given long text into smaller chunks, "
-        "potentially with overlap."
+        "Splits a given long text into smaller chunks using "
+        "Jina AI Segmenter API."
     )
     inputs = {
         "text": {
@@ -50,22 +50,25 @@ class ChunkTextTool(Tool):
             verbose (bool): Whether to enable verbose logging.
         """
         super().__init__()
-        # Chunker instance can be created on demand or in setup
-        self._chunker_instance: Optional[Chunker] = None
+        # Segmenter instance can be created on demand
+        self._segmenter_instance: Optional[JinaAISegmenter] = None
         self.default_chunk_size = default_chunk_size
         self.default_chunk_overlap = default_chunk_overlap
         self.cli_console = cli_console
         self.verbose = verbose
 
-    def _get_chunker(self, chunk_size: int, chunk_overlap: int) -> Chunker:
-        """Get or create a Chunker instance with specified parameters."""
-        # If different parameters are needed, create a new Chunker
-        # For simplicity, always create a new Chunker based
-        # on current call parameters
-        return Chunker(
-            chunk_size=chunk_size,
-            chunk_overlap=chunk_overlap
-        )
+    def _get_segmenter(self, chunk_size: int) -> JinaAISegmenter:
+        """
+        Get or create a JinaAISegmenter instance with specified parameters.
+
+        Args:
+            chunk_size (int): Target size for each chunk.
+
+        Returns:
+            JinaAISegmenter: A segmenter instance.
+        """
+        # Always create a new segmenter instance with the requested chunk size
+        return JinaAISegmenter()
 
     def forward(
         self,
@@ -87,36 +90,44 @@ class ChunkTextTool(Tool):
             str: JSON string containing the list of text chunks.
         """
         effective_chunk_size = (
-            chunk_size if chunk_size is not None else self.default_chunk_size
-        )
-        effective_chunk_overlap = (
-            chunk_overlap if chunk_overlap is not None else self.default_chunk_overlap
+            chunk_size if chunk_size is not None
+            else self.default_chunk_size
         )
 
-        log_func = (self.cli_console.print if self.cli_console and self.verbose
-                    else lambda *args, **kwargs: None)
-        log_func("[bold blue]Executing text chunking[/bold blue]")
-        log_func(
-            f"[dim]Parameters: chunk_size={effective_chunk_size}, "
-            f"chunk_overlap={effective_chunk_overlap}[/dim]"
+        log_func = (
+            self.cli_console.print
+            if self.cli_console and self.verbose
+            else lambda *args, **kwargs: None
         )
+
+        log_func("[bold blue]Executing text chunking with Jina AI"
+                 " Segmenter API[/bold blue]")
+        log_func(f"[dim]Parameters: chunk_size={effective_chunk_size}[/dim]")
 
         if not text:
-            log_func("[yellow]Input text is empty, returning empty list.[/yellow]")
+            log_func("[yellow]Input text is empty, returning empty list."
+                     "[/yellow]")
             return "[]"
 
         try:
-            chunker = self._get_chunker(effective_chunk_size, effective_chunk_overlap)
-            chunks: List[str] = chunker.split_text(text)
+            segmenter = self._get_segmenter(effective_chunk_size)
+            chunks: List[str] = segmenter.split_text(
+                text=text,
+                max_chunk_length=effective_chunk_size
+            )
 
-            log_func(f"[bold green]Text chunking completed, "
-                    f"generated {len(chunks)} chunks.[/bold green]")
+            log_func(
+                f"[bold green]Text chunking completed, generated "
+                f"{len(chunks)} chunks.[/bold green]"
+            )
 
             # Convert chunk list to JSON string
             return json.dumps(chunks, ensure_ascii=False)
 
         except Exception as e:
-            log_func(f"[bold red]Error during text chunking: {str(e)}[/bold red]")
+            log_func(
+                f"[bold red]Error during text chunking: {str(e)}[/bold red]"
+            )
             return f"Error during text chunking: {str(e)}"
 
     def setup(self):

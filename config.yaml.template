@@ -16,25 +16,33 @@ agents:
   # Settings specific to the ReAct agent
   react:
     max_steps: 25                       # Max number of reasoning steps
-    enable_streaming: true              # Enable streaming output for final answer
+    enable_streaming: false             # Enable streaming output for final answer
     planning_interval: 7                # Interval for agent planning steps
 
   # Settings specific to the CodeAct agent
   codact:
-    executor_type: "local"              # local or lambda # local or lambda (for PROD must be set to Secure code execution eg. secure Docker/E2B/AWS Lambda...)
+    executor_type: "local"              # local or lambda (for PROD must be set to Secure code execution eg. secure Docker/E2B/AWS Lambda...)
     max_steps: 25                       # Max number of steps in execution
     verbosity_level: 1                  # 0=minimal, 1=normal, 2=verbose
-    enable_streaming: true              # Enable streaming response (CLI priority)
+    enable_streaming: false             # Enable streaming response (CLI priority)
     executor_kwargs: {}                 # Additional kwargs for executor
     additional_authorized_imports: []   # Additional Python modules to allow importing
-    planning_interval: 5                # Interval for agent planning steps
+    planning_interval: 4                # Interval for agent planning steps
 
 # Service configuration
 service:
   host: "0.0.0.0"
   port: 8000
-  version: "0.2.3"
+  version: "v0.2.4.dev"
   deepsearch_agent_mode: "codact"       # "react" or "codact" Default is "codact" because it's more powerful and faster
+
+# Logging configuration
+logging:
+  litellm_level: "WARNING"        # Use WARNING level to reduce INFO logs
+  filter_repeated_logs: true      # Enable repeated log filtering
+  filter_cost_calculator: true    # Filter cost calculation related logs
+  filter_token_counter: true      # Filter token count related logs
+  format: "minimal"               # Use simplified format
 
 # --- LiteLLM specific settings (optional) ---
 # litellm:
@@ -122,6 +130,5 @@ model_list:
       litellm_params:
           model: openrouter/openai/o3-mini-high
           api_base: LITELLM_BASE_URL
-          api_key: LITELLM_MASTER_KEY
-      model_info:
+          api_key: LITELLM_MASTER_KEY      model_info:
           supports_reasoning: True

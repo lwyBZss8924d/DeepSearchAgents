@@ -32,7 +32,8 @@ tools in a search-read-reason cycle.
     use `read_url` for promising sources.
 *   **Content Processing (Optional):** If `read_url` returns very long text or if
     you need finer-grained relevance filtering:
-    *   Use `chunk_text` to split the content.
+    *   Use `chunk_text` to split the content into smaller segments 
+        using Jina AI Segmenter API.
     *   (Advanced) Use `rerank_texts` on the chunks with the original query
         to find the most relevant parts.
     *   (Advanced, less common) Use `embed_texts` if you need embeddings for
@@ -130,7 +131,7 @@ Action:
   "arguments": {
     "query": "RAG retrieval step",
     "texts": "[Observation content from chunk_text]",
-    "top_k": 3
+    "top_n": 3
   }
 }
 ```

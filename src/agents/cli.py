@@ -2,27 +2,94 @@
 # -*- coding: utf-8 -*-
 # src/agents/cli.py
 
-"""
-DeepSearchAgent CLI
-
-This module provides a command-line interface for development Inspecting runs
-telemetry of DeepSearchAgent, allowing for interactive exploration and testing
-of the agent's capabilities.
-
-Current version is so so so, like "monkey code", need to be improved and optimized.
-Meanwhile, the core Agent components will be added to the agent inspecting run
-pugins(Langfuse or other telemetry tools) in the future iterations.
-
-"""
+import logging
 import os
+import sys
+
+
+class LiteLLMStrictFilter(logging.Filter):
+    """Filter to strictly filter out all duplicate and redundant LiteLLM logs"""
+
+    def __init__(self):
+        super().__init__()
+        self.last_message = None
+
+    def filter(self, record):
+        # If not a LiteLLM log, let it pass
+        if not record.name.startswith('litellm'):
+            return True
+
+        # Filter out cost calculation and token count logs
+        if ('cost_calculator' in record.msg or 
+                'selected model name for cost calculation' in record.msg or
+                'token_counter' in record.msg):
+            return False
+
+        # Filter out duplicate messages
+        if record.msg == self.last_message:
+            return False
+
+        self.last_message = record.msg
+        return True
+
+
+# 1. Configure root logger
+root_logger = logging.getLogger()
+
+# 2. Remove all existing handlers to avoid duplicate logs
+for handler in root_logger.handlers[:]:
+    root_logger.removeHandler(handler)
+
+# 3. Add a custom console handler
+console_handler = logging.StreamHandler(sys.stdout)
+console_handler.setLevel(logging.WARNING)  # Default only shows WARNING and above
+console_handler.setFormatter(logging.Formatter('%(message)s'))
+root_logger.addHandler(console_handler)
+
+# 4. Apply filter to root logger
+litellm_filter = LiteLLMStrictFilter()
+root_logger.addFilter(litellm_filter)
+
+# 5. Set level for litellm logger
+litellm_logger = logging.getLogger("litellm")
+litellm_logger.setLevel(logging.WARNING)
+litellm_logger.propagate = False
+
+# 6. Add a separate handler for litellm and apply filter
+litellm_handler = logging.StreamHandler(sys.stdout)
+litellm_handler.setFormatter(logging.Formatter('LITELLM: %(message)s'))
+litellm_handler.addFilter(litellm_filter)
+litellm_logger.addHandler(litellm_handler)
+
+# 7. Apply same settings to all litellm submodules
+for submodule in ["utils", "llms", "proxy"]:
+    sublogger = logging.getLogger(f"litellm.{submodule}")
+    sublogger.setLevel(logging.WARNING)
+    sublogger.propagate = False
+    sublogger.addFilter(litellm_filter)
+    sub_handler = logging.StreamHandler(sys.stdout)
+    sub_handler.setFormatter(logging.Formatter(f'LITELLM.{submodule}: %(message)s'))
+    sub_handler.addFilter(litellm_filter)
+    sublogger.addHandler(sub_handler)
+
+# 8. Set httpx logger
+httpx_logger = logging.getLogger("httpx")
+httpx_logger.setLevel(logging.WARNING)
+httpx_logger.propagate = False
+
+
+# Import other modules now
 import argparse
 import traceback
 import asyncio
 import time
 import json
+import re
 from pathlib import Path
 from typing import List
 from dotenv import load_dotenv
+
+load_dotenv()
 
 from .agent import create_react_agent
 from .codact_agent import create_codact_agent
@@ -51,27 +118,37 @@ except ImportError as e:
     print(error_message)
     exit(1)
 
-load_dotenv()
 
-# --- Load React specific config for planning interval ---
 REACT_PLANNING_INTERVAL = get_config_value(
     APP_CONFIG, 'agents.react.planning_interval', 7
 )
 
-# --- Load CodeAct specific config for streaming and planning ---
+# Load CodeAct specific configuration
 CODACT_ENABLE_STREAMING = get_config_value(
-    APP_CONFIG, 'agents.codact.enable_streaming', True  # Default to True
+    APP_CONFIG, 'agents.codact.enable_streaming', True
 )
 CODACT_PLANNING_INTERVAL = get_config_value(
     APP_CONFIG, 'agents.codact.planning_interval', 5
 )
-# add additional CodeAct configuration
 CODACT_EXECUTOR_KWARGS = get_config_value(
     APP_CONFIG, 'agents.codact.executor_kwargs', {}
 )
 CODACT_ADDITIONAL_IMPORTS = get_config_value(
     APP_CONFIG, 'agents.codact.additional_authorized_imports', []
 )
+
+
+# --- Custom domain name masking formatter ---
+class DomainMaskingFormatter(logging.Formatter):
+    def format(self, record):
+        message = super().format(record)
+        if record.name == 'httpx':
+            message = re.sub(
+                r'(https?://)[^/\s]+',
+                r'\1******',
+                message
+            )
+        return message
 
 
 # --- CLI Helper Functions ---
@@ -196,74 +273,80 @@ def render_json_as_markdown(final_result_str, console):
     Check if the output is JSON format, if so, extract and render its content as Markdown
     Return a flag indicating whether rendering was successful
     """
-    if not final_result_str or not isinstance(final_result_str, str):
+    if not final_result_str:
         return False
 
-    if final_result_str.strip().startswith('{') and final_result_str.strip().endswith('}'):
+    # Handle dictionary input directly
+    json_data = None
+
+    if isinstance(final_result_str, dict):
+        json_data = final_result_str
+    elif isinstance(final_result_str, str) and final_result_str.strip().startswith('{') and final_result_str.strip().endswith('}'):
         try:
             json_data = json.loads(final_result_str)
-            if isinstance(json_data, dict) and 'content' in json_data:
-                # Extract Markdown content
-                markdown_content = json_data.get('content', '')
-                
-                # Get sources for rendering
-                sources = []
-                if 'sources' in json_data and json_data['sources']:
-                    sources = json_data['sources']
-                
-                # If markdown_content doesn't already contain a Sources section, add one
-                has_sources_section = '## Sources' in markdown_content
-                
-                # If there are sources and no Sources section, append one
-                if sources and not has_sources_section:
-                    # Add newlines to ensure proper spacing
-                    if not markdown_content.endswith('\n\n'):
-                        if markdown_content.endswith('\n'):
-                            markdown_content += '\n'
-                        else:
-                            markdown_content += '\n\n'
-                    
-                    # Add Sources section header
-                    markdown_content += "## Sources\n\n"
-                    
-                    # Add each source as a numbered reference
-                    for i, url in enumerate(sources):
-                        # Extract a title from the URL or use a generic one
-                        url_parts = url.split("/")
-                        title = ""
-                        # Try to get a meaningful title from the URL
-                        if len(url_parts) > 2:
-                            # Use last part of URL path, cleaned up
-                            raw_title = url_parts[-1] if url_parts[-1] else url_parts[-2]
-                            # Remove file extensions and clean up
-                            title = raw_title.split('.')[0].replace('-', ' ').replace('_', ' ').capitalize()
-                        
-                        # If we couldn't extract a meaningful title, use a generic one
-                        if not title:
-                            title = f"Source {i+1}"
-                            
-                        # Add the numbered reference
-                        markdown_content += f"{i+1}. [{title}]({url})\n"
-                
-                # Prepare title
-                title = "[bold green]Final Markdown Output[/bold green]"
-                if 'title' in json_data and json_data['title']:
-                    title = f"[bold green]{json_data['title']}[/bold green]"
-
-                # Display Markdown rendering content
-                console.print("\n[bold cyan]Final Answer Report:[/bold cyan]")
-                console.print(Panel(
-                    Markdown(markdown_content),
-                    title=title,
-                    border_style="green"
-                ))
-
-                return True
         except json.JSONDecodeError:
-            # If JSON parsing fails, continue with normal process
-            pass
-        except Exception as e:
-            console.print(f"[yellow]Warning: Error rendering Markdown: {e}[/yellow]")
+            return False
+    else:
+        return False
+
+    # Process JSON data if we have it
+    if isinstance(json_data, dict) and 'content' in json_data:
+        # Extract Markdown content
+        markdown_content = json_data.get('content', '')
+
+        # Get sources for rendering
+        sources = []
+        if 'sources' in json_data and json_data['sources']:
+            sources = json_data['sources']
+
+        # If markdown_content doesn't already contain a Sources section, add one
+        has_sources_section = '## Sources' in markdown_content
+
+        # If there are sources and no Sources section, append one
+        if sources and not has_sources_section:
+            # Add newlines to ensure proper spacing
+            if not markdown_content.endswith('\n\n'):
+                if markdown_content.endswith('\n'):
+                    markdown_content += '\n'
+                else:
+                    markdown_content += '\n\n'
+
+            # Add Sources section header
+            markdown_content += "## Sources\n\n"
+
+            # Add each source as a numbered reference
+            for i, url in enumerate(sources):
+                # Extract a title from the URL or use a generic one
+                url_parts = url.split("/")
+                title = ""
+                # Try to get a meaningful title from the URL
+                if len(url_parts) > 2:
+                    # Use last part of URL path, cleaned up
+                    raw_title = url_parts[-1] if url_parts[-1] else url_parts[-2]
+                    # Remove file extensions and clean up
+                    title = raw_title.split('.')[0].replace('-', ' ').replace('_', ' ').capitalize()
+
+                # If we couldn't extract a meaningful title, use a generic one
+                if not title:
+                    title = f"Source {i+1}"
+
+                # Add the numbered reference
+                markdown_content += f"{i+1}. [{title}]({url})\n"
+
+        # Prepare title
+        title = "[bold green]Final Markdown Output[/bold green]"
+        if 'title' in json_data and json_data['title']:
+            title = f"[bold green]{json_data['title']}[/bold green]"
+
+        # Display Markdown rendering content
+        console.print("\n[bold cyan]Final Answer Report:[/bold cyan]")
+        console.print(Panel(
+            Markdown(markdown_content),
+            title=title,
+            border_style="green"
+        ))
+
+        return True
 
     return False
 
@@ -292,6 +375,8 @@ async def process_query_async(
     # Collect streaming output statistics
     token_count = 0
     start_time = None
+    actual_input_tokens = None # Variable for API input tokens
+    actual_output_tokens = None # Variable for API output tokens
 
     # Track planning steps and state variables
     planning_counter = 0
@@ -363,13 +448,14 @@ async def process_query_async(
 
                     # Check if the return type is a synchronous or asynchronous iterator
                     # or a normal string
-                    continue_processing = True  # 控制是否继续处理流式输出
+                    continue_processing = True  # Control whether to continue processing streaming output
                     if isinstance(sync_generator, str):
                         # If it's a string, use it directly as the final result
                         final_result_str = sync_generator
                     elif isinstance(sync_generator, dict):
-                        # 特殊处理：如果返回的是字典类型，直接转为JSON字符串处理
-                        console.print("\n[bold green]处理返回数据...[/bold green]")
+                        # Special handling: If the return type is a dictionary,
+                        # directly convert it to a JSON string for processing
+                        console.print("\n[bold green]Processing returned data...[/bold green]")
                         import json
                         try:
                             final_result_str = json.dumps(sync_generator, ensure_ascii=False)
@@ -385,7 +471,7 @@ async def process_query_async(
                         except Exception as e:
                             console.print(f"[yellow]Error processing dict result: {e}[/yellow]")
                             final_result_str = str(sync_generator)
-                    # 只有需要继续处理时才进入流式处理分支    
+                    # Only enter the streaming processing branch if there is a need to continue processing
                     elif continue_processing and (hasattr(sync_generator, '__iter__') and
                           not hasattr(sync_generator, '__aiter__')):
                         # Streaming processing
@@ -431,20 +517,20 @@ async def process_query_async(
                                     if not has_next:
                                         break
                                 except Exception as e:
-                                    # 特别处理dict类型错误
+                                    # Special handling for dict type errors
                                     if "'dict' object is not an iterator" in str(e):
-                                        console.print("[yellow]检测到字典对象无法迭代，尝试直接处理最终结果...[/yellow]")
-                                        # 如果是dict类型导致的错误，尝试直接访问sync_generator
+                                        console.print("[yellow]Detected dictionary object cannot be iterated, trying to process final result directly...[/yellow]")
+                                        # If the error is due to dict type, try to access sync_generator directly
                                         if isinstance(sync_generator, dict):
-                                            # 直接将dict转换为JSON字符串
+                                            # Directly convert dict to JSON string
                                             import json
                                             try:
                                                 json_str = json.dumps(sync_generator, ensure_ascii=False)
                                                 collected_text = json_str
-                                                # 跳出循环，直接处理最终结果
+                                                # Break the loop, directly process the final result
                                                 break
                                             except Exception as json_err:
-                                                console.print(f"[yellow]JSON转换错误: {json_err}[/yellow]")
+                                                console.print(f"[yellow]JSON conversion error: {json_err}[/yellow]")
                                                 collected_text = str(sync_generator)
                                                 break
                                     console.print(f"[yellow]Safe iteration error: {e}[/yellow]")
@@ -556,7 +642,7 @@ async def process_query_async(
                                 # Check if there is a specific format for Markdown report
                                 is_markdown_report = False
                                 if collected_text and (
-                                    "# " in collected_text or 
+                                    "# " in collected_text or
                                     "## " in collected_text or
                                     "```" in collected_text
                                 ):
@@ -838,6 +924,19 @@ async def process_query_async(
         console.print(traceback.format_exc())  # More detailed stack trace
         return
 
+    # --- Get Actual Token Counts After Run ---
+    token_counts = {}
+    if hasattr(agent_instance, 'model') and hasattr(agent_instance.model, 'get_token_counts'):
+        try:
+            token_counts = agent_instance.model.get_token_counts()
+            actual_input_tokens = token_counts.get("input_token_count")
+            actual_output_tokens = token_counts.get("output_token_count")
+        except Exception as token_error:
+             console.print(
+                 Text(f"Warning: Could not retrieve token counts from model: {token_error}", style="yellow")
+             )
+
+
     # Final output display
     if final_result_str:
         last_response_md.append(final_result_str)
@@ -873,24 +972,44 @@ async def process_query_async(
                 console.print(f"[yellow]Error rendering Markdown: {e}[/yellow]")
 
         # Display generation statistics if streaming mode is used
+        # Now also display API token counts if available
+        stats_text = Text()
         if use_stream and start_time and token_count > 0:
+             # Display streamed token count (if different logic is desired)
             total_time = time.time() - start_time
             tokens_per_second = token_count / total_time if total_time > 0 else 0
 
-            stats_text = Text()
-            stats_text.append("\n[Statistics] ", style="dim")
-            stats_text.append(f"{token_count} tokens", style="cyan")
-            stats_text.append(" generated in ", style="dim")
+            stats_text.append("\n[Streaming Stats] ", style="dim")
+            stats_text.append(f"{token_count} streamed tokens", style="cyan")
+            stats_text.append(" in ", style="dim")
             stats_text.append(f"{total_time:.2f}s", style="yellow")
-
             tokens_per_sec_text = f" ({tokens_per_second:.1f} tokens/sec)"
             stats_text.append(tokens_per_sec_text, style="green")
 
+        # Display API token counts if available
+        if actual_input_tokens is not None or actual_output_tokens is not None:
+            stats_text.append("\n[API Token Usage] ", style="dim")
+            if actual_input_tokens is not None:
+                 stats_text.append(f"Input: {actual_input_tokens}", style="cyan")
+            if actual_output_tokens is not None:
+                 if actual_input_tokens is not None:
+                      stats_text.append(" | ", style="dim")
+                 stats_text.append(f"Output: {actual_output_tokens}", style="cyan")
+
+
             # If there are planning steps, display
             if planning_counter > 0:
-                stats_text.append(f" | {planning_counter} planning steps", style="orange")
+                 # Add separator if previous stats were printed
+                 if stats_text:
+                      stats_text.append(" | ", style="dim")
+                 else:
+                      stats_text.append("\n", style="dim") # Start new line if no stats yet
+                 stats_text.append(f"{planning_counter} planning steps", style="orange")
 
-            console.print(stats_text)
+            # Print stats if any were added
+            if stats_text:
+                 console.print(stats_text)
+
 
             # Display status overview (if any)
             if any(state_summary.values()):
@@ -907,12 +1026,28 @@ async def process_query_async(
         if not use_stream and not rendered:
             console.print("\n[bold green]Answer:[/bold green]")
 
-            # Try to display with standard Markdown
-            console.print(Panel(
-                Markdown(final_result_str),
-                title="Final Answer",
-                border_style="green"
-            ))
+            # Handle dictionary results (from EnhancedFinalAnswerTool)
+            if isinstance(final_result_str, dict):
+                # Extract content field if it exists
+                if "content" in final_result_str:
+                    markdown_content = final_result_str["content"]
+                else:
+                    # Fall back to JSON string representation
+                    markdown_content = json.dumps(final_result_str, ensure_ascii=False, indent=2)
+
+                # Try to display with standard Markdown
+                console.print(Panel(
+                    Markdown(markdown_content),
+                    title="Final Answer",
+                    border_style="green"
+                ))
+            else:
+                # Original behavior for string content
+                console.print(Panel(
+                    Markdown(final_result_str),
+                    title="Final Answer",
+                    border_style="green"
+                ))
     elif not use_stream:
         # Only display this error in non-streaming mode
         console.print(

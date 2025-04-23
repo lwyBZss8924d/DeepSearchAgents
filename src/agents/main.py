@@ -254,7 +254,7 @@ app = FastAPI(
         "provides a Search Agent API with Normal React mode "
         "or CodeAct-ReAct Agent deep search mode."
     ),
-    version="0.2.3",
+    version="v0.2.4.dev",
 )
 
 # CORS Middleware: Allow all origins
@@ -478,7 +478,7 @@ async def read_root():
     return {
         "message": "DeepSearch-AgentTeam API service is running",
         "agents": agents_info,
-        "version": "0.2.3"
+        "version": "v0.2.4.dev"
     }
 
 

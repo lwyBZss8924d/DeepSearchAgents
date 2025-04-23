@@ -1,4 +1,6 @@
 from typing import List, Optional, Dict, Any
+import importlib
+import yaml
 from smolagents import (
     LiteLLMModel, CodeAgent, Tool
 )
@@ -7,7 +9,11 @@ from .tools import (
     EmbedTextsTool, RerankTextsTool,
     EnhancedWolframAlphaTool, FinalAnswerTool
 )
-from .prompt_templates import CODACT_ACTION_PROMPT
+from .prompt_templates.codact_prompts import (
+    CODACT_SYSTEM_EXTENSION, PLANNING_TEMPLATES,
+    FINAL_ANSWER_EXTENSION, MANAGED_AGENT_TEMPLATES,
+    merge_prompt_templates
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -152,20 +158,35 @@ def create_codact_agent(
         agent_tools.append(wolfram_tool)
     agent_tools.append(final_answer_tool)
 
-    # --- Create prompt template dictionary ---
-    # Prepare prompt templates for CodeAgent
-    # The system prompt is the most critical part,
-    # the other templates (planning, managed_agent, final_answer)
-    # are less used but provide structure.
+    # --- Load base prompt templates ---
+    # Load base CodeAgent prompt templates from smolagents framework
+    base_prompts = yaml.safe_load(
+        importlib.resources.files(
+            "smolagents.prompts"
+        ).joinpath("code_agent.yaml").read_text()
+    )
 
-    # Use the properly structured CODACT_ACTION_PROMPT
-    # 使用标准的PromptTemplates对象
-    
-    # Set default allowed imports, including 'json' for tool output handling
+    # --- Create extended prompt templates ---
+    extension_content = {
+        "system_extension": CODACT_SYSTEM_EXTENSION,
+        "planning": PLANNING_TEMPLATES,
+        "final_answer": FINAL_ANSWER_EXTENSION,
+        "managed_agent": MANAGED_AGENT_TEMPLATES
+    }
+
+    # Merge base templates with extension content
+    extended_prompt_templates = merge_prompt_templates(
+        base_templates=base_prompts,
+        extensions=extension_content
+    )
+
+    # --- Set default allowed imports ---
+    # Including 'json' for tool output handling
     default_authorized_imports = [
         "json", "re", "collections", "datetime",
         "time", "math", "itertools", "copy",
-        "requests", "bs4", "urllib", "html",  # 添加网络请求和HTML解析相关模块
+        "requests", "bs4", "urllib", "html",
+        "io", "os", "aiohttp", "asyncio", "dotenv",
     ]
     if additional_authorized_imports:
         # Merge and deduplicate allowed imports list
@@ -217,12 +238,12 @@ def create_codact_agent(
         api_base=litellm_base_url
     )
 
-    # --- Initialize CodeAgent ---
-    # We always use the standard CodeAgent to run code
+    # --- Initialize CodeAgent with extended templates ---
     code_agent = CodeAgent(
         tools=agent_tools,
         model=standard_model,
-        prompt_templates=CODACT_ACTION_PROMPT,
+        # base smolagents.prompts.code_agent.yaml + codact_prompts.py
+        prompt_templates=extended_prompt_templates,
         additional_authorized_imports=combined_authorized_imports,
         executor_type=executor_type,
         executor_kwargs=executor_kwargs or {},
@@ -253,7 +274,8 @@ def create_codact_agent(
         streaming_agent = StreamingCodeAgent(
             tools=agent_tools,
             model=streaming_model,
-            prompt_templates=CODACT_ACTION_PROMPT,
+            # base smolagents.prompts.code_agent.yaml + codact_prompts.py
+            prompt_templates=extended_prompt_templates,
             additional_authorized_imports=combined_authorized_imports,
             executor_type=executor_type,
             executor_kwargs=executor_kwargs or {},

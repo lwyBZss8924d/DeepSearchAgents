@@ -38,7 +38,7 @@ class RerankTextsTool(Tool):
             "default": "jina-reranker-m0",
             "nullable": True,
         },
-        "top_k": {
+        "top_n": {
             "type": "integer",
             "description": "Number of top results to return. Returns all if None.",
             "default": None,
@@ -101,7 +101,7 @@ class RerankTextsTool(Tool):
         query: str,
         texts: str,
         model: Optional[str] = None,
-        top_k: Optional[int] = None,
+        top_n: Optional[int] = None,
         query_image_url: Optional[str] = None  # Support multimodal queries
     ) -> str:
         """
@@ -114,7 +114,7 @@ class RerankTextsTool(Tool):
                 A JSON string representing a list of texts or documents
                 (dictionaries with 'text' and optional 'image_url').
             model (str, optional): The model to use.
-            top_k (int, optional): Return top K results.
+            top_n (int, optional): Return top N results.
             query_image_url (str, optional):
                 URL of an image related to the query
                 (only for multimodal models).
@@ -168,7 +168,7 @@ class RerankTextsTool(Tool):
                     return await reranker.get_reranked_documents_async(
                         query=query,
                         documents=input_list,
-                        top_k=top_k,
+                        top_n=top_n,
                         query_image_url=query_image_url
                     )
 

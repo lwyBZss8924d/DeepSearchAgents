@@ -3,7 +3,7 @@ from smolagents import Tool
 
 
 class WolframAlphaTool(Tool):
-    name = "calculate"
+    name = "wolfram"
     description = """
     Performs computational, mathematical, and factual queries using
     Wolfram Alpha's computational knowledge engine.

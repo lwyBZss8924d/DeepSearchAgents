@@ -1,4 +1,4 @@
-feat(release): upgrade to v0.2.4 with streaming agent enhancements, doc updates, and bugfixes
+feat(release): upgrade to vv0.2.4.dev with streaming agent enhancements, doc updates, and bugfixes
 
 This release introduces comprehensive streaming capabilities, periodic planning, CLI rendering improvements, and critical bugfixes for agent execution. Documentation (READMEs in EN & ZH) has been updated significantly to reflect these changes, including new screenshot examples for both agent modes. Dependencies have been updated and distribution packages rebuilt.
 
@@ -24,7 +24,7 @@ This release introduces comprehensive streaming capabilities, periodic planning,
 - 🖼️ Update `README.md` reference cases with direct screenshot embeds instead of links.
 - 🧪 Add safeguards to ensure tools are properly passed to the execution environment.
 - 📦 Update project dependencies (`requirements.txt`, `uv.lock`) based on `pyproject.toml`.
-- 📦 Rebuild distribution packages (`sdist` and `wheel`) for v0.2.4.
+- 📦 Rebuild distribution packages (`sdist` and `wheel`) for vv0.2.4.dev.
 
 ### Technical Details
 - Implemented `StreamingAgentMixin` with proper tool initialization method.

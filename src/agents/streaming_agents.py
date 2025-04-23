@@ -522,13 +522,12 @@ class StreamingCodeAgent(CodeAgent, StreamingAgentMixin):
                 except Exception as e:
                     logger.error(f"Error extracting content from JSON: {e}")
                     # When an error occurs, return the original text
-            
-            # 特殊处理dict类型的final_answer，不用转换成生成器
+            # Special handling for dict type final_answer, do not convert to generator
             if isinstance(final_answer, dict) and stream:
-                # 遵循smolagents的行为，直接返回dict
-                # CLI会有专门的错误捕获机制来处理dict
+                # Follow smolagents behavior, return dict directly
+                # CLI will have a dedicated error capture mechanism for dict
                 return final_answer
-                
+
             # For streaming output, return the original text
             return self._generate_streaming_final_answer(
                 self.task, final_answer
@@ -538,47 +537,52 @@ class StreamingCodeAgent(CodeAgent, StreamingAgentMixin):
     def _generate_streaming_final_answer(self, task: str, final_answer: Any) -> Iterator[str]:
         """
         Generate a streaming final answer from a final answer object.
-        
+
         This method wraps any final answer object (string, dictionary, etc.)
         into an iterable stream for consumption by the CLI.
-        
+
         Args:
             task: The original task
             final_answer: The final answer object (could be string, dict, etc.)
-            
+
         Returns:
             An iterator that yields the final answer content
         """
-        # 关键修改：处理字典类型的final_answer
-        # 不再尝试将其转换为迭代器，而是作为单个值返回
+        # Key modification: Prioritize processing dictionary type final_answer
         if isinstance(final_answer, dict):
-            # 直接将dict转为JSON字符串，但不创建生成器
-            # 这样，调用方可以直接获取结果而不是迭代
-            import json
-            try:
-                # Ensure proper JSON formatting with ensure_ascii=False for better Unicode handling
-                json_str = json.dumps(final_answer, ensure_ascii=False)
-                # 只yield一次，与smolagents代码执行器的行为保持一致
-                yield json_str
+            # If there is a content field, ensure the full dictionary structure is retained
+            if 'content' in final_answer:
+                # Keep object integrity, do not extract content, return the entire object as a JSON string
+                import json
+                try:
+                    # Ensure proper JSON formatting with ensure_ascii=False
+                    json_str = json.dumps(final_answer, ensure_ascii=False)
+                    # Yield only once, consistent with smolagents code executor behavior
+                    yield json_str
+                    return
+                except Exception as e:
+                    logger.error(f"Error converting dictionary to JSON: {e}")
+                    yield str(final_answer)
+                    return
+            else:
+                # If there is no content field in the dictionary, convert it directly to a JSON string
+                import json
+                yield json.dumps(final_answer, ensure_ascii=False)
                 return
-            except Exception as e:
-                logger.error(f"Error converting dictionary to JSON: {e}")
-                yield str(final_answer)
-                return
-        
-        # 如果是字符串类型的final_answer
+
+        # If final_answer is a string type
         if isinstance(final_answer, str):
-            # 如果是JSON格式字符串，直接返回
+            # If it is a JSON format string, return directly
             if final_answer.strip().startswith('{') and final_answer.strip().endswith('}'):
                 yield final_answer
                 return
-                
-            # 处理可能包含URL的普通文本
+
+            # Process normal text that may contain URLs
             import re
             url_pattern = r'https?://[^\s)>]+'
             found_urls = re.findall(url_pattern, final_answer)
-            
-            # 如果包含URL，格式化为标准JSON结构
+
+            # If it contains URLs, format it as a standard JSON structure
             if found_urls:
                 import json
                 formatted_json = {
@@ -588,12 +592,12 @@ class StreamingCodeAgent(CodeAgent, StreamingAgentMixin):
                 }
                 yield json.dumps(formatted_json, ensure_ascii=False)
                 return
-                
-            # 普通文本，直接返回
+
+            # Normal text, return directly
             yield final_answer
             return
-            
-        # 处理其他可迭代对象(但不是字典)
+
+        # Process other iterable objects (but not dictionaries)
         if hasattr(final_answer, '__iter__') and not isinstance(final_answer, (str, dict)):
             try:
                 for chunk in final_answer:
@@ -602,8 +606,8 @@ class StreamingCodeAgent(CodeAgent, StreamingAgentMixin):
                 logger.error(f"Error iterating through final answer: {e}")
                 yield f"[Error processing stream: {str(e)}]"
             return
-                
-        # 其他类型，转为字符串
+
+        # Other types, convert to string
         yield str(final_answer)
 
     def _execute_step(self, task: str, memory_step: ActionStep) -> Union[None, Any]:
@@ -836,16 +840,20 @@ class StreamingReactAgent(ToolCallingAgent, StreamingAgentMixin):
             )
 
             # Check if result is JSON format, if so, try to extract content field
-            if (isinstance(final_answer, str) and 
-                    final_answer.strip().startswith('{') and 
+            if (isinstance(final_answer, str) and
+                    final_answer.strip().startswith('{') and
                     final_answer.strip().endswith('}')):
                 try:
                     import json
                     json_data = json.loads(final_answer)
                     if isinstance(json_data, dict) and 'content' in json_data:
-                        return json_data['content']
+                        return json_data  # Return the full JSON object, not just content
                 except Exception as e:
                     logger.error(f"Error extracting content from JSON: {e}")
+
+            # Handle the case if final_answer is already a dictionary
+            if isinstance(final_answer, dict) and 'content' in final_answer:
+                return final_answer  # Return the dictionary directly
 
             return final_answer
 
@@ -947,7 +955,7 @@ class StreamingReactAgent(ToolCallingAgent, StreamingAgentMixin):
                                 # Extract URLs from final answer
                                 url_pattern = r'https?://[^\s)>]+'
                                 found_urls = re.findall(url_pattern, final_answer)
-                                
+
                                 if found_urls:
                                     # Create properly formatted JSON with sources
                                     formatted_json = {

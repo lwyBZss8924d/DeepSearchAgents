@@ -7,7 +7,7 @@ Build with 💖 for Humanity with AI
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.00+-009688.svg?logo=fastapi&logoColor=white)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![version](https://img.shields.io/badge/version-0.2.4-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.4)
+[![version](https://img.shields.io/badge/version-v0.2.4.dev-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/vv0.2.4.dev)
 
 > **Come From Open Source, This is the Way**
 
@@ -148,7 +148,7 @@ agents:
 service:
   host: "0.0.0.0"
   port: 8000
-  version: "0.2.4"
+  version: "v0.2.4.dev"
   deepsearch_agent_mode: "codact"       # "react" or "codact"
 ```
 
@@ -388,11 +388,15 @@ final_answer("The result is...")
 
 ### Streaming Mode
 
-New in version 0.2.4, both ReAct and CodeAct agent types now support streaming output. When enabled:
+New in version v0.2.4.dev, both ReAct and CodeAct agent types now support streaming output. When enabled:
 
 - ReAct agents (StreamingReactAgent) stream each thinking step, tool call, and final answer
 - CodeAct agents (StreamingCodeAgent) stream the final answer while maintaining standard execution for code steps
 - CLI renders special formats (JSON/Markdown) in real-time with rich formatting
+
+**Note**:
+
+> ⚠️ **Warning**: The current streaming functionality implementation has known issues and is not recommended for production use. We suggest setting `enable_streaming: false` in your `config.yaml` for both react and codact agents until a more stable version is released. We are working on improving the streaming implementation in future releases.
 
 ### Comparison and Use Cases
 
@@ -422,7 +426,7 @@ In a typical sequence, the agent first uses `search_links` to find information s
 
 ## 7. 📺 Streaming and Rendering Features
 
-New in version 0.2.4, DeepSearchAgent now includes comprehensive streaming and rendering capabilities:
+New in version v0.2.4.dev, DeepSearchAgent now includes comprehensive streaming and rendering capabilities:
 
 ### Streaming Output
 
@@ -462,7 +466,7 @@ Compared to static instructions, code as an action representation offers greater
 
 ### Periodic Planning and Adaptive Search
 
-New in version 0.2.4, both agent modes implement periodic planning intervals, allowing agents to reassess their strategy every N steps. This enables more effective search paths by:
+New in version v0.2.4.dev, both agent modes implement periodic planning intervals, allowing agents to reassess their strategy every N steps. This enables more effective search paths by:
 
 - Evaluating progress against the original task
 - Identifying gaps in information collection

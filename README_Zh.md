@@ -7,7 +7,7 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.00+-009688.svg?logo=fastapi&logoColor=white)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![version](https://img.shields.io/badge/version-0.2.4-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.4)
+[![version](https://img.shields.io/badge/version-v0.2.4.dev-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/vv0.2.4.dev)
 
 > 自开源 正是此道
 
@@ -148,7 +148,7 @@ agents:
 service:
   host: "0.0.0.0"
   port: 8000
-  version: "0.2.4"
+  version: "v0.2.4.dev"
   deepsearch_agent_mode: "codact"       # "react" 或 "codact"
 ```
 
@@ -388,11 +388,15 @@ final_answer("结果是...")
 
 ### 流式模式 | Streaming Mode
 
-版本 0.2.4 的新特性，ReAct 和 CodeAct 两种类型的智能体现在都支持流式输出。启用时：
+版本 v0.2.4.dev 的新特性，ReAct 和 CodeAct 两种类型的智能体现在都支持流式输出。启用时：
 
 - ReAct 智能体 (StreamingReactAgent) 会流式传输每个思考步骤、工具调用和最终答案
 - CodeAct 智能体 (StreamingCodeAgent) 会流式传输最终答案，同时保持代码步骤的标准执行方式
 - CLI 会实时渲染特殊格式（JSON/Markdown），并带有富文本格式
+
+**注意**：
+
+> ⚠️ **警告**：当前流式功能实现存在已知问题，不建议在生产环境中使用。我们建议在 `config.yaml` 中将 react 和 codact 智能体的 `enable_streaming` 设置为 `false`，直到发布更稳定的版本。我们正在努力在未来版本中改进流式处理实现。
 
 ### 对比与使用场景 | Comparison and Use Cases
 
@@ -422,7 +426,7 @@ DeepSearchAgent 拥有一套可扩展的工具链，用于辅助智能体检索�
 
 ## 7. 📺 流式传输和渲染功能 | Streaming and Rendering Features
 
-版本 0.2.4 新增，DeepSearchAgent 现在包含全面的流式传输和渲染功能：
+版本 v0.2.4.dev 新增，DeepSearchAgent 现在包含全面的流式传输和渲染功能：
 
 ### 流式输出 | Streaming Output
 
@@ -462,7 +466,7 @@ CodeAct 指的是让智能体以代码形式生成并执行动作的方法。核
 
 ### 周期性规划与自适应搜索 | Periodic Planning and Adaptive Search
 
-版本 0.2.4 新增，两种智能体模式都实现了周期性规划间隔，允许智能体每 N 步重新评估其策略。这通过以下方式实现更有效的搜索路径：
+版本 v0.2.4.dev 新增，两种智能体模式都实现了周期性规划间隔，允许智能体每 N 步重新评估其策略。这通过以下方式实现更有效的搜索路径：
 
 - 评估相对于原始任务的进展
 - 识别信息收集中的差距
