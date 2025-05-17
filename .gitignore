@@ -189,6 +189,7 @@ uv.lock
 # Project specific ignores
 CLAUDE.md
 config.yaml
+config.toml
 
 # Cursor specific files (often user-specific)
 .cursor/
