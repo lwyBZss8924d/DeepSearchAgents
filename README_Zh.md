@@ -30,7 +30,7 @@ DeepSearchAgent 项目是一个基于 ReAct（Reasoning + Acting）推理行动�
 ## 2. ✨ 特性 | Features
 
 - 👻 **深度搜索任务能力**：通过多步搜索、阅读和推理过程，处理网络内容以回答复杂问题
-- 🧑‍💻 **DeepSearch 专员**：同时支持 CodeAct（Python代码执行）模式 & 用于实验对照的 ReAct（工具调用）模式，可通过 `config.yaml` 配置相关 Agent Run time , 语言模型 和各种工具的配置参数
+- **DeepSearch 专员**：同时支持 CodeAct（Python 代码执行）模式与 ReAct（工具调用）模式，可在 `config.toml`（`src/core/config/settings.py`）中配置 Agent 运行时、语言模型和工具参数。
 - 🪄 **可扩展工具箱**：内置网络搜索、内容获取、文本处理、语义排序和计算功能的工具集
 - 🔍 **文本嵌入与重排序**：使用 Jina AI 嵌入和重排序模型处理 URL Web 多模态内容
 - 🧠 **周期性规划更新**: 在执行过程中实施战略性重评以优化搜索路径
@@ -142,7 +142,7 @@ DeepSearchAgent 项目是一个基于 ReAct（Reasoning + Acting）推理行动�
 确保您已安装 CLI 依赖项 (参见 安装与配置 第 4 步)。
 
 ```bash
-# 运行 CLI（交互模式，使用 config.yaml 中的设置）
+# 运行 CLI（交互模式，使用 config.toml 中的设置）
 make cli
 # 或直接使用:
 uv run python -m src.agents.cli
@@ -155,18 +155,18 @@ CLI 参数将覆盖 `config.toml` 中定义的设置。
 确保您已安装核心依赖项 (参见 安装与配置 第 4 步)。
 
 ```bash
-# 启动主 API 服务器（使用 config.yaml 中的 host/port，例如 http://0.0.0.0:8000）
+# 启动主 API 服务器（使用 config.toml 中的 host/port，例如 http://0.0.0.0:8000）
 make run
 # 或直接使用:
 uv run -- uvicorn src.agents.main:app --reload
-# 注意：--host 和 --port 现在通过 main.py 从 config.yaml 获取
+# 注意：--host 和 --port 现在通过 main.py 从 config.toml 获取
 # 使用 LOG_LEVEL 环境变量设置日志级别（例如 LOG_LEVEL=debug make run）
 ```
 
 **API 端点**：
 
 * `POST /run_react_agent`：运行 React 智能体。
-* `POST /run_deepsearch_agent`：运行由 `config.yaml` 中 `service.deepsearch_agent_mode`（或 `DEEPSEARCH_AGENT_MODE` 环境变量）配置的智能体。
+* `POST /run_deepsearch_agent`：运行由 `config.toml` 中 `service.deepsearch_agent_mode`（或 `DEEPSEARCH_AGENT_MODE` 环境变量）配置的智能体。
 * `GET /`：API 信息和健康检查。
 
 向配置的深度搜索端点发送 API 请求示例：
@@ -229,7 +229,7 @@ flowchart TB
         direction TB
         CoreAgents{{"Core Agents
 (Handles Mode Selection)"}}
-        ConfigLoader["Config Loader (yaml, .env)"]
+        ConfigLoader["Config Loader (toml, .env)"]
         StreamingSupport["Streaming Support"]
         subgraph Agents["Agent Logic"]
             direction LR

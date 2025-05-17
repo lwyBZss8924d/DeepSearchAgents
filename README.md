@@ -13,7 +13,7 @@ Build with 💖 for Humanity with AI
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.00+-009688.svg?logo=fastapi&logoColor=white)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![version](https://img.shields.io/badge/version-v0.2.6.dev-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/vv0.2.6.dev)
+[![version](https://img.shields.io/badge/version-v0.2.6-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.6)
 
 </h2>
 
@@ -30,7 +30,7 @@ The project supports command-line interface (CLI), standard FastAPI services, an
 ## 2. ✨ Features
 
 - 👻 **Deep Search Task Capability**: Handles complex questions through multi-step searching, reading, and reasoning processes involving online content.
-- 🧑‍💻 **DeepSearch Specialist**: Supports both CodeAct (Python code execution) mode and ReAct (tool invocation) mode for experimental comparison; configuration of related Agent runtime, language models, and various tools can be managed via `config.yaml`.
+- **DeepSearch Specialist**: Supports both CodeAct (Python code execution) mode and ReAct (tool invocation) mode for experimental comparison; configuration of related Agent runtime, language models, and various tools can be managed via `config.toml` (`src/core/config/settings.py`).
 - 🪄 **Extensible Toolbox**: Built-in set of tools for web searching, content retrieval, text processing, semantic ranking, and computation.
 - 🔍 **Text Embedding and Re-ranking**: Uses Jina AI embedding and re-ranking models to process multimodal web content from URLs.
 - 🧠 **Periodic Planning and Updates**: Implements strategic reevaluation during execution to optimize search paths.
@@ -58,7 +58,7 @@ The project supports command-line interface (CLI), standard FastAPI services, an
 
 1. CLI integration supports Docker containerization for rapid deployment;
 2. Encapsulate various FastAPI Agents as MCP (Model Context Protocol) Servers, providing MCP tools services;
-3. [DONE] DeepSearchAgents' ToolCollection adds MCP Client/MCP tools HUB, supporting MCP Tools configuration and invocation;
+3. [DONE] DeepSearchAgents' Toolbox adds MCP Client/MCP tools HUB, supporting MCP Tools configuration and invocation;
 4. Deep search strategies offer more strategy parameters, supporting Tokens budget parameters;
 5. Experimentally add DeepSearchAgents' Agent Runs evaluator (independent evaluation of DeepSearchAgents' deep search paths & result evaluation Agent);
 6. Adapt to code_sandbox Docker automated configuration, adding more remote code_sandbox secure environment SDK support;
@@ -143,7 +143,7 @@ This section guides you through setting up the environment, installing dependenc
 Ensure you have installed the CLI dependencies (see Step 4 in Installation & Setup).
 
 ```bash
-# Run the CLI (interactive mode, uses settings from config.yaml)
+# Run the CLI (interactive mode, uses settings from config.toml)
 make cli
 # or directly:
 uv run python -m src.agents.cli
@@ -156,18 +156,18 @@ CLI arguments will override settings defined in `config.toml`.
 Ensure you have installed the core dependencies (see Step 4 in Installation & Setup).
 
 ```bash
-# Start the main API server (uses host/port from config.yaml, e.g., http://0.0.0.0:8000)
+# Start the main API server (uses host/port from config.toml, e.g., http://0.0.0.0:8000)
 make run
 # or directly:
 uv run -- uvicorn src.agents.main:app --reload
-# Note: --host and --port are now taken from config.yaml via main.py
+# Note: --host and --port are now taken from config.toml via main.py
 # Use LOG_LEVEL environment variable for log level (e.g., LOG_LEVEL=debug make run)
 ```
 
 **API Endpoints:**
 
 *   `POST /run_react_agent`: Runs the React agent.
-*   `POST /run_deepsearch_agent`: Runs the agent configured by `service.deepsearch_agent_mode` in `config.yaml` (or `DEEPSEARCH_AGENT_MODE` env var).
+*   `POST /run_deepsearch_agent`: Runs the agent configured by `service.deepsearch_agent_mode` in `config.toml` (or `DEEPSEARCH_AGENT_MODE` env var).
 *   `GET /`: API info and health check.
 
 Example API request to the configured deep search endpoint:
@@ -194,11 +194,12 @@ The core system architecture includes:
 
 1. **Core Specialist Agents Modules (`src/agents/react_agent.py`, `src/agents/codact_agent.py`)**: Implement ReAct and CodeAct logic based on `smolagents`. `src/agents/runtime.py` serves as the runtime manager, responsible for managing the agent's runtime environment.
 2. **Specialist Core Agent Runtime Module (`src/agents/runtime.py`)**: Responsible for managing the agent's runtime environment.
-3. **Agent Toolkit Collection (`src/agents/tools/`)**: Functions that the agent can invoke (such as web search, reading URLs, etc.).
+3. **Agent Toolkit Collection (`src/tools/`)**: Functions that the agent can invoke (such as web search, reading URLs, etc.).
 4. **FastAPI Service (`src/api`)**: FastAPI service providing REST API related services.
-5. **CLI Interface (`src/agents/cli.py`)**: Provides an interactive command-line interface with rich formatting.
+5. **CLI Interface (`src/cli.py`)**: Provides an interactive command-line interface with rich formatting.
+6. **GaiaUI Web Interface (`src/app.py`)**: Gradio-based web GUI for interacting with agents.
 
-*Note: The current architecture diagram is for version 0.2.5, and will be updated to version 0.2.6*
+*Architecture diagram updated for version 0.2.6*
 
 ```mermaid
 ---
@@ -225,12 +226,13 @@ flowchart TB
         direction LR
         CLI{{"CLI"}}
         FastAPI{{"FastAPI Service"}}
+        GaiaUI{{"GaiaUI"}}
     end
     subgraph DeepSearchAgentSystem["DeepSearch Agents System"]
         direction TB
         CoreAgents{{"Core Agents
 (Handles Mode Selection)"}}
-        ConfigLoader["Config Loader (yaml, .env)"]
+        ConfigLoader["Config Loader (toml, .env)"]
         StreamingSupport["Streaming Support"]
         subgraph Agents["Agent Logic"]
             direction LR
@@ -242,7 +244,7 @@ flowchart TB
             StreamingCodeAgent[["StreamingCodeAgent"]]
         end
     end
-    subgraph ToolCollection["Tool Collection"]
+    subgraph Toolbox["Toolbox"]
         direction TB
         SearchLinks[/search_links/]
         ReadURL[/read_url/]
@@ -261,6 +263,7 @@ Environment (for CodeAct)")]
 
     CLI -- "User Query" --> CoreAgents
     FastAPI -- "API Request" --> CoreAgents
+    GaiaUI -- "User Input" --> CoreAgents
     CoreAgents -- "Select Mode: ReAct" --> ToolAgent
     CoreAgents -- "Select Mode: CodeAct" --> CodeAgent
     CoreAgents -- "Select Mode: StreamingReAct" --> StreamingReactAgent
@@ -295,12 +298,14 @@ Environment (for CodeAct)")]
     EmbedTexts -- "Uses External API" --> ExternalAPIs
     RerankTexts -- "Uses External API" --> ExternalAPIs
     Wolfram -- "Uses External API" --> ExternalAPIs
-    ExternalAPIs -.-> ToolCollection
+    ExternalAPIs -.-> Toolbox
 
     ToolAgent -. "Final Answer" .-> CoreAgents
     CodeAgent -. "Final Answer" .-> CoreAgents
     StreamingReactAgent -. "Streaming Output" .-> CLI
     StreamingCodeAgent -. "Streaming Output" .-> CLI
+    StreamingReactAgent -. "Streaming Output" .-> GaiaUI
+    StreamingCodeAgent -. "Streaming Output" .-> GaiaUI
     CoreAgents -. "Response" .-> Interfaces
 
     classDef default fill:#1a1a2e,stroke:#7700ff,stroke-width:2px,color:#00fff9
@@ -315,6 +320,7 @@ Environment (for CodeAct)")]
 
     CLI:::interface
     FastAPI:::interface
+    GaiaUI:::interface
     CoreAgents:::manager
     ToolAgent:::agent
     CodeAgent:::agent
@@ -394,7 +400,7 @@ In a typical sequence, the agent first uses `search_links` to find information s
 
 ## 7. 📺 Streaming and Rendering Features
 
-In version v0.2.6.dev, DeepSearchAgent now includes comprehensive streaming and rendering capabilities (CLI & GUI):
+In version v0.2.6, DeepSearchAgent now includes comprehensive streaming and rendering capabilities (CLI & GUI):
 
 ### Streaming Output
 
