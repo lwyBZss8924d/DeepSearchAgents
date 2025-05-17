@@ -1,7 +1,7 @@
 ---
 description: 
 globs: 
-alwaysApply: true
+alwaysApply: false
 ---
 # DeepSearchAgent Interfaces
 
@@ -26,13 +26,6 @@ DeepSearchAgent provides multiple interfaces for different usage scenarios:
     - `/run_react_agent`: Runs the ReAct agent
     - `/run_deepsearch_agent`: Runs the configured agent (ReAct or CodeAct)
     - `/`: API information and health check
-
-## MCP Tool Server
-
-- **[run_mcp_server.py](mdc:src/agents/run_mcp_server.py)**: MCP (Model Context Protocol) server
-  - Enables integration with other MCP-compatible agents and systems
-  - Exposes DeepSearchAgent functionality as MCP tools
-  - Implementation in [fastapi_mcp_server.py](mdc:src/agents/fastapi_mcp_server.py)
 
 ## Deployment Methods
 

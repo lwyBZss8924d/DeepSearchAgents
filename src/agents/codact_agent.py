@@ -1,331 +1,294 @@
-from typing import List, Optional, Dict, Any
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# src/agents/codact_agent.py
+# code style: PEP 8
+
+"""
+CodeAct agent implementation, uses Python code execution mode
+for deep search task
+"""
+
+
+from typing import (
+    List, Optional, Dict, Any
+)
+import importlib
+import yaml
 from smolagents import (
-    CodeAgent, LiteLLMModel, Tool
+    CodeAgent, Tool
 )
-from .tools import (
-    SearchLinksTool,
-    ReadURLTool,
-    ChunkTextTool,
-    EmbedTextsTool,
-    RerankTextsTool,
-    EnhancedWolframAlphaTool,
-    FinalAnswerTool
+from .prompt_templates.codact_prompts import (
+    CODACT_SYSTEM_EXTENSION, PLANNING_TEMPLATES,
+    FINAL_ANSWER_EXTENSION, MANAGED_AGENT_TEMPLATES,
+    merge_prompt_templates
 )
-from .prompts import CODE_ACTION_SYSTEM_PROMPT
 import logging
+from .base_agent import BaseAgent, MultiModelRouter
+
 
 logger = logging.getLogger(__name__)
 
 
-def create_codact_agent(
-    orchestrator_model_id: str,
-    search_model_name: Optional[str] = None,
-    reranker_type: str = "jina-reranker-m0",
-    verbose_tool_callbacks: bool = False,
-    executor_type: str = "local",
-    executor_kwargs: Optional[Dict[str, Any]] = None,
-    max_steps: int = 25,
-    verbosity_level: int = 1,
-    additional_authorized_imports: Optional[List[str]] = None,
-    litellm_master_key: Optional[str] = None,
-    litellm_base_url: Optional[str] = None,
-    serper_api_key: Optional[str] = None,
-    jina_api_key: Optional[str] = None,
-    wolfram_app_id: Optional[str] = None,
-    cli_console=None,
-    enable_streaming: bool = True,
-    planning_interval: int = 5,
-):
-    """
-    Create and configure a CodeAgent with deep search capabilities.
+class CodeActAgent(BaseAgent):
+    """CodeAct agent implementation, uses Python code execution mode
+    for deep search"""
 
-    This agent uses Python code execution mode, not JSON tool calling mode,
-    allowing more flexible logic flow and state management. The agent can
-    generate Python code to implement complex search strategies, including
-    query planning, multi-URL access, content chunking and reranking.
+    def __init__(
+        self,
+        orchestrator_model,
+        search_model,
+        tools: List[Tool],
+        initial_state: Dict[str, Any],
+        executor_type: str = "local",
+        executor_kwargs: Optional[Dict[str, Any]] = None,
+        max_steps: int = 25,
+        verbosity_level: int = 2,
+        additional_authorized_imports: Optional[List[str]] = None,
+        enable_streaming: bool = False,
+        planning_interval: int = 5,
+        cli_console=None,
+        step_callbacks: Optional[List[Any]] = None,
+        **kwargs
+    ):
+        """Initialize CodeAct agent
 
-    Args:
-        orchestrator_model_id (str): The LLM model ID for orchestration.
-        search_model_name (str, optional):
-            The search model name (for compatibility).
-        reranker_type (str):
-            The reranking model type.
-        verbose_tool_callbacks (bool):
-            Whether tools should output detailed logs.
-        executor_type (str):
-            The code executor type ("local", "docker" or "e2b").
-        executor_kwargs (Dict[str, Any], optional):
-            Additional executor parameters.
-        max_steps (int):
-            The maximum number of steps the agent can execute.
-        verbosity_level (int): The agent's log level.
-        additional_authorized_imports (List[str], optional):
-            Additional authorized imports.
-        litellm_master_key (Optional[str]): LiteLLM Master Key.
-        litellm_base_url (Optional[str]): LiteLLM Base URL.
-        serper_api_key (Optional[str]): Serper API Key.
-        jina_api_key (Optional[str]): Jina API Key.
-        wolfram_app_id (Optional[str]): WolframAlpha App ID.
-        cli_console: Optional rich.console.Console for verbose CLI output.
-        enable_streaming (bool): Whether to enable streaming for final answer
-            generation. If True, agent steps will run normally, but the final
-            answer will be streamed token-by-token.
-        planning_interval (int): Interval for agent planning steps
-            (default: 5). Agent will reassess strategy every this many steps.
+        Args:
+            orchestrator_model: Model for planning and final answer
+            search_model: Model for general code generation and search
+            tools: Pre-initialized list of tools from runtime
+            initial_state: Initial agent state from runtime
+            executor_type: Code executor type
+            executor_kwargs: Additional executor parameters
+            max_steps: Maximum execution steps
+            verbosity_level: Verbosity level for logging
+            additional_authorized_imports: Additional modules to
+                allow importing
+            enable_streaming: Whether to enable streaming output
+            planning_interval: Interval for planning steps
+            cli_console: CLI console object
+            step_callbacks: List of step callbacks
+            **kwargs: Additional parameters for future extensions
+        """
+        # 1. ensure additional_authorized_imports is always a flat list
+        if additional_authorized_imports is None:
+            self.additional_authorized_imports = []
+        elif isinstance(additional_authorized_imports, list):
+            # check if there is a nested list and flatten it
+            if (
+                additional_authorized_imports and
+                isinstance(additional_authorized_imports[0], list)
+            ):
+                self.additional_authorized_imports = (
+                    additional_authorized_imports[0]
+                )
+            else:
+                self.additional_authorized_imports = (
+                    additional_authorized_imports
+                )
+        else:
+            self.additional_authorized_imports = [
+                additional_authorized_imports
+            ]
 
-    Returns:
-        CodeAgent: The configured DeepSearch agent instance,
-        or None if missing required API keys.
-    """
+        # 2. ensure the collection type in initial_state is correct
+        if initial_state and "visited_urls" in initial_state:
+            if not isinstance(initial_state["visited_urls"], set):
+                # convert to set
+                initial_state["visited_urls"] = set(
+                    initial_state["visited_urls"]
+                    if initial_state["visited_urls"]
+                    else []
+                )
 
-    # --- API Key Checks (using passed keys) ---
+        # other initialization remains unchanged
+        self.executor_type = executor_type
+        self.executor_kwargs = executor_kwargs or {}
+        self.verbosity_level = verbosity_level
+        self.step_callbacks = step_callbacks or []
 
-    essential_keys_missing = False
-    if not serper_api_key:
-        print("ERROR: "
-              "SERPER_API_KEY is missing. "
-              "SearchLinksTool will not work.")
-        essential_keys_missing = True
-    if not jina_api_key:
-        print("ERROR: "
-              "JINA_API_KEY is missing. "
-              "ReadURLTool, EmbedTextsTool, RerankTextsTool will not work.")
-        essential_keys_missing = True
-
-    if not wolfram_app_id:
-        print("WARNING: "
-              "WOLFRAM_ALPHA_APP_ID is missing. "
-              "WolframAlphaTool will not work.")
-
-    if essential_keys_missing:
-        print("ERROR: "
-              "CodeAgent creation failed due to missing required API keys.")
-        return None
-
-    # --- Tool Initialization (using passed keys) ---
-
-    # Note: CodeAgent directly calls tools, so we pass instances.
-    agent_tools: List[Tool] = []
-
-    search_tool = SearchLinksTool(
-        serper_api_key=serper_api_key,
-        cli_console=cli_console,
-        verbose=verbose_tool_callbacks
-    )
-
-    read_tool = ReadURLTool(
-        jina_api_key=jina_api_key,
-        cli_console=cli_console,
-        verbose=verbose_tool_callbacks
-    )
-
-    chunk_tool = ChunkTextTool(
-        cli_console=cli_console,
-        verbose=verbose_tool_callbacks
-    )
-
-    embed_tool = EmbedTextsTool(
-        jina_api_key=jina_api_key,
-        cli_console=cli_console,
-        verbose=verbose_tool_callbacks
-    )
-
-    rerank_tool = RerankTextsTool(
-        jina_api_key=jina_api_key,
-        default_model=reranker_type,
-        cli_console=cli_console,
-        verbose=verbose_tool_callbacks
-    )
-
-    wolfram_tool = None
-    if wolfram_app_id:
-        wolfram_tool = EnhancedWolframAlphaTool(
-            app_id=wolfram_app_id,
+        # call parent class constructor
+        super().__init__(
+            agent_type="codact",
+            orchestrator_model=orchestrator_model,
+            search_model=search_model,
+            tools=tools,
+            initial_state=initial_state,
+            enable_streaming=enable_streaming,
+            max_steps=max_steps,
+            planning_interval=planning_interval,
             cli_console=cli_console,
-            verbose=verbose_tool_callbacks
+            **kwargs
         )
 
-    final_answer_tool = FinalAnswerTool()
+        # initialize agent
+        self.initialize()
 
-    agent_tools.append(search_tool)
-    agent_tools.append(read_tool)
-    agent_tools.append(chunk_tool)
-    agent_tools.append(embed_tool)
-    agent_tools.append(rerank_tool)
-    if wolfram_tool:
-        agent_tools.append(wolfram_tool)
-    agent_tools.append(final_answer_tool)
+    def _create_prompt_templates(self):
+        """Create extended prompt templates
 
-    # --- Create prompt template dictionary ---
-    # Prepare prompt templates for CodeAgent
-    # The system prompt is the most critical part,
-    # the other templates (planning, managed_agent, final_answer)
-    # are less used but provide structure.
+        Returns:
+            dict: Extended prompt templates
+        """
+        # Load base CodeAgent prompt templates
+        base_prompts = yaml.safe_load(
+            importlib.resources.files(
+                "smolagents.prompts"
+            ).joinpath("code_agent.yaml").read_text()
+        )
 
-    # Create a dictionary of prompt templates with key system_prompt
-    prompt_templates_dict = {
-        'system_prompt': CODE_ACTION_SYSTEM_PROMPT,
-        'planning': {
-            'initial_plan': (
-                'Based on the task, create a plan to search and gather '
-                'information using the available tools. Think about what '
-                'steps you need to take and in what order.\n\n{{task}}\n\n'
-                '<end_plan>'
-            ),
-            'update_plan_pre_messages': (
-                'Review your progress and update your plan based on what '
-                'you have learned so far. Consider what new information you '
-                'need and how to obtain it.'
-            ),
-            'update_plan_post_messages': (
-                'Update your plan based on the task and new information. '
-                'Decide what steps to take next to complete the task.\n\n'
-                '{{task}}\n\n<end_plan>'
-            )
-        },
-        'managed_agent': {
-            'task': '{{name}}: {{task}}',
-            'report': '{{name}} final report: {{final_answer}}'
-        },
-        'final_answer': {
-            'pre_messages': (
-                'You have been working on the following task. Review all '
-                'the information you have gathered and provide a '
-                'comprehensive final answer.'
-            ),
-            'post_messages': (
-                'Based on all the information you have gathered, provide a '
-                'final comprehensive answer to the task: {{task}}'
-            )
+        # Create extension content
+        extension_content = {
+            "system_extension": CODACT_SYSTEM_EXTENSION,
+            "planning": PLANNING_TEMPLATES,
+            "final_answer": FINAL_ANSWER_EXTENSION,
+            "managed_agent": MANAGED_AGENT_TEMPLATES
         }
-    }
 
-    # Set default allowed imports, including 'json' for tool output handling
-    default_authorized_imports = [
-        "json", "re", "collections", "datetime",
-        "time", "math", "itertools", "copy"
-    ]
-    if additional_authorized_imports:
-        # Merge and deduplicate allowed imports list
-        combined_authorized_imports = list(set(
-            default_authorized_imports + additional_authorized_imports
-        ))
-    else:
-        combined_authorized_imports = default_authorized_imports
+        # Merge base templates with extension content
+        return merge_prompt_templates(
+            base_templates=base_prompts,
+            extensions=extension_content
+        )
 
-    # --- Structured Output JSON Schema ---
-    # Provide JSON-formatted structured output
-    # for search results and final answer
-    json_grammar = None
-    if reranker_type:  # If reranking is used, add structured output support
-        json_grammar = {
-            "json_object": {
-                "type": "object",
-                "properties": {
-                    "title": {"type": "string"},
-                    "content": {"type": "string"},
-                    "sources": {"type": "array", "items": {"type": "string"}},
-                    "confidence": {"type": "number"}
+    def _get_authorized_imports(self):
+        """Get list of authorized import modules
+
+        Returns:
+            List[str]: List of authorized import modules
+        """
+        # Set default allowed import modules
+        default_authorized_imports = [
+            "json", "re", "collections", "datetime",
+            "time", "calendar", "math", "csv", "itertools", "copy",
+            "requests", "bs4", "urllib", "html",
+            "io", "os", "aiohttp", "asyncio", "dotenv",
+            "logging", "sys", "pandas", "numpy", "tabulate",
+            "rich"
+        ]
+
+        if self.additional_authorized_imports:
+            # Merge and deduplicate import module lists
+            return list(set(
+                default_authorized_imports + self.additional_authorized_imports
+            ))
+        else:
+            return default_authorized_imports
+
+    def create_agent(self):
+        """Create CodeAct agent instance
+
+        Returns:
+            CodeAgent: Configured CodeAct agent instance
+        """
+        # Create extended prompt templates
+        extended_prompt_templates = self._create_prompt_templates()
+
+        # Get authorized import modules
+        authorized_imports = self._get_authorized_imports()
+
+        # Create JSON grammar (if using reranker)
+        json_grammar = None
+        if hasattr(self, 'reranker_type') and self.reranker_type:
+            json_grammar = {
+                "json_object": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string"},
+                        "content": {"type": "string"},
+                        "sources": {
+                            "type": "array",
+                            "items": {"type": "string"}
+                        },
+                        "confidence": {"type": "number"}
+                    },
+                    "required": ["title", "content"]
                 }
             }
-        }
 
-    # --- Set Planning Interval ---
-    # Deep search requires periodic reassessment of search strategy
-    search_planning_interval = planning_interval  # Use the provided planning_interval parameter
-
-    # --- Initialize State Management ---
-    # Provide structured state tracking for the agent
-    initial_state = {
-        "visited_urls": set(),        # Visited URLs
-        "search_queries": [],         # Executed search queries
-        "key_findings": {},           # Key findings, indexed by topic
-        "search_depth": 0,            # Current search depth
-        "reranking_history": [],      # Reranking history
-        "content_quality": {}         # URL content quality scores
-    }
-
-    # --- Initialize LiteLLM Model ---
-    # Create a standard model for CodeAgent
-    standard_model = LiteLLMModel(
-        model_id=orchestrator_model_id,
-        temperature=0.2,
-        api_key=litellm_master_key,
-        api_base=litellm_base_url
-    )
-
-    # --- Initialize CodeAgent ---
-    # We always use the standard CodeAgent to run code
-    code_agent = CodeAgent(
-        tools=agent_tools,
-        model=standard_model,
-        prompt_templates=prompt_templates_dict,
-        additional_authorized_imports=combined_authorized_imports,
-        executor_type=executor_type,
-        executor_kwargs=executor_kwargs or {},
-        max_steps=max_steps,
-        verbosity_level=verbosity_level,
-        grammar=json_grammar,
-        planning_interval=search_planning_interval,
-    )
-
-    # Initialize agent state
-    code_agent.state.update(initial_state)
-
-    # Stream mode: If streaming mode is enabled, use StreamingCodeAgent
-    if enable_streaming:
-        # Import needed modules
-        from .streaming_models import StreamingLiteLLMModel
-        from .streaming_agents import StreamingCodeAgent
-
-        # Create a streaming model for final answer
-        streaming_model = StreamingLiteLLMModel(
-            model_id=orchestrator_model_id,
-            temperature=0.2,
-            api_key=litellm_master_key,
-            api_base=litellm_base_url
+        # Create model router to use different models for different prompts
+        model_router = MultiModelRouter(
+            search_model=self.search_model,
+            orchestrator_model=self.orchestrator_model
         )
 
-        # Create a StreamingCodeAgent with the same configuration
-        streaming_agent = StreamingCodeAgent(
-            tools=agent_tools,
-            model=streaming_model,
-            prompt_templates=prompt_templates_dict,
-            additional_authorized_imports=combined_authorized_imports,
-            executor_type=executor_type,
-            executor_kwargs=executor_kwargs or {},
-            max_steps=max_steps,
-            verbosity_level=verbosity_level,
-            grammar=json_grammar,
-            planning_interval=search_planning_interval,
-        )
+        # Disable streaming processing, use CodeAgent directly
+        # Note: Even if enable_streaming=True is passed, non-streaming mode
+        # will be used
+        if self.enable_streaming:
+            # Use normal agent, but output warning
+            print("Warning: Streaming mode is temporarily disabled in "
+                  "this version.")
+            agent = CodeAgent(
+                tools=self.tools,
+                model=model_router,  # Use model router here
+                prompt_templates=extended_prompt_templates,
+                additional_authorized_imports=authorized_imports,
+                executor_type=self.executor_type,
+                executor_kwargs=self.executor_kwargs,
+                max_steps=self.max_steps,
+                verbosity_level=self.verbosity_level,
+                grammar=json_grammar,
+                planning_interval=self.planning_interval,
+                step_callbacks=self.step_callbacks
+            )
+        else:
+            agent = CodeAgent(
+                tools=self.tools,
+                model=model_router,  # Use model router here
+                prompt_templates=extended_prompt_templates,
+                additional_authorized_imports=authorized_imports,
+                executor_type=self.executor_type,
+                executor_kwargs=self.executor_kwargs,
+                max_steps=self.max_steps,
+                verbosity_level=self.verbosity_level,
+                grammar=json_grammar,
+                planning_interval=self.planning_interval,
+                step_callbacks=self.step_callbacks
+            )
 
         # Initialize agent state
-        streaming_agent.state.update(initial_state)
+        agent.state.update(self.initial_state)
 
-        # Ensure execution environment is correctly set up
-        streaming_agent._setup_executor_environment()
+        # Output log information
+        print(
+            f"DeepSearch CodeAct agent initialized successfully, "
+            f"using executor: {self.executor_type}"
+        )
+        print(f"Allowed import modules: {authorized_imports}")
+        print(
+            f"Configured tools: "
+            f"{[tool.name for tool in agent.tools.values()]}"
+        )
+        if self.planning_interval:
+            print(
+                f"Planning interval: "
+                f"Every {self.planning_interval} steps"
+            )
+        print(
+            f"Using orchestrator model: "
+            f"{self.orchestrator_model.model_id} for planning"
+        )
+        print(
+            f"Using search model: {self.search_model.model_id} "
+            f"for code generation"
+        )
 
-        # Set logging output
-        print("DeepSearch CodeAgent with streaming support "
-              f"({orchestrator_model_id}) created successfully, "
-              f"using executor: {executor_type}")
-        print(f"Allowed import modules: {combined_authorized_imports}")
-        print(f"Configured tools: "
-              f"{[tool.name for tool in streaming_agent.tools.values()]}")
-        print("Streaming mode: ENABLED - Only Final Answer will be streamed")
-        if search_planning_interval:
-            print(f"Planning interval: Every {search_planning_interval} steps")
+        # ensure callbacks can be accessed and debugged
+        if self.step_callbacks and len(self.step_callbacks) > 0:
+            logger.info(f"There are {len(self.step_callbacks)} step callbacks "
+                        f"when initializing the agent")
+            for i, callback in enumerate(self.step_callbacks):
+                logger.info(f"Step callback #{i+1}: "
+                            f"{callback.__class__.__name__}")
+        else:
+            logger.warning("Warning: No step callbacks provided!")
 
-        return streaming_agent
-    else:
-        # Non-streaming mode: Use the standard CodeAgent
-        print(f"DeepSearch CodeAgent ({orchestrator_model_id}) "
-              f"created successfully, using executor: {executor_type}")
-        print(f"Allowed import modules: {combined_authorized_imports}")
-        print(f"Configured tools: "
-              f"{[tool.name for tool in code_agent.tools.values()]}")
-        if search_planning_interval:
-            print(f"Planning interval: Every {search_planning_interval} steps")
+        # add extra logs to confirm step callbacks
+        # this will check if the wrapped agent retains callbacks
+        if hasattr(agent, 'step_callbacks') and agent.step_callbacks:
+            logger.info(f"Agent created, has {len(agent.step_callbacks)} "
+                        f"step callbacks")
+        else:
+            logger.warning("Warning: Agent created without step callbacks!")
 
-        return code_agent
+        return agent

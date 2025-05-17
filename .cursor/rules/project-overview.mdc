@@ -11,31 +11,48 @@ DeepSearchAgent is an intelligent agent system that combines the ReAct (Reasonin
 
 ```
 src/agents/
-├── agent.py              # ReAct agent implementation
-├── cli.py                # Command-line interface
-├── codact_agent.py       # CodeAct agent implementation
-├── config_loader.py      # Configuration loading utilities
-├── main.py               # FastAPI web service
-├── prompts.py            # System prompts
-├── streaming_agents.py   # Streaming agent implementations
-├── streaming_models.py   # Streaming model wrappers
-└── tools/                # Tool implementations
+├── agent.py                # ReAct agent implementation
+├── cli.py                  # Command-line interface
+├── codact_agent.py         # CodeAct agent implementation
+├── config_loader.py        # Configuration loading utilities
+├── main.py                 # FastAPI web service
+├── prompt_templates/       # Modular prompt template system
+│   ├── codact_prompts.py   # CodeAct agent prompts
+│   └── react_prompts.py    # ReAct agent prompts
+├── streaming_agents.py     # Streaming agent implementations
+├── streaming_models.py     # Streaming model wrappers
+├── core/                   # Core implementation classes
+│   └── chunk/              # Text chunking components
+│       └── segmenter.py    # Jina AI Segmenter implementation
+└── tools/                  # Tool implementations
+    ├── chunk.py            # Text chunking tool
+    ├── embed.py            # Text embedding tool
+    ├── final_answer.py     # Final answer generation tool
+    ├── readurl.py          # URL content reading tool
+    ├── rerank.py           # Content reranking tool
+    ├── search.py           # Web search tool
+    └── wolfram.py          # Wolfram Alpha computational tool
 ```
 
 ## Version
-Current version: 0.2.4 (as specified in [pyproject.toml](mdc:pyproject.toml))
+Current version: 0.2.4.dev (as specified in [pyproject.toml](mdc:pyproject.toml))
 
 ## Core Components
 
 ### Agent Implementations
 - **[src/agents/main.py](mdc:src/agents/main.py)**: Main FastAPI service entry point
-- **[src/agents/cli.py](mdc:src/agents/cli.py)**: Command-line interface implementation
-- **[config.yaml](mdc:config.yaml)**: Configuration file for agents, models, and services
+- **[src/agents/cli.py](mdc:src/agents/cli.py)**: Command-line interface with improved logging
+- **[config.yaml](mdc:config.yaml)**: Configuration file with enhanced logging options
 - **[requirements.txt](mdc:requirements.txt)**: Project dependencies
 - **[src/agents/agent.py](mdc:src/agents/agent.py)**: Base agent implementation (ReAct paradigm)
 - **[src/agents/codact_agent.py](mdc:src/agents/codact_agent.py)**: CodeAct agent implementation
-- **[streaming_agents.py](mdc:src/agents/streaming_agents.py)**: Streaming-enabled versions of both agents
+- **[streaming_agents.py](mdc:src/agents/streaming_agents.py)**: Streaming-enabled versions of both agents (not recommended)
 - **[streaming_models.py](mdc:src/agents/streaming_models.py)**: Model wrappers supporting streaming output
+
+### Text Processing Components
+- **[src/agents/core/chunk/segmenter.py](mdc:src/agents/core/chunk/segmenter.py)**: Intelligent text segmentation using Jina AI Segment API
+- **[src/agents/tools/chunk.py](mdc:src/agents/tools/chunk.py)**: Tool interface for the new segmenter
+- **[src/agents/tools/final_answer.py](mdc:src/agents/tools/final_answer.py)**: Enhanced final answer generation with multiple output formats
 
 ## Key Components
 
@@ -44,9 +61,9 @@ Current version: 0.2.4 (as specified in [pyproject.toml](mdc:pyproject.toml))
    - CodeAct: Code execution agent generating Python code to perform actions
 
 2. **Tools Collection**: Various tools for deep web search and content processing:
-    - **Search tools**: Web search, content retrieval, chunking
-    - **Processing tools**: Embedding, reranking, computational tools ...
-    - **Final Answer tools**: Answer synthesis and formatting
+   - **Search tools**: Web search, content retrieval, chunking
+   - **Processing tools**: Embedding, reranking, computational tools
+   - **Final Answer tools**: Answer synthesis and formatting
 
 3. **Multiple Interfaces**:
    - CLI mode (`src/agents/cli.py`)
@@ -55,26 +72,44 @@ Current version: 0.2.4 (as specified in [pyproject.toml](mdc:pyproject.toml))
 4. **Configuration**:
    - [config.yaml](mdc:config.yaml): Main configuration file
    - [config_loader.py](mdc:src/agents/config_loader.py): Configuration loading utilities
-   - [prompts.py](mdc:src/agents/prompts.py): System prompts for different agent types
+   - [prompt_templates/](mdc:src/agents/prompt_templates): Modular prompt template system
    - API keys and sensitive data in `.env` (not committed to the repository)
 
-## Key Features in v0.2.4
+## Key Features in v0.2.4.dev
 
-As documented in @the release notes:
+1. **Text Chunking Enhancements**:
+   - Intelligent text segmentation via Jina AI Segment API
+   - Improved error handling and asynchronous processing
+   - Backward compatibility with previous chunking system
 
-1. **Streaming Output**: Real-time output for both agent types
-   - `StreamingReactAgent`: Full streaming of thinking, actions, observations
-   - `StreamingCodeAgent`: Streaming for final answer generation
+2. **Prompt Template System Refactoring**:
+   - Modular structure for better organization
+   - Enhanced template merging logic
+   - Updated tool descriptions
 
-2. **Periodic Planning**: Strategic reassessment at configurable intervals
-   - `planning_interval`: Controls frequency of planning steps
+3. **Final Answer Generation Improvements**:
+   - Multiple output format support
+   - Intelligent JSON processing
+   - Unified result formatting
+   - Better source link extraction
+
+4. **CLI and Logging Optimizations**:
+   - Simplified LiteLLM logs output
+   - Strict filtering for redundant logs
+   - Fixed tool naming consistency
+   - More granular log filtering options
+
+5. **Streaming Capability** (⚠️ Not Recommended):
+   - Current implementation has stability issues
+   - Set `enable_streaming: false` in config.yaml
+   - Will be improved in future releases
+
+6. **Periodic Planning**:
+   - Strategic reassessment at configurable intervals
    - Helps maintain focus and adjust search strategy
 
-3. **Enhanced CLI Experience**:
-   - Rich rendering of JSON/Markdown
-   - Progress tracking and statistics
-   - Task display management
-4. **Reliability Improvements**:
-   - Robust error handling
-   - Proper initialization sequence for executor environments
-   - Fixed type imports and tool recognition
+7. **Stability Improvements**:
+   - Enhanced error handling and retry mechanisms
+   - Improved asynchronous processing support
+   - Unified agent state management
+   - Centralized logging configuration
