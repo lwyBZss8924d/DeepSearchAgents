@@ -50,7 +50,7 @@ The CodeAct planning involves:
 
 Planning intervals can be configured in:
 
-1. [config.yaml](mdc:config.yaml):
+1. [config.toml](mdc:config.toml):
    ```yaml
    agents:
      react:

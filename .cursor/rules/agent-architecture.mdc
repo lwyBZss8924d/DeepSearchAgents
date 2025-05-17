@@ -95,7 +95,7 @@ The [prompt_templates](mdc:src/agents/prompt_templates) directory contains a mod
 ### ⚠️ Important Note: Streaming Functionality Not Recommended
 - Current streaming implementation has known issues and stability concerns
 - **Developers and users are advised not to enable streaming mode** until future optimizations
-- Set `enable_streaming` parameter to `false` in `config.yaml` for both agent types
+- Set `enable_streaming` parameter to `false` in `config.toml` for both agent types
 
 ### Streaming Components
 
