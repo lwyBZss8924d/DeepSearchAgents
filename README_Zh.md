@@ -492,15 +492,14 @@ CodeAct 指的是让智能体以代码形式生成并执行动作的方法。核
 
 DeepSearchAgent 项目在设计时考虑了现代 AI 工程师与人类工程师协作程序开发&编码的工作流程。我们已经整合了特殊的仓库工作区规则文件(`.cursor/rules/*.mdc`)，以促进 AI 辅助开发并确保代码库的一致性。
 
-### cursor-rules(`.mdc`) 等价于
+### `.cursor/rules/`(`.mdc`) 等价于
 
-- `CLAUDE.md`: Claude Code best practices
-- Codex CLI prompts: Codex CLI prompts for DeepSearchAgent
-- etc.
+- `CLAUDE.md`: `Claude Code` Prompting markdown file.
+- `AGENTS.md`: `Codex CLI` & `Codex` Software engineering Agent, Prompting markdown file.
 
-### 使用 .cursor/rules 文件
+### 使用 `.cursor/rules/` 文件
 
-本仓库在 `.cursor/rules/` 目录中包含特殊的文档文件，作为人类开发者和 AI 编码助手的上下文指南。这些文件类似于 [Claude Code 最佳实践](dev-docs/claude-code-best-practices.md) 中描述的 `CLAUDE.md` 概念，提供了关于项目架构、组件和约定的结构化信息。
+本仓库在 `.cursor/rules/` 目录中包含特殊的 Markdown 文件，作为人类开发者和 AI 编码助手的上下文指南提示词。这些文件类似于 [Claude Code 最佳实践](dev-docs/claude-code-best-practices.md) 中描述的 `CLAUDE.md` 概念，提供了关于项目架构、组件和约定的结构化信息。
 
 #### 可用的规则文件
 

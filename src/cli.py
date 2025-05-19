@@ -44,7 +44,6 @@ from src.core.config.settings import settings
 
 load_dotenv()
 
-# 设置logger
 logger = logging.getLogger(__name__)
 
 # Global settings

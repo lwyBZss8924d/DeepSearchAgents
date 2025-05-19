@@ -6,8 +6,8 @@ debug = true
 
 # Model configuration
 [models]
-orchestrator_id = "openai/openrouter/openai/o4-mini-high"  # for main LLM orchestration
-search_id = "openai/openrouter/openai/o4-mini-high"        # for search (if different)
+orchestrator_id = "openai/o4-mini-high"  # for main LLM orchestration
+search_id = "openai/o4-mini-high"        # for search (if different)
 reranker_type = "jina-reranker-m0"
 
 # Tools configuration
@@ -63,7 +63,7 @@ additional_authorized_imports = []  # additional Python modules allowed to impor
 [service]
 host = "0.0.0.0"
 port = 8000
-version = "0.2.6.dev"
+version = "0.2.6"
 deepsearch_agent_mode = "codact"  # "react" or "codact"
 
 # Logging configuration
@@ -85,8 +85,8 @@ api_base = "LITELLM_BASE_URL"
 api_key = "LITELLM_MASTER_KEY"
 
 [[model_list]]
-model_name = "gemini-2.5-pro-exp-03-25"
+model_name = "gemini-2.5-pro-preview-05-06"
 [model_list.litellm_params]
-model = "openai/gemini-2.5-pro-exp-03-25"
+model = "openai/gemini-2.5-pro-preview-05-06"
 api_base = "LITELLM_BASE_URL"
 api_key = "LITELLM_MASTER_KEY"

@@ -21,7 +21,7 @@ Build with 💖 for Humanity with AI
 
 [中文版](README_Zh.md)
 
-## 1. 项目介绍 | Introduction
+## 1. Introduction
 
 The DeepSearchAgent project is an intelligent agent system based on the ReAct (Reasoning + Acting) reasoning and action framework and the CodeAct (executable code-based intelligence) concept. It aims to achieve deep network search and reasoning. It leverages the reasoning capabilities of large language models (LLMs) as well as the ability to invoke external toolkits, enabling multi-step search, multimodal web text processing, reading, and multi-step reasoning to handle complex network search tasks that are both broad and deep, while providing traceable reference materials. The project is built on Hugging Face's smolagents framework and implements a dual-mode intelligent agent that can both invoke predefined tools and execute code.
 
@@ -499,15 +499,14 @@ Special thanks to the following open-source projects (as well as other equally i
 
 The DeepSearchAgent project is designed with modern AI engineers and human engineers collaborating in software development and coding workflows in mind. We have integrated special repository workspace rule files (`.cursor/rules/*.mdc`) to facilitate AI-assisted development and ensure consistency within the codebase.
 
-### Equivalent to cursor-rules (`.mdc`)
+### Equivalent to `.cursor/rules/` (`.mdc`)
 
-- `CLAUDE.md`: Claude Code best practices
-- Codex CLI prompts: Codex CLI prompts for DeepSearchAgent
-- etc.
+- `CLAUDE.md`: `Claude Code` Prompting markdown file.
+- `AGENTS.md`: `Codex CLI` & `Codex` Software engineering Agent, Prompting markdown file.
 
-### Using `.cursor/rules` Files
+### Use `.cursor/rules/` Files
 
-This repository contains special documentation files in the `.cursor/rules/` directory, serving as contextual guidelines for human developers and AI coding assistants. These files are similar to the `CLAUDE.md` concept described in [Claude Code Best Practices](dev-docs/claude-code-best-practices.md), providing structured information about project architecture, components, and conventions.
+This repository contains special Markdown files in the `.cursor/rules/` directory, serving as contextual guideline prompts for human developers and AI coding assistants. These files are similar to the `CLAUDE.md` concept described in [Claude Code Best Practices](dev-docs/claude-code-best-practices.md), providing structured information about project architecture, components, and conventions.
 
 #### Available Rules Files
 

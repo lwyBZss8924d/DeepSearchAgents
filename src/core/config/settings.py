@@ -20,15 +20,15 @@ class Settings(BaseSettings):
     # Service configuration
     SERVICE_HOST: str = "0.0.0.0"
     SERVICE_PORT: int = 8000
-    VERSION: str = "0.2.6.dev"
+    VERSION: str = ""
     DEEPSEARCH_AGENT_MODE: str = "codact"
 
     # Debug mode
     DEBUG: bool = False
 
     # Model configuration
-    ORCHESTRATOR_MODEL_ID: str = "openai/openrouter/openai/o4-mini-high"
-    SEARCH_MODEL_NAME: str = "openai/openrouter/openai/o4-mini-high"
+    ORCHESTRATOR_MODEL_ID: str = ""
+    SEARCH_MODEL_NAME: str = ""
     RERANKER_TYPE: str = "jina-reranker-m0"
 
     # Common agent configuration

@@ -71,6 +71,8 @@ dev = [
     "flake8>=7.2.0",
     "isort>=6.0.0",
     "mypy>=1.15.0",
+    "build",
+    "pyproject-hooks",
 ]
 test = [
     "pytest>=8.3.5",
