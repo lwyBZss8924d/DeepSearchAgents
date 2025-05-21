@@ -6,14 +6,17 @@ Build with 💖 for Humanity with AI
 
 ![Smolagents](https://img.shields.io/badge/Smolagents-1.16.0+-yellow.svg) <img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/smolagents/smolagents.png" alt="Smol Pingu" height="25">
 
+![MCP](https://img.shields.io/badge/MCP-1.9.0+-009688.svg?logo=mcp&logoColor=white) <img src="https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/main/docs/logo/dark.svg" alt="MCP" height="25">
+
 ![LiteLLM](https://img.shields.io/badge/LiteLLM-1.68.1+-orange.svg) 🚅
 
 ![Jina AI](https://img.shields.io/badge/Jina%20AI-blue.svg) <img src="static/Jina-white.png" alt="Jina AI" height="25">
 
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.00+-009688.svg?logo=fastapi&logoColor=white)
+
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![version](https://img.shields.io/badge/version-v0.2.6-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.6)
+[![version](https://img.shields.io/badge/version-v0.2.7.dev-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.7.dev)
 
 </h2>
 
@@ -57,7 +60,7 @@ The project supports command-line interface (CLI), standard FastAPI services, an
 **The ongoing intensive development plan:**
 
 1. CLI integration supports Docker containerization for rapid deployment;
-2. Encapsulate various FastAPI Agents as MCP (Model Context Protocol) Servers, providing MCP tools services;
+2. [DONE] Encapsulate various FastAPI Agents as MCP (Model Context Protocol) Servers, providing MCP tools services;
 3. [DONE] DeepSearchAgents' Toolbox adds MCP Client/MCP tools HUB, supporting MCP Tools configuration and invocation;
 4. Deep search strategies offer more strategy parameters, supporting Tokens budget parameters;
 5. Experimentally add DeepSearchAgents' Agent Runs evaluator (independent evaluation of DeepSearchAgents' deep search paths & result evaluation Agent);
@@ -188,6 +191,61 @@ make app
 python src/app.py
 ```
 
+### (4) Running the FastMCP Server
+
+DeepSearchAgent now supports serving as a Model Context Protocol (MCP) server, exposing deep search capabilities as an MCP tool that can be accessed by any MCP client.
+
+```bash
+# Run the FastMCP server with default settings
+python -m src.agents.servers.run_fastmcp
+# or with custom settings
+python -m src.agents.servers.run_fastmcp --agent-type codact --port 8100
+```
+
+This starts a FastMCP server with Streamable HTTP transport at `http://localhost:8100/mcp` (default), providing access to DeepSearchAgent's functionality through the `deepsearch_tool` endpoint.
+
+**Server Arguments:**
+
+* `--agent-type`: Agent type to use (`codact` or `react`, default: `codact`)
+* `--port`: Port number for server (default: `8100`)
+* `--host`: Host address (default: `0.0.0.0`)
+* `--debug`: Enable debug logging
+* `--path`: Custom URL path (default: `/mcp`)
+
+**Debugging with MCP Inspector:**
+
+The MCP Inspector can be used to debug and interact with the DeepSearchAgent MCP server:
+
+1. Install MCP Inspector if you haven't already:
+   ```bash
+   npm install -g @modelcontextprotocol/inspector
+   ```
+
+2. Start the MCP Inspector debugging console:
+   ```bash
+   npx @modelcontextprotocol/inspector
+   ```
+
+3. In the browser UI that opens (typically at http://127.0.0.1:6274):
+   * Set Transport Type: `Streamable HTTP`
+   * Set URL: `http://localhost:8100/mcp`
+   * Click "Connect"
+   * Navigate to "Tools" tab and select "deepsearch_tool"
+   * Enter your search query and click "Run Tool"
+
+4. You'll see real-time progress updates and the final search results rendered in the UI.
+
+**FastMCP Server in FastAPI Application:**
+
+You can also embed the FastMCP server in the main FastAPI application:
+
+```bash
+# Run main API server with FastMCP integration
+python -m src.main --enable-fastmcp --agent-type codact
+```
+
+When run with `--enable-fastmcp`, the main API server mounts the FastMCP server at `/mcp-server` (default) for integrated operation.
+
 ## 4. 🛠️ Architecture and Modules
 
 The core system architecture includes:
@@ -227,6 +285,7 @@ flowchart TB
         CLI{{"CLI"}}
         FastAPI{{"FastAPI Service"}}
         GaiaUI{{"GaiaUI"}}
+        MCPServer{{"MCP Server (FastMCP)"}}
     end
     subgraph DeepSearchAgentSystem["DeepSearch Agents System"]
         direction TB
@@ -264,6 +323,7 @@ Environment (for CodeAct)")]
     CLI -- "User Query" --> CoreAgents
     FastAPI -- "API Request" --> CoreAgents
     GaiaUI -- "User Input" --> CoreAgents
+    MCPServer -- "Tool Call" --> CoreAgents
     CoreAgents -- "Select Mode: ReAct" --> ToolAgent
     CoreAgents -- "Select Mode: CodeAct" --> CodeAgent
     CoreAgents -- "Select Mode: StreamingReAct" --> StreamingReactAgent
@@ -307,6 +367,7 @@ Environment (for CodeAct)")]
     StreamingReactAgent -. "Streaming Output" .-> GaiaUI
     StreamingCodeAgent -. "Streaming Output" .-> GaiaUI
     CoreAgents -. "Response" .-> Interfaces
+    CoreAgents -. "Tool Result" .-> MCPServer
 
     classDef default fill:#1a1a2e,stroke:#7700ff,stroke-width:2px,color:#00fff9
     classDef interface fill:#16213e,stroke:#ff00f7,stroke-width:3px,color:#00fff9
@@ -317,10 +378,12 @@ Environment (for CodeAct)")]
     classDef external fill:#1a1a2e,stroke:#00fff9,stroke-width:2px,color:#ff00f7
     classDef config fill:#0f0f1a,stroke:#7700ff,stroke-width:1px,color:#00fff9
     classDef streaming fill:#16213e,stroke:#00fff9,stroke-width:3px,color:#ff00f7
+    classDef mcpserver fill:#16213e,stroke:#ff00f7,stroke-width:3px,color:#00fff9
 
     CLI:::interface
     FastAPI:::interface
     GaiaUI:::interface
+    MCPServer:::mcpserver
     CoreAgents:::manager
     ToolAgent:::agent
     CodeAgent:::agent
@@ -569,3 +632,45 @@ I need to add new configuration options for depth search Tokens budget & index d
 
 As the project evolves, we encourage contributors to update and expand these rules files. If you're adding a new major component or changing existing architecture, please update the relevant `.mdc` files to reflect these changes. This helps maintain the documentation as a living resource that accurately represents the current state of the codebase.
 
+## Project Structure
+
+```
+src/
+├── main.py                # Main application entry point
+├── cli.py                 # Command-line interface
+├── app.py                 # Gradio UI web application
+├── agents/               # Agent implementations
+│   ├── __init__.py        # Package initialization
+│   ├── base_agent.py      # Base agent interface
+│   ├── codact_agent.py    # CodeAct agent implementation
+│   ├── react_agent.py     # ReAct agent implementation
+│   ├── runtime.py         # Agent runtime manager
+│   ├── prompt_templates/  # Modular prompt template system
+│   │   ├── __init__.py
+│   │   ├── codact_prompts.py
+│   │   └── react_prompts.py
+│   ├── servers/           # Server implementations 
+│   │   ├── __init__.py
+│   │   ├── run_fastmcp.py # FastMCP MCP server implementation
+│   │   ├── run_gaia.py    # Gradio UI web server
+│   │   └── gradio_patch.py # Gradio patch functions
+│   └── ui_common/         # Shared UI components
+├── api/                   # FastAPI service components
+│   └── v1/                # API version 1 endpoints
+├── core/                  # Core system components
+│   ├── chunk/             # Text chunking components
+│   ├── config/            # Configuration handling
+│   ├── ranking/           # Content ranking
+│   ├── scraping/          # Web content scraping
+│   └── search_engines/    # Search engine integrations
+└── tools/                 # Tool implementations
+    ├── __init__.py
+    ├── chunk.py           # Text chunking tool
+    ├── embed.py           # Text embedding tool
+    ├── final_answer.py    # Final answer generation tool
+    ├── readurl.py         # URL content reading tool
+    ├── rerank.py          # Content reranking tool
+    ├── search.py          # Web search tool
+    ├── toolbox.py         # Tool management utilities
+    └── wolfram.py         # Wolfram Alpha computational tool
+```
