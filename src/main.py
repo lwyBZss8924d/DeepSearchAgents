@@ -6,12 +6,12 @@
 """
 DeepSearchAgents - FastAPI API Entry
 
-This is a simplified version without Streamable HTTP & SSE functionality.
-Only basic Agent Run API endpoints are enabled.
+This module provides the main FastAPI entry point with both standard REST API
+endpoints and optional FastMCP integration for Streamable HTTP MCP API.
 """
 
-import os
 import logging
+import argparse
 import uvicorn
 from contextlib import asynccontextmanager
 from src.api.api import create_app
@@ -47,20 +47,91 @@ async def lifespan(app):
     logger.info("Application shutdown completed")
 
 
-app = create_app(lifespan=lifespan)
+def parse_args():
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(
+        description="DeepSearchAgents API Server"
+    )
+
+    # Server configuration
+    parser.add_argument(
+        "--host",
+        type=str,
+        default=settings.SERVICE_HOST,
+        help="Host address to bind the server to"
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=settings.SERVICE_PORT,
+        help="Port to bind the server to"
+    )
+    parser.add_argument(
+        "--log-level",
+        type=str,
+        default="info",
+        choices=["debug", "info", "warning", "error", "critical"],
+        help="Logging level"
+    )
+
+    # FastMCP integration options
+    parser.add_argument(
+        "--enable-fastmcp",
+        action="store_true",
+        help="Enable FastMCP integration"
+    )
+    parser.add_argument(
+        "--fastmcp-path",
+        type=str,
+        default="/mcp-server",
+        help="Path to mount the FastMCP server at"
+    )
+    parser.add_argument(
+        "--agent-type",
+        type=str,
+        default=settings.DEEPSEARCH_AGENT_MODE,
+        choices=["react", "codact"],
+        help="Agent type to use for FastMCP server"
+    )
+
+    return parser.parse_args()
+
+
+# Create the application
+args = parse_args()
+app = create_app(
+    lifespan=lifespan,
+    enable_fastmcp=args.enable_fastmcp,
+    fastmcp_path=args.fastmcp_path,
+    agent_type=args.agent_type
+)
 
 
 if __name__ == "__main__":
     """Entry point when running directly"""
-    log_level = os.getenv("LOG_LEVEL", "info").lower()
+    log_level = args.log_level.lower()
 
-    host_port = f"http://{settings.SERVICE_HOST}:{settings.SERVICE_PORT}"
-    logger.info(f"Starting FastAPI server: {host_port}")
+    host = args.host or settings.SERVICE_HOST
+    port = args.port or settings.SERVICE_PORT
 
-    # Run server using Uvicorn
+    # Show server configuration
+    server_url = f"http://{host}:{port}"
+    logger.info(f"Starting FastAPI server: {server_url}")
+
+    # Show FastMCP integration status
+    if args.enable_fastmcp:
+        mcp_path = f"{server_url}{args.fastmcp_path}/mcp"
+        logger.info(
+            f"FastMCP integration enabled at {mcp_path} "
+            f"(agent_type: {args.agent_type})"
+        )
+    else:
+        logger.info("FastMCP integration disabled")
+
+    # Run server using Uvicorn - pass the app instance directly
     uvicorn.run(
-        "main:app",
-        host=settings.SERVICE_HOST,
-        port=settings.SERVICE_PORT,
+        app,
+        host=host,
+        port=port,
         log_level=log_level
     )
