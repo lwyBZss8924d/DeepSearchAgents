@@ -81,7 +81,10 @@ test = [
 ]
 cli = [
     "rich>=14.0.0",
-    "prompt-toolkit>=3.0.0", 
+    "prompt-toolkit>=3.0.0",
+]
+fastmcp = [
+    "fastmcp>=2.3.0",
 ]
 
 [tool.pytest.ini_options]
