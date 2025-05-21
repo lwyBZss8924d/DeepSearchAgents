@@ -6,14 +6,17 @@
 
 ![Smolagents](https://img.shields.io/badge/Smolagents-1.16.0+-yellow.svg) <img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/smolagents/smolagents.png" alt="Smol Pingu" height="25">
 
+![MCP](https://img.shields.io/badge/MCP-1.9.0+-009688.svg?logo=mcp&logoColor=white) <img src="https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/main/docs/logo/dark.svg" alt="MCP" height="25">
+
 ![LiteLLM](https://img.shields.io/badge/LiteLLM-1.68.1+-orange.svg) 🚅
 
 ![Jina AI](https://img.shields.io/badge/Jina%20AI-blue.svg) <img src="static/Jina-white.png" alt="Jina AI" height="25">
 
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.00+-009688.svg?logo=fastapi&logoColor=white)
+
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![version](https://img.shields.io/badge/version-v0.2.6.dev-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/vv0.2.6.dev)
+[![version](https://img.shields.io/badge/version-v0.2.7.dev-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.7.dev)
 
 </h2>
 
@@ -56,7 +59,7 @@ DeepSearchAgent 项目是一个基于 ReAct（Reasoning + Acting）推理行动�
 
 **正在紧张迭代中的开发计划:**
 1. CLI 集成版本支持 Docker 容器化快速部署;
-2. 封装 FastAPI 各种 Agents 为 MCP (Model Context Protocol) Server, 提供 MCP tools 服务;
+2. [DONE] 封装 FastAPI 各种 Agents 为 MCP (Model Context Protocol) Server, 提供 MCP tools 服务;
 3. [DONE] DeepSearchAgents 的 ToolCollection 增加 MCP Client/MCP tools HUB, 支持 MCP Tools 配置和调用;
 4. 深度搜索策略提供更多策略参数, 支持 Tokens 预算参数;
 5. 实验性增加 DeepSearchAgents 的 Agent Runs 评估器(独立评估DeepSearchAgents 的 深度搜索路径&结果评估Agent);
@@ -163,13 +166,13 @@ uv run -- uvicorn src.agents.main:app --reload
 # 使用 LOG_LEVEL 环境变量设置日志级别（例如 LOG_LEVEL=debug make run）
 ```
 
-**API 端点**：
+**API 端口**：
 
 * `POST /run_react_agent`：运行 React 智能体。
 * `POST /run_deepsearch_agent`：运行由 `config.toml` 中 `service.deepsearch_agent_mode`（或 `DEEPSEARCH_AGENT_MODE` 环境变量）配置的智能体。
 * `GET /`：API 信息和健康检查。
 
-向配置的深度搜索端点发送 API 请求示例：
+向配置的深度搜索 REST API 端口发送 API 请求示例：
 
 ```bash
 curl -X POST http://localhost:8000/run_deepsearch_agent \
@@ -179,13 +182,71 @@ curl -X POST http://localhost:8000/run_deepsearch_agent \
 
 *（如果 `config.toml` 中的主机和端口已更改，请将 `localhost:8000` 替换为实际值）*
 
-### (3) 运行 GradioUI Web GUI 服务 | Running the GradioUI Web GUI Service
+### (3) 运行 GradioUI Web GUI Web 服务 | Running the GradioUI Web GUI Service
 
 ```bash
 make app
 # 或直接使用:
 python src/app.py
 ```
+
+### (4) 运行 MCP 服务 (MCP Tools `deepsearch_tool`) | Running the MCP Server (MCP Tools `deepsearch_tool`)
+
+DeepSearchAgent 现在支持作为模型上下文协议（MCP）服务器，暴露深度搜索功能作为一个 MCP 工具 `deepsearch_tool`，可以被任何 MCP 客户端访问。
+
+```bash
+# Run the FastMCP server with default settings
+python -m src.agents.servers.run_fastmcp
+# or
+python -m src.agents.servers.run_fastmcp --agent-type codact --port 8100
+```
+
+该命令会启动一个 FastMCP 服务器，使用 Streamable HTTP 传输，地址为 `http://localhost:8100/mcp`（默认），通过 `deepsearch_tool` 端点提供对 DeepSearchAgent 功能的访问。
+
+**服务器参数：**
+
+* `--agent-type`：要使用的代理类型（`codact` 或 `react`，默认：`codact`）
+* `--port`：服务器端口号（默认：`8100`）
+* `--host`：主机地址（默认：`0.0.0.0`）
+* `--debug`：启用调试日志
+* `--path`：自定义 URL 路径（默认：`/mcp`）
+
+**使用 MCP Inspector 进行调试：**
+
+可以使用 MCP Inspector 来调试和交互 DeepSearchAgent MCP 服务器：
+
+1. 如果还没有安装 MCP Inspector，请先安装：
+
+```bash
+npm install -g @modelcontextprotocol/inspector
+```
+
+2. 启动 MCP Inspector MCP 客户端开发调试控制台：
+
+```bash
+npx @modelcontextprotocol/inspector
+```
+
+3. 请在打开的浏览器界面中（通常在 `http://127.0.0.1:6274`）：
+
+  * 设置传输类型：`Streamable HTTP`
+  * 设置 URL：`http://localhost:8100/mcp`
+  * 点击“Connect”
+  * 转到“工具”标签并选择“deepsearch_tool”
+  * 输入您的搜索查询并点击“Run Tool”按钮
+
+4. 您将会看到实时的进度更新和最终的搜索结果在 MCP Inspector 调试台网页界面中呈现。
+
+**FastMCP 服务器在 FastAPI 应用中：**
+
+您也可以将 FastMCP 服务器嵌入到主 FastAPI 应用中：
+
+```bash
+# 启动运行主 API 服务器并启用 FastMCP 集成
+python -m src.main --enable-fastmcp --agent-type codact
+```
+
+当使用 `--enable-fastmcp` 运行时，主 API 服务器会在 `/mcp-server`（默认）挂载 FastMCP 服务器进行集成操作。
 
 ## 4. 🛠️ 架构与模块 | Architecture and Modules
 
@@ -195,9 +256,11 @@ python src/app.py
 2.  **专员核心运行时模块（`src/agents/runtime.py`）**：负责管理智能体运行时环境。
 3.  **专员工具箱集合（`src/agents/tools/`）**：智能体可以调用的函数（网络搜索、读取 URL 等）。
 4.  **FastAPI 服务（`src/api`）**：FastAPI 服务，提供 REST API 相关服务。
-5.  **CLI 接口 (`src/agents/cli.py`)**: 提供具有丰富格式的交互式命令行界面。
+5.  **CLI 接口 (`src/cli.py`)**：提供具有丰富格式的交互式命令行界面。
+6.  **GaiaUI Web 界面 (`src/app.py`)**：基于 Gradio 的 Web GUI，与智能体交互。
+7.  **MCP 工具服务器 (`src/agents/servers/run_fastmcp.py`)**：提供 MCP 协议的流式 Streamable HTTP 服务。
 
-注意: *当前架构图为 0.2.5 旧版, 待更新至 0.2.6 最新版本*
+*架构图已更新至版本 `v0.2.7.dev`*
 
 ```mermaid
 ---
@@ -220,87 +283,86 @@ config:
   layout: elk
 ---
 flowchart TB
-    subgraph Interfaces["Interfaces"]
+    subgraph 接口["接口"]
         direction LR
-        CLI{{"CLI"}}
-        FastAPI{{"FastAPI Service"}}
+        CLI{{"命令行"}}
+        FastAPI{{"FastAPI 服务"}}
+        GaiaUI{{"GaiaUI"}}
+        MCPServer{{"MCP 服务"}}
     end
-    subgraph DeepSearchAgentSystem["DeepSearch Agents System"]
+    subgraph 深度搜索智能体系统["DeepSearch Agents 系统"]
         direction TB
-        CoreAgents{{"Core Agents
-(Handles Mode Selection)"}}
-        ConfigLoader["Config Loader (toml, .env)"]
-        StreamingSupport["Streaming Support"]
-        subgraph Agents["Agent Logic"]
+        核心专员{{"核心专员(模式选择)"}}
+        配置加载["配置加载器 (toml, .env)"]
+        流式支持["流式响应支持"]
+        subgraph 智能体逻辑["智能体逻辑"]
             direction LR
-            ToolAgent[["ToolCallingAgent
-(Normal-ReAct)"]]
-            CodeAgent[["CodeAgent
-(CodeAct-ReAct)"]]
-            StreamingReactAgent[["StreamingReactAgent"]]
-            StreamingCodeAgent[["StreamingCodeAgent"]]
+            工具专员[["ToolCallingAgent\n(普通 ReAct)"]]
+            代码专员[["CodeAgent\n(CodeAct-ReAct)"]]
+            流式ReAct[["StreamingReactAgent"]]
+            流式CodeAct[["StreamingCodeAgent"]]
         end
     end
-    subgraph ToolCollection["Tool Collection"]
+    subgraph 工具箱["工具箱"]
         direction TB
-        SearchLinks[/search_links/]
-        ReadURL[/read_url/]
-        ChunkText[/chunk_text/]
-        EmbedTexts[/embed_texts/]
-        RerankTexts[/rerank_texts/]
+        搜索链接[/search_links/]
+        读取URL[/read_url/]
+        分块文本[/chunk_text/]
+        嵌入文本[/embed_texts/]
+        重排文本[/rerank_texts/]
         Wolfram[/"wolfram computational"/]
-        FinalAnswer[/final_answer/]
-        ExternalAPIs{{External APIs
-Serper, Jina, Wolfram...}}
+        最终答案[/final_answer/]
+        外部API{{外部 API\nSerper, Jina, Wolfram...}}
     end
-    subgraph Execution["Execution"]
-        PythonEnv[("Python Execution
-Environment (for CodeAct)")]
+    subgraph 执行环境["执行环境"]
+        Python环境(("Python 执行环境\n(CodeAct)"))
     end
 
-    CLI -- "User Query" --> CoreAgents
-    FastAPI -- "API Request" --> CoreAgents
-    CoreAgents -- "Select Mode: ReAct" --> ToolAgent
-    CoreAgents -- "Select Mode: CodeAct" --> CodeAgent
-    CoreAgents -- "Select Mode: StreamingReAct" --> StreamingReactAgent
-    CoreAgents -- "Select Mode: StreamingCodeAct" --> StreamingCodeAgent
-    CoreAgents -- "Uses Config" --> ConfigLoader
-    StreamingReactAgent -- "Inherits From" --> ToolAgent
-    StreamingCodeAgent -- "Inherits From" --> CodeAgent
-    StreamingReactAgent -- "Uses" --> StreamingSupport
-    StreamingCodeAgent -- "Uses" --> StreamingSupport
+    CLI -- "用户查询" --> 核心专员
+    FastAPI -- "API 请求" --> 核心专员
+    GaiaUI -- "用户输入" --> 核心专员
+    MCPServer -- "MCP 请求" --> 核心专员
+    核心专员 -- "选择模式: ReAct" --> 工具专员
+    核心专员 -- "选择模式: CodeAct" --> 代码专员
+    核心专员 -- "选择模式: 流式ReAct" --> 流式ReAct
+    核心专员 -- "选择模式: 流式CodeAct" --> 流式CodeAct
+    核心专员 -- "使用配置" --> 配置加载
+    流式ReAct -- "继承自" --> 工具专员
+    流式CodeAct -- "继承自" --> 代码专员
+    流式ReAct -- "使用" --> 流式支持
+    流式CodeAct -- "使用" --> 流式支持
 
-    ToolAgent == "Calls Tools" ==> SearchLinks
-    ToolAgent == "Calls Tools" ==> ReadURL
-    ToolAgent == "Calls Tools" ==> ChunkText
-    ToolAgent == "Calls Tools" ==> EmbedTexts
-    ToolAgent == "Calls Tools" ==> RerankTexts
-    ToolAgent == "Calls Tools" ==> Wolfram
-    ToolAgent == "Calls Tools" ==> FinalAnswer
+    工具专员 == "调用工具" ==> 搜索链接
+    工具专员 == "调用工具" ==> 读取URL
+    工具专员 == "调用工具" ==> 分块文本
+    工具专员 == "调用工具" ==> 嵌入文本
+    工具专员 == "调用工具" ==> 重排文本
+    工具专员 == "调用工具" ==> Wolfram
+    工具专员 == "调用工具" ==> 最终答案
 
-    CodeAgent == "Generates Code" ==> PythonEnv
-    PythonEnv[("Python Execution
-Environment (for CodeAct)")]
-    PythonEnv -- "Calls Tools via Code" --> SearchLinks
-    PythonEnv -- "Calls Tools via Code" --> ReadURL
-    PythonEnv -- "Calls Tools via Code" --> ChunkText
-    PythonEnv -- "Calls Tools via Code" --> EmbedTexts
-    PythonEnv -- "Calls Tools via Code" --> RerankTexts
-    PythonEnv -- "Calls Tools via Code" --> Wolfram
-    PythonEnv -- "Calls Tools via Code" --> FinalAnswer
+    代码专员 == "生成代码" ==> Python环境
+    Python环境 -- "代码调用工具" --> 搜索链接
+    Python环境 -- "代码调用工具" --> 读取URL
+    Python环境 -- "代码调用工具" --> 分块文本
+    Python环境 -- "代码调用工具" --> 嵌入文本
+    Python环境 -- "代码调用工具" --> 重排文本
+    Python环境 -- "代码调用工具" --> Wolfram
+    Python环境 -- "代码调用工具" --> 最终答案
 
-    SearchLinks -- "Uses External API" --> ExternalAPIs
-    ReadURL -- "Uses External API" --> ExternalAPIs
-    EmbedTexts -- "Uses External API" --> ExternalAPIs
-    RerankTexts -- "Uses External API" --> ExternalAPIs
-    Wolfram -- "Uses External API" --> ExternalAPIs
-    ExternalAPIs -.-> ToolCollection
+    搜索链接 -- "使用外部 API" --> 外部API
+    读取URL -- "使用外部 API" --> 外部API
+    嵌入文本 -- "使用外部 API" --> 外部API
+    重排文本 -- "使用外部 API" --> 外部API
+    Wolfram -- "使用外部 API" --> 外部API
+    外部API -.-> 工具箱
 
-    ToolAgent -. "Final Answer" .-> CoreAgents
-    CodeAgent -. "Final Answer" .-> CoreAgents
-    StreamingReactAgent -. "Streaming Output" .-> CLI
-    StreamingCodeAgent -. "Streaming Output" .-> CLI
-    CoreAgents -. "Response" .-> Interfaces
+    工具专员 -. "最终答案" .-> 核心专员
+    代码专员 -. "最终答案" .-> 核心专员
+    流式ReAct -. "流式输出" .-> CLI
+    流式CodeAct -. "流式输出" .-> CLI
+    流式ReAct -. "流式输出" .-> GaiaUI
+    流式CodeAct -. "流式输出" .-> GaiaUI
+    核心专员 -. "响应" .-> 接口
 
     classDef default fill:#1a1a2e,stroke:#7700ff,stroke-width:2px,color:#00fff9
     classDef interface fill:#16213e,stroke:#ff00f7,stroke-width:3px,color:#00fff9
@@ -314,22 +376,24 @@ Environment (for CodeAct)")]
 
     CLI:::interface
     FastAPI:::interface
-    CoreAgents:::manager
-    ToolAgent:::agent
-    CodeAgent:::agent
-    StreamingReactAgent:::agent
-    StreamingCodeAgent:::agent
-    StreamingSupport:::streaming
-    SearchLinks:::tool
-    ReadURL:::tool
-    ChunkText:::tool
-    EmbedTexts:::tool
-    RerankTexts:::tool
+    GaiaUI:::interface
+    MCPServer:::interface
+    核心专员:::manager
+    工具专员:::agent
+    代码专员:::agent
+    流式ReAct:::agent
+    流式CodeAct:::agent
+    流式支持:::streaming
+    搜索链接:::tool
+    读取URL:::tool
+    分块文本:::tool
+    嵌入文本:::tool
+    重排文本:::tool
     Wolfram:::tool
-    FinalAnswer:::tool
-    PythonEnv:::environment
-    ExternalAPIs:::external
-    ConfigLoader:::config
+    最终答案:::tool
+    Python环境:::environment
+    外部API:::external
+    配置加载:::config
 ```
 
 ## 5. ⚙️ AI 专员模式 (ReAct vs CodeAct) | Agent Modes
@@ -393,7 +457,7 @@ DeepSearchAgent 拥有一套可扩展的工具链，用于辅助智能体检索�
 
 ## 7. 📺 流式传输和渲染功能 | Streaming and Rendering Features
 
-v0.2.6.dev 版本 DeepSearchAgent 现在包含全面的流式传输和渲染功能(CLI & GUI)：
+>= `v0.2.6.dev` 版本 DeepSearchAgent 现在包含全面的流式传输和渲染功能(CLI & GUI)：
 
 ### 流式输出 | Streaming Output
 
@@ -560,3 +624,46 @@ DeepSearchAgent 项目在设计时考虑了现代 AI 工程师与人类工程师
 ### 贡献规则
 
 随着项目的发展，我们鼓励贡献者更新和扩展这些规则文件。如果您添加了新的主要组件或更改了现有架构，请更新相关的 `.mdc` 文件以反映这些变化。这有助于将文档维护为准确反映代码库当前状态的活跃资源。
+
+## 项目结构 | Project Structure
+
+```tree
+src/
+├── main.py                # Main application entry point
+├── cli.py                 # Command-line interface
+├── app.py                 # Gradio UI web application
+├── agents/               # Agent implementations
+│   ├── __init__.py        # Package initialization
+│   ├── base_agent.py      # Base agent interface
+│   ├── codact_agent.py    # CodeAct agent implementation
+│   ├── react_agent.py     # ReAct agent implementation
+│   ├── runtime.py         # Agent runtime manager
+│   ├── prompt_templates/  # Modular prompt template system
+│   │   ├── __init__.py
+│   │   ├── codact_prompts.py
+│   │   └── react_prompts.py
+│   ├── servers/           # Server implementations 
+│   │   ├── __init__.py
+│   │   ├── run_fastmcp.py # FastMCP MCP server implementation
+│   │   ├── run_gaia.py    # Gradio UI web server
+│   │   └── gradio_patch.py # Gradio patch functions
+│   └── ui_common/         # Shared UI components
+├── api/                   # FastAPI service components
+│   └── v1/                # API version 1 endpoints
+├── core/                  # Core system components
+│   ├── chunk/             # Text chunking components
+│   ├── config/            # Configuration handling
+│   ├── ranking/           # Content ranking
+│   ├── scraping/          # Web content scraping
+│   └── search_engines/    # Search engine integrations
+└── tools/                 # Tool implementations
+    ├── __init__.py
+    ├── chunk.py           # Text chunking tool
+    ├── embed.py           # Text embedding tool
+    ├── final_answer.py    # Final answer generation tool
+    ├── readurl.py         # URL content reading tool
+    ├── rerank.py          # Content reranking tool
+    ├── search.py          # Web search tool
+    ├── toolbox.py         # Tool management utilities
+    └── wolfram.py         # Wolfram Alpha computational tool
+```

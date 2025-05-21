@@ -173,7 +173,7 @@ uv run -- uvicorn src.agents.main:app --reload
 *   `POST /run_deepsearch_agent`: Runs the agent configured by `service.deepsearch_agent_mode` in `config.toml` (or `DEEPSEARCH_AGENT_MODE` env var).
 *   `GET /`: API info and health check.
 
-Example API request to the configured deep search endpoint:
+Example API request to the configured deep search REST API endpoint:
 
 ```bash
 curl -X POST http://localhost:8000/run_deepsearch_agent \
@@ -183,7 +183,7 @@ curl -X POST http://localhost:8000/run_deepsearch_agent \
 
 *(Replace `localhost:8000` with the actual host and port if changed in `config.toml`)*
 
-### (3) Running the GradioUI Web GUI Service
+### (3) Running the GradioUI Web GUI Web Service
 
 ```bash
 make app
@@ -191,14 +191,14 @@ make app
 python src/app.py
 ```
 
-### (4) Running the FastMCP Server
+### (4) Running the MCP Server (MCP Tools `deepsearch_tool`)
 
-DeepSearchAgent now supports serving as a Model Context Protocol (MCP) server, exposing deep search capabilities as an MCP tool that can be accessed by any MCP client.
+DeepSearchAgent now supports serving as a Model Context Protocol (MCP) server, exposing deep search capabilities as an MCP tool `deepsearch_tool` that can be accessed by any MCP client.
 
 ```bash
 # Run the FastMCP server with default settings
 python -m src.agents.servers.run_fastmcp
-# or with custom settings
+# or
 python -m src.agents.servers.run_fastmcp --agent-type codact --port 8100
 ```
 
@@ -217,23 +217,25 @@ This starts a FastMCP server with Streamable HTTP transport at `http://localhost
 The MCP Inspector can be used to debug and interact with the DeepSearchAgent MCP server:
 
 1. Install MCP Inspector if you haven't already:
-   ```bash
-   npm install -g @modelcontextprotocol/inspector
-   ```
 
-2. Start the MCP Inspector debugging console:
-   ```bash
-   npx @modelcontextprotocol/inspector
-   ```
+```bash
+npm install -g @modelcontextprotocol/inspector
+```
 
-3. In the browser UI that opens (typically at http://127.0.0.1:6274):
+2. Start the MCP Inspector dev MCP Client debugging console:
+
+```bash
+npx @modelcontextprotocol/inspector
+```
+
+3. In the browser UI that opens (typically at `http://127.0.0.1:6274`):
    * Set Transport Type: `Streamable HTTP`
    * Set URL: `http://localhost:8100/mcp`
    * Click "Connect"
    * Navigate to "Tools" tab and select "deepsearch_tool"
-   * Enter your search query and click "Run Tool"
+   * Enter your search query and click "Run Tool" button
 
-4. You'll see real-time progress updates and the final search results rendered in the UI.
+4. You'll see real-time progress updates and the final search results rendered in the MCP Inspector Web UI.
 
 **FastMCP Server in FastAPI Application:**
 
@@ -256,8 +258,9 @@ The core system architecture includes:
 4. **FastAPI Service (`src/api`)**: FastAPI service providing REST API related services.
 5. **CLI Interface (`src/cli.py`)**: Provides an interactive command-line interface with rich formatting.
 6. **GaiaUI Web Interface (`src/app.py`)**: Gradio-based web GUI for interacting with agents.
+7. **MCP Server (`src/agents/servers/run_fastmcp.py`)**: FastMCP server providing MCP tools services with Streamable HTTP transport.
 
-*Architecture diagram updated for version 0.2.6*
+*Architecture diagram updated for version `v0.2.7.dev`*
 
 ```mermaid
 ---
@@ -463,7 +466,7 @@ In a typical sequence, the agent first uses `search_links` to find information s
 
 ## 7. 📺 Streaming and Rendering Features
 
-In version v0.2.6, DeepSearchAgent now includes comprehensive streaming and rendering capabilities (CLI & GUI):
+In version >= `v0.2.6.dev`, DeepSearchAgent now includes comprehensive streaming and rendering capabilities (CLI & GUI):
 
 ### Streaming Output
 
@@ -634,7 +637,7 @@ As the project evolves, we encourage contributors to update and expand these rul
 
 ## Project Structure
 
-```
+```tree
 src/
 ├── main.py                # Main application entry point
 ├── cli.py                 # Command-line interface
