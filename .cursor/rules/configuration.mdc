@@ -1,7 +1,7 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # DeepSearchAgent Configuration
 
@@ -9,7 +9,7 @@ DeepSearchAgent uses a flexible configuration system with multiple options for c
 
 ## Configuration Sources
 
-1. **@config.yaml** configuration file
+1. **@config.toml** configuration file
 2. **Environment Variables**: Override config file settings
 3. **Command Line Arguments**: Highest precedence overrides
 

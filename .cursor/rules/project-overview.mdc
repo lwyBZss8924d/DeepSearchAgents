@@ -42,7 +42,7 @@ Current version: 0.2.4.dev (as specified in [pyproject.toml](mdc:pyproject.toml)
 ### Agent Implementations
 - **[src/agents/main.py](mdc:src/agents/main.py)**: Main FastAPI service entry point
 - **[src/agents/cli.py](mdc:src/agents/cli.py)**: Command-line interface with improved logging
-- **[config.yaml](mdc:config.yaml)**: Configuration file with enhanced logging options
+- **[config.toml](mdc:config.toml)**: Configuration file with enhanced logging options
 - **[requirements.txt](mdc:requirements.txt)**: Project dependencies
 - **[src/agents/agent.py](mdc:src/agents/agent.py)**: Base agent implementation (ReAct paradigm)
 - **[src/agents/codact_agent.py](mdc:src/agents/codact_agent.py)**: CodeAct agent implementation
@@ -70,7 +70,7 @@ Current version: 0.2.4.dev (as specified in [pyproject.toml](mdc:pyproject.toml)
    - FastAPI service (`src/agents/main.py`)
 
 4. **Configuration**:
-   - [config.yaml](mdc:config.yaml): Main configuration file
+   - [config.toml](mdc:config.toml): Main configuration file
    - [config_loader.py](mdc:src/agents/config_loader.py): Configuration loading utilities
    - [prompt_templates/](mdc:src/agents/prompt_templates): Modular prompt template system
    - API keys and sensitive data in `.env` (not committed to the repository)
@@ -101,7 +101,7 @@ Current version: 0.2.4.dev (as specified in [pyproject.toml](mdc:pyproject.toml)
 
 5. **Streaming Capability** (⚠️ Not Recommended):
    - Current implementation has stability issues
-   - Set `enable_streaming: false` in config.yaml
+   - Set `enable_streaming: false` in config.toml
    - Will be improved in future releases
 
 6. **Periodic Planning**:

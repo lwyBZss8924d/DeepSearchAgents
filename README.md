@@ -2,12 +2,20 @@
 
 Build with 💖 for Humanity with AI
 
-![Smolagents](https://img.shields.io/badge/Smolagents-1.14.0+-yellow.svg)
-![LiteLLM](https://img.shields.io/badge/LiteLLM-1.65.4+-orange.svg)
+<h2>
+
+![Smolagents](https://img.shields.io/badge/Smolagents-1.16.0+-yellow.svg) <img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/smolagents/smolagents.png" alt="Smol Pingu" height="25">
+
+![LiteLLM](https://img.shields.io/badge/LiteLLM-1.68.1+-orange.svg) 🚅
+
+![Jina AI](https://img.shields.io/badge/Jina%20AI-blue.svg) <img src="static/Jina-white.png" alt="Jina AI" height="25">
+
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.00+-009688.svg?logo=fastapi&logoColor=white)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![version](https://img.shields.io/badge/version-v0.2.4.dev-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/vv0.2.4.dev)
+[![version](https://img.shields.io/badge/version-v0.2.6-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.6)
+
+</h2>
 
 > **Come From Open Source, This is the Way**
 
@@ -15,41 +23,42 @@ Build with 💖 for Humanity with AI
 
 ## 1. Introduction
 
-DeepSearchAgent is an intelligent agent system that combines the ReAct (Reasoning + Acting) framework and the CodeAct concept (executable code agents) to enable deep web search and reasoning. It leverages a large language model (LLM) to perform reasoning and to invoke external tools, allowing it to answer complex queries through multi-step search, reading, and computation with traceable references. Built on Hugging Face's smolagents framework, this project implements a dual-mode agent capable of both tool calling and code execution, embodying the strengths of ReAct and CodeAct.
+The DeepSearchAgent project is an intelligent agent system based on the ReAct (Reasoning + Acting) reasoning and action framework and the CodeAct (executable code-based intelligence) concept. It aims to achieve deep network search and reasoning. It leverages the reasoning capabilities of large language models (LLMs) as well as the ability to invoke external toolkits, enabling multi-step search, multimodal web text processing, reading, and multi-step reasoning to handle complex network search tasks that are both broad and deep, while providing traceable reference materials. The project is built on Hugging Face's smolagents framework and implements a dual-mode intelligent agent that can both invoke predefined tools and execute code.
 
-It supports a Command Line Interface (CLI) and a standard FastAPI service, making it convenient for developers to integrate and use within various systems.
+The project supports command-line interface (CLI), standard FastAPI services, and GradioUI web GUI services, making it convenient for developers to develop experiments and integrate or use in various systems. It is an open-source project of Code Agent that is friendly to beginners. It is a great project for learning and developing Code Agent.
 
 ## 2. ✨ Features
 
-- 🔍 **Deep Research Capability**: Performs multi-step search, reading, and reasoning across web content to answer complex queries
-- 🧩 **Dual Agent Modes**: Supports both ReAct (tool calling) and CodeAct (Python execution) paradigms, configurable via `config.yaml` or environment variables
-- 🔧 **Extensible Toolchain**: Includes tools for web search, content retrieval, text processing, semantic ranking, and computation
-- ⚙️ **Flexible Configuration**: Manage parameters via a `config.yaml` file and API keys via `.env`
-- 📊 **Semantic Understanding**: Uses advanced embedding and reranking to identify the most relevant content
-- 🧮 **Computational Integration**: Connects with WolframAlpha for solving mathematical and computational queries
-- 🖥️ **Multiple Interfaces**: Offers a rich CLI experience and a standard FastAPI service
-- 📝 **Traceable References**: Provides sources and references for generated answers
-- 🔄 **Iterative Refinement**: Continuously improves search and analysis strategy based on initial findings
-- 📺 **Streaming Output**: Supports real-time streaming of agent steps and final answers with rich formatting
-- 🔍 **JSON/Markdown Rendering**: Automatically detects and renders structured outputs in a user-friendly format
-- 🧠 **Periodic Planning**: Implements strategic reassessment during execution to optimize search paths
+- 👻 **Deep Search Task Capability**: Handles complex questions through multi-step searching, reading, and reasoning processes involving online content.
+- **DeepSearch Specialist**: Supports both CodeAct (Python code execution) mode and ReAct (tool invocation) mode for experimental comparison; configuration of related Agent runtime, language models, and various tools can be managed via `config.toml` (`src/core/config/settings.py`).
+- 🪄 **Extensible Toolbox**: Built-in set of tools for web searching, content retrieval, text processing, semantic ranking, and computation.
+- 🔍 **Text Embedding and Re-ranking**: Uses Jina AI embedding and re-ranking models to process multimodal web content from URLs.
+- 🧠 **Periodic Planning and Updates**: Implements strategic reevaluation during execution to optimize search paths.
+- 🔄 **Iterative Optimization**: Continuously improves search and analysis strategies based on initial findings.
+- 💻 **Multiple Development and Debugging Interaction Modes**: Offers CLI command-line interaction, standard FastAPI service, and Gradio UI web interface.
+- 🔗 **Traceable References**: Provides sources and references for generated answers.
+- 📺 **Streaming Output**: Supports real-time streaming of agent steps and final answers, with rich text formatting.
+- 🧮 **Computational Engine**: Integrates WolframAlpha for mathematical and computational queries.
+- 📝 **JSON/Markdown Rendering**: Automatically detects and presents structured outputs in user-friendly formats.
 
 **Reference Case**
+
 - **CodeAct Mode Example**: Full CLI run showing multi-step deep search process.
   - Start:
-    ![CodeAct Start](docs/examples/codact-model-tests-250421-022/001-SEART.png)
-  - End:
-    ![CodeAct End](docs/examples/codact-model-tests-250421-022/008-END.png)
-- **ReAct Mode Example**: Full CLI run demonstrating the ReAct agent's process.
-  - Start:
-    ![ReAct Start](docs/examples/react-model-tests-250421-022/001-START.png)
-  - End:
-    ![ReAct End](docs/examples/react-model-tests-250421-022/007-END.png)
+    ![CodeAct Start](docs/examples/codact-model-tests-250517-002/CodeAct-Agent-START.png)
+  
+  ![CodeAct Action1](docs/examples/codact-model-tests-250517-002/CodeAct-Agent-action1.png)
+  
+  ![CodeAct Action1x](docs/examples/codact-model-tests-250517-002/CodeAct-Agent-action1x.png)
+
+  - FinalAnswer:
+    ![CodeAct FinalAnswer](docs/examples/codact-model-tests-250517-002/CodeAct-Agent-FinalAnswer.png)
 
 **The ongoing intensive development plan:**
+
 1. CLI integration supports Docker containerization for rapid deployment;
 2. Encapsulate various FastAPI Agents as MCP (Model Context Protocol) Servers, providing MCP tools services;
-3. DeepSearchAgents' ToolCollection adds MCP Client/MCP tools HUB, supporting MCP Tools configuration and invocation;
+3. [DONE] DeepSearchAgents' Toolbox adds MCP Client/MCP tools HUB, supporting MCP Tools configuration and invocation;
 4. Deep search strategies offer more strategy parameters, supporting Tokens budget parameters;
 5. Experimentally add DeepSearchAgents' Agent Runs evaluator (independent evaluation of DeepSearchAgents' deep search paths & result evaluation Agent);
 6. Adapt to code_sandbox Docker automated configuration, adding more remote code_sandbox secure environment SDK support;
@@ -69,12 +78,14 @@ This section guides you through setting up the environment, installing dependenc
     *   Git.
 
 2.  **Clone the Repository:**
+
     ```bash
     git clone https://github.com/DeepSearch-AgentTeam/DeepSearchAgent.git
     cd DeepSearchAgent
     ```
 
 3.  **Create Virtual Environment (Recommended):**
+
     ```bash
     # Using uv
     uv venv
@@ -90,116 +101,73 @@ This section guides you through setting up the environment, installing dependenc
 4.  **Install Dependencies:**
 
     *   **For running the FastAPI service:**
+
         ```bash
         uv pip install .
         ```
+
     *   **For running the CLI or for Development:**
+
         ```bash
         # Installs core + CLI dependencies + development tools in editable mode
         uv pip install -e ".[cli]"
         ```
+  
+    *   **For Development:**
+
+        ```bash
+        uv pip install -e ".[dev,test,cli]"
+        ```
 
 5.  **Configure:**
+
     ```bash
     # Create configuration files from templates
-    cp config.yaml.template config.yaml
+    cp config.template.toml config.toml
     cp .env.template .env
 
-    # Edit config.yaml for models, agent parameters, service settings
-    # nano config.yaml
+    # Edit config.toml for models, agent parameters, service settings
+    # nano config.toml
 
     # Edit .env for API keys (LITELLM_MASTER_KEY, SERPER_API_KEY, etc.)
     # nano .env
     ```
 
 **Configuration Details:**
-*   `config.yaml`: Contains non-sensitive configurations like model IDs, agent parameters (max steps, executor type), service settings (host, port).
+*   `config.toml`: Contains non-sensitive configurations like model IDs, agent parameters (max steps, executor type), service settings (host, port).
 
-```yaml
-# Example config.yaml content
-# Model configuration
-models:
-  orchestrator_id: "openrouter/openai/gpt-4.1"  # Used for main LLM orchestration
-  search_id: "openrouter/openai/gpt-4.1"        # Used for search (only if different)
-  reranker_type: "jina-reranker-m0"             # Default reranker type
+*   `.env`: Contains **only** sensitive API keys (e.g., `LITELLM_MASTER_KEY`, `SERPER_API_KEY`, `JINA_API_KEY`, `WOLFRAM_ALPHA_APP_ID`).
 
-# Agent common settings
-agents:
-  common:
-    verbose_tool_callbacks: true        # If true, show full tool inputs/outputs
-  
-  # Settings specific to the ReAct agent
-  react:
-    max_steps: 25                       # Max number of reasoning steps
-    enable_streaming: true              # Enable streaming output for final answer
-    planning_interval: 7                # Interval for agent planning steps
-
-  # Settings specific to the CodeAct agent
-  codact:
-    executor_type: "local"              # local or lambda (for AWS Lambda execution)
-    max_steps: 25                       # Max number of steps in execution
-    verbosity_level: 1                  # 0=minimal, 1=normal, 2=verbose
-    enable_streaming: true              # Enable streaming response (CLI priority)
-    executor_kwargs: {}                 # Additional kwargs for executor
-    additional_authorized_imports: []   # Additional Python modules to allow importing
-    planning_interval: 5                # Interval for agent planning steps
-
-# Service configuration
-service:
-  host: "0.0.0.0"
-  port: 8000
-  version: "v0.2.4.dev"
-  deepsearch_agent_mode: "codact"       # "react" or "codact"
-```
-
-*   `.env`: Contains **only** sensitive API keys (e.g., `LITELLM_MASTER_KEY`, `SERPER_API_KEY`, `JINA_API_KEY`, `WOLFRAM_ALPHA_APP_ID`). You can also optionally set `LOG_LEVEL` here (e.g., `debug`, `info`, `warning`, `error`).
-
-### Running the CLI
+### (1) Running the CLI console
 
 Ensure you have installed the CLI dependencies (see Step 4 in Installation & Setup).
 
 ```bash
-# Run the CLI (interactive mode, uses settings from config.yaml)
+# Run the CLI (interactive mode, uses settings from config.toml)
 make cli
 # or directly:
 uv run python -m src.agents.cli
-
-# Override agent type from config.yaml via CLI argument
-make cli ARGS="--agent-type react"
-# or directly:
-uv run python -m src.agents.cli --agent-type react
-
-# Enable or disable streaming output
-uv run python -m src.agents.cli --enable-streaming  # Enable streaming
-uv run python -m src.agents.cli --no-streaming      # Disable streaming
-
-# Configure planning intervals
-uv run python -m src.agents.cli --planning-interval 5  # For CodeAct
-uv run python -m src.agents.cli --react-planning-interval 7  # For ReAct
-
-# Run with a single query (non-interactive)
-uv run python -m src.agents.cli --query "Search the latest news about OpenAI's new GPT-4.1 API."
 ```
 
-CLI arguments will override settings defined in `config.yaml`.
+CLI arguments will override settings defined in `config.toml`.
 
-### Running the FastAPI Service
+### (2) Running the FastAPI Service
 
 Ensure you have installed the core dependencies (see Step 4 in Installation & Setup).
 
 ```bash
-# Start the main API server (uses host/port from config.yaml, e.g., http://0.0.0.0:8000)
+# Start the main API server (uses host/port from config.toml, e.g., http://0.0.0.0:8000)
 make run
 # or directly:
 uv run -- uvicorn src.agents.main:app --reload
-# Note: --host and --port are now taken from config.yaml via main.py
+# Note: --host and --port are now taken from config.toml via main.py
 # Use LOG_LEVEL environment variable for log level (e.g., LOG_LEVEL=debug make run)
 ```
 
 **API Endpoints:**
 
 *   `POST /run_react_agent`: Runs the React agent.
-*   `POST /run_deepsearch_agent`: Runs the agent configured by `service.deepsearch_agent_mode` in `config.yaml` (or `DEEPSEARCH_AGENT_MODE` env var).
+*   `POST /run_deepsearch_agent`: Runs the agent configured by `service.deepsearch_agent_mode` in `config.toml` (or `DEEPSEARCH_AGENT_MODE` env var).
 *   `GET /`: API info and health check.
 
 Example API request to the configured deep search endpoint:
@@ -209,18 +177,29 @@ curl -X POST http://localhost:8000/run_deepsearch_agent \
   -H "Content-Type: application/json" \
   -d '{"user_input": "Search the latest news about OpenAI'''s new GPT-4.1 API."}'
 ```
-*(Replace `localhost:8000` with the actual host and port if changed in `config.yaml`)*
+
+*(Replace `localhost:8000` with the actual host and port if changed in `config.toml`)*
+
+### (3) Running the GradioUI Web GUI Service
+
+```bash
+make app
+# or directly:
+python src/app.py
+```
 
 ## 4. 🛠️ Architecture and Modules
 
-The core system architecture consists of:
+The core system architecture includes:
 
-1.  **Core Agents (`src/agents/agent.py`, `src/agents/codact_agent.py`)**: Implement the ReAct and CodeAct logic based on `smolagents`.
-2.  **Streaming Support (`src/agents/streaming_agents.py`, `src/agents/streaming_models.py`)**: Provides real-time streaming output capabilities for both agent types.
-3.  **Tools (`src/agents/tools/`)**: Functions the agents can call (web search, read URL, etc.).
-4.  **FastAPI Service (`src/agents/main.py`)**: Exposes the agent functionality via a REST API.
-5.  **CLI Interface (`src/agents/cli.py`)**: Provides an interactive command-line interface with rich formatting.
-6.  **Configuration Loader (`src/agents/config_loader.py`)**: Manages loading settings from `config.yaml` and `.env`.
+1. **Core Specialist Agents Modules (`src/agents/react_agent.py`, `src/agents/codact_agent.py`)**: Implement ReAct and CodeAct logic based on `smolagents`. `src/agents/runtime.py` serves as the runtime manager, responsible for managing the agent's runtime environment.
+2. **Specialist Core Agent Runtime Module (`src/agents/runtime.py`)**: Responsible for managing the agent's runtime environment.
+3. **Agent Toolkit Collection (`src/tools/`)**: Functions that the agent can invoke (such as web search, reading URLs, etc.).
+4. **FastAPI Service (`src/api`)**: FastAPI service providing REST API related services.
+5. **CLI Interface (`src/cli.py`)**: Provides an interactive command-line interface with rich formatting.
+6. **GaiaUI Web Interface (`src/app.py`)**: Gradio-based web GUI for interacting with agents.
+
+*Architecture diagram updated for version 0.2.6*
 
 ```mermaid
 ---
@@ -247,12 +226,13 @@ flowchart TB
         direction LR
         CLI{{"CLI"}}
         FastAPI{{"FastAPI Service"}}
+        GaiaUI{{"GaiaUI"}}
     end
     subgraph DeepSearchAgentSystem["DeepSearch Agents System"]
         direction TB
         CoreAgents{{"Core Agents
 (Handles Mode Selection)"}}
-        ConfigLoader["Config Loader (yaml, .env)"]
+        ConfigLoader["Config Loader (toml, .env)"]
         StreamingSupport["Streaming Support"]
         subgraph Agents["Agent Logic"]
             direction LR
@@ -264,7 +244,7 @@ flowchart TB
             StreamingCodeAgent[["StreamingCodeAgent"]]
         end
     end
-    subgraph ToolCollection["Tool Collection"]
+    subgraph Toolbox["Toolbox"]
         direction TB
         SearchLinks[/search_links/]
         ReadURL[/read_url/]
@@ -283,6 +263,7 @@ Environment (for CodeAct)")]
 
     CLI -- "User Query" --> CoreAgents
     FastAPI -- "API Request" --> CoreAgents
+    GaiaUI -- "User Input" --> CoreAgents
     CoreAgents -- "Select Mode: ReAct" --> ToolAgent
     CoreAgents -- "Select Mode: CodeAct" --> CodeAgent
     CoreAgents -- "Select Mode: StreamingReAct" --> StreamingReactAgent
@@ -317,12 +298,14 @@ Environment (for CodeAct)")]
     EmbedTexts -- "Uses External API" --> ExternalAPIs
     RerankTexts -- "Uses External API" --> ExternalAPIs
     Wolfram -- "Uses External API" --> ExternalAPIs
-    ExternalAPIs -.-> ToolCollection
+    ExternalAPIs -.-> Toolbox
 
     ToolAgent -. "Final Answer" .-> CoreAgents
     CodeAgent -. "Final Answer" .-> CoreAgents
     StreamingReactAgent -. "Streaming Output" .-> CLI
     StreamingCodeAgent -. "Streaming Output" .-> CLI
+    StreamingReactAgent -. "Streaming Output" .-> GaiaUI
+    StreamingCodeAgent -. "Streaming Output" .-> GaiaUI
     CoreAgents -. "Response" .-> Interfaces
 
     classDef default fill:#1a1a2e,stroke:#7700ff,stroke-width:2px,color:#00fff9
@@ -337,6 +320,7 @@ Environment (for CodeAct)")]
 
     CLI:::interface
     FastAPI:::interface
+    GaiaUI:::interface
     CoreAgents:::manager
     ToolAgent:::agent
     CodeAgent:::agent
@@ -357,15 +341,28 @@ Environment (for CodeAct)")]
 
 ## 5. ⚙️ Agent Modes (ReAct vs CodeAct)
 
-DeepSearchAgent supports two modes of agent operation: the ReAct tool-calling mode and the CodeAct code-execution mode. The default mode used by the `/run_deepsearch_agent` endpoint is configured in `config.yaml` (`service.deepsearch_agent_mode`) or via the `DEEPSEARCH_AGENT_MODE` environment variable.
+DeepSearchAgent supports two modes of agent operation: the CodeAct code-execution mode and the ReAct tool-calling mode. The default mode used by the `/run_deepsearch_agent` endpoint is configured in `config.toml` (`service.deepsearch_agent_mode`) or via the `DEEPSEARCH_AGENT_MODE` environment variable.
 
 Both modes now support streaming output, providing real-time visibility into the agent's reasoning and execution process.
+
+### CodeAct Mode (Code Execution)
+
+In CodeAct mode, the agent produces executable Python code, and by running that code the agent completes its reasoning and actions. This allows for more complex operations, combining multiple steps into one code execution.
+
+**Example format:**
+
+```python
+results = search_links("example query")
+content = read_url(results[0]["link"])
+final_answer("The result is...")
+```
 
 ### ReAct Mode (Tool Calling)
 
 In ReAct mode, the agent operates in the classic reasoning+acting manner, with actions executed by invoking predefined tools. During its reasoning process, the LLM generates structured "action" outputs that specify which tool to use and with what parameters.
 
 **Example format:**
+
 ```json
 {
   "name": "search_links",
@@ -374,29 +371,6 @@ In ReAct mode, the agent operates in the classic reasoning+acting manner, with a
   }
 }
 ```
-
-### CodeAct Mode (Code Execution)
-
-In CodeAct mode, the agent produces executable Python code, and by running that code the agent completes its reasoning and actions. This allows for more complex operations, combining multiple steps into one code execution.
-
-**Example format:**
-```python
-results = search_links("example query")
-content = read_url(results[0]["link"])
-final_answer("The result is...")
-```
-
-### Streaming Mode
-
-New in version v0.2.4.dev, both ReAct and CodeAct agent types now support streaming output. When enabled:
-
-- ReAct agents (StreamingReactAgent) stream each thinking step, tool call, and final answer
-- CodeAct agents (StreamingCodeAgent) stream the final answer while maintaining standard execution for code steps
-- CLI renders special formats (JSON/Markdown) in real-time with rich formatting
-
-**Note**:
-
-> ⚠️ **Warning**: The current streaming functionality implementation has known issues and is not recommended for production use. We suggest setting `enable_streaming: false` in your `config.yaml` for both react and codact agents until a more stable version is released. We are working on improving the streaming implementation in future releases.
 
 ### Comparison and Use Cases
 
@@ -426,7 +400,7 @@ In a typical sequence, the agent first uses `search_links` to find information s
 
 ## 7. 📺 Streaming and Rendering Features
 
-New in version v0.2.4.dev, DeepSearchAgent now includes comprehensive streaming and rendering capabilities:
+In version v0.2.6, DeepSearchAgent now includes comprehensive streaming and rendering capabilities (CLI & GUI):
 
 ### Streaming Output
 
@@ -466,7 +440,7 @@ Compared to static instructions, code as an action representation offers greater
 
 ### Periodic Planning and Adaptive Search
 
-New in version v0.2.4.dev, both agent modes implement periodic planning intervals, allowing agents to reassess their strategy every N steps. This enables more effective search paths by:
+Both agent modes implement periodic planning intervals, allowing agents to reassess their strategy every N steps. This enables more effective search paths by:
 
 - Evaluating progress against the original task
 - Identifying gaps in information collection
@@ -478,14 +452,13 @@ New in version v0.2.4.dev, both agent modes implement periodic planning interval
 ### Requirements
 
 - Python 3.13+
-- Create `config.yaml` from `config.yaml.template` and customize parameters.
+- Create `config.toml` from `config.template.toml` and customize parameters.
 - Create `.env` from `.env.template` and add required API keys:
   - `LITELLM_MASTER_KEY` (if using LiteLLM compatible models)
   - `SERPER_API_KEY` (for web search via `search_links`)
   - `JINA_API_KEY` (for content processing via `read_url`, `embed_texts`, `rerank_texts`)
   - `WOLFRAM_ALPHA_APP_ID` (optional, for computational queries via `wolfram`)
   - `LITELLM_BASE_URL` (optional, if using a custom LiteLLM endpoint)
-  - `LOG_LEVEL` (optional, e.g., `debug`, `info`, `warning`, `error`)
 
 ## 10. 🤝 Contributing
 
@@ -497,15 +470,14 @@ This project is licensed under the MIT License
 
 ## 12. 📝 Acknowledgements Open Source Projects
 
-Very special thanks to the following projects and individuals who made this project possible:
+Special thanks to the following open-source projects (as well as other equally important projects not listed), "May the Force be with you":
 
 - [Hugging Face](https://huggingface.co/) 🤗
-- [smolagents](https://github.com/huggingface/smolagents) <img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/smolagents/smolagents.png" alt="Smol Pingu" height="15">
+- [smolagents](https://github.com/huggingface/smolagents)
 - [Litellm](https://github.com/BerriAI/litellm) 🚅
 - [FastAPI](https://github.com/tiangolo/fastapi)
 - [Jina AI](https://github.com/jina-ai)
 - [Langchain](https://github.com/langchain-ai/langchain)
-- [Langgraph](https://github.com/langchain-ai/langgraph)
 
 ## 13. Theoretical Foundations & References
 
@@ -527,15 +499,14 @@ Very special thanks to the following projects and individuals who made this proj
 
 The DeepSearchAgent project is designed with modern AI engineers and human engineers collaborating in software development and coding workflows in mind. We have integrated special repository workspace rule files (`.cursor/rules/*.mdc`) to facilitate AI-assisted development and ensure consistency within the codebase.
 
-### Equivalent to cursor-rules (`.mdc`)
+### Equivalent to `.cursor/rules/` (`.mdc`)
 
-- `CLAUDE.md`: Claude Code best practices
-- Codex CLI prompts: Codex CLI prompts for DeepSearchAgent
-- etc.
+- `CLAUDE.md`: `Claude Code` Prompting markdown file.
+- `AGENTS.md`: `Codex CLI` & `Codex` Software engineering Agent, Prompting markdown file.
 
-### Using `.cursor/rules` Files
+### Use `.cursor/rules/` Files
 
-This repository contains special documentation files in the `.cursor/rules/` directory, serving as contextual guidelines for human developers and AI coding assistants. These files are similar to the `CLAUDE.md` concept described in [Claude Code Best Practices](dev-docs/claude-code-best-practices.md), providing structured information about project architecture, components, and conventions.
+This repository contains special Markdown files in the `.cursor/rules/` directory, serving as contextual guideline prompts for human developers and AI coding assistants. These files are similar to the `CLAUDE.md` concept described in [Claude Code Best Practices](dev-docs/claude-code-best-practices.md), providing structured information about project architecture, components, and conventions.
 
 #### Available Rules Files
 
@@ -597,3 +568,4 @@ I need to add new configuration options for depth search Tokens budget & index d
 ### Contributing to Rules
 
 As the project evolves, we encourage contributors to update and expand these rules files. If you're adding a new major component or changing existing architecture, please update the relevant `.mdc` files to reflect these changes. This helps maintain the documentation as a living resource that accurately represents the current state of the codebase.
+
