@@ -189,6 +189,7 @@ uv.lock
 # Project specific ignores
 CLAUDE.md
 config.yaml
+config.toml
 
 # Cursor specific files (often user-specific)
 .cursor/
@@ -205,4 +206,24 @@ config.yaml
 mcp.json # If mcp.json can appear elsewhere
 ~/.cursor/mcp.json # Ignore if path is explicitly added (less likely)
 
-smolagents
+# packages source code
+/smolagents
+
+# dev-docs (exclude all except commits and Issues)
+/dev-docs/*
+!/dev-docs/commits/
+!/dev-docs/Issues/
+
+# dev branch
+/src/api_streaming
+
+# dev test logs & cache
+/tests
+/callback_logs
+/redis_cache
+/.gradio
+/uploads
+/tmp_gradio
+
+# docker
+/docker

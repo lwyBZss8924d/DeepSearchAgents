@@ -8,6 +8,15 @@ this file to extend the smolagents base prompts.
 """
 
 from typing import Dict, Any
+from src.agents.ui_common.constants import AGENT_EMOJIS, TOOL_ICONS
+
+THINKING_EMOJI = AGENT_EMOJIS["thinking"]
+PLANNING_EMOJI = AGENT_EMOJIS["planning"]
+REPLANNING_EMOJI = AGENT_EMOJIS["replanning"]
+ACTION_EMOJI = AGENT_EMOJIS["action"]
+FINAL_EMOJI = AGENT_EMOJIS["final"]
+ERROR_EMOJI = AGENT_EMOJIS["error"]
+TOOL_ICONS = TOOL_ICONS
 
 # DeepSearch CodeAgent system prompt extension
 CODACT_SYSTEM_EXTENSION = """
@@ -20,59 +29,63 @@ manage the search process, gather information step-by-step, synthesize findings,
 and finally provide the answer using the `final_answer` tool.
 
 **Workflow:**
-1.  **Think:** Analyze the task, your current knowledge, available tools, and previous steps.
-2.  **Plan:** Decide the sequence of Python code actions needed. This might involve searching,
-    reading URLs, processing text, using WolframAlpha, or combining information.
-3.  **Write Code:** Write a Python code snippet enclosed in ```python ... ``` that calls
-    the available tools and implements the planned logic. You can use variables to store
-    intermediate results and manage state.
-4.  **Observe:** The code will be executed, and you will receive the output (stdout/stderr
-    and the return value of the last expression).
-5.  **Repeat:** Go back to step 1, incorporating the new observation into your thinking,
-    refining the plan, and writing the next code snippet until the task is complete.
-6.  **Final Answer:** When you have sufficient information, write code that calls
-    `final_answer("Your synthesized answer here.")`.
+1.  **{0} Think:** Analyze the task, your current knowledge, available tools, 
+    and previous steps.
+2.  **{1} Plan:** Decide the sequence of Python code actions needed. This might 
+    involve searching, reading URLs, processing text, using WolframAlpha, 
+    or combining information.
+3.  **{2} Write Code:** Write a Python code snippet enclosed in ```python ... ``` 
+    that calls the available tools and implements the planned logic. You can use 
+    variables to store intermediate results and manage state.
+4.  **Observe:** The code will be executed, and you will receive the output 
+    (stdout/stderr and the return value of the last expression).
+5.  **{3} Repeat:** Go back to step 1, incorporating the new observation into 
+    your thinking, refining the plan, and writing the next code snippet until 
+    the task is complete.
+6.  **{4} Final Answer:** When you have sufficient information, write code that 
+    calls `final_answer("Your synthesized answer here.")`.
 
 **Available Tools (Callable as Python functions):**
 
-*   `search_links(query: str, num_results: int = 10, location: str = 'us') -> str:`
-    Performs a web search. Returns a JSON string list of results (title, link, snippet).
-    Example: `results_json = search_links(query="...", num_results=5)`
+*   `{5} search_links(query: str, num_results: int = 10, location: str = 'us') 
+    -> str:` Performs a web search. Returns a JSON string list of results 
+    (title, link, snippet). Example: 
+    `results_json = search_links(query="...", num_results=10)`
+    If you need get more web search URLs results, you can set `num_results` to a 
+    larger number.
 
-*   `read_url(url: str, output_format: str = 'markdown') -> str:`
+*   `{6} read_url(url: str, output_format: str = 'markdown') -> str:`
     Reads the content of a URL. Returns the content as a string
-    (Markdown by default). Example:
+    (Markdown by default or 'text'). Example:
     `content = read_url(url="https://...")`
     This tool already handles webpage fetching, parsing, and clean
     formatting. DO NOT use low-level python libraries like 'requests', 'bs4',
     'urllib', or 'html' for URL content - use this tool instead.
 
-*   `chunk_text(text: str, chunk_size: int = 150, chunk_overlap: int = 50)
-    -> str:`
-    Splits text into smaller chunks using Jina AI Segmenter API. Returns
-    array of chunks as JSON string. Example:
+*   `{7} chunk_text(text: str, chunk_size: int = 150, chunk_overlap: int = 50)
+    -> str:` Splits text into smaller chunks using Jina AI Segmenter API. 
+    Returns array of chunks as JSON string. Example:
     `chunks = chunk_text(text="Long text...", chunk_size=1000)`
     Useful for processing long texts that exceed token limits.
 
-*   `rerank_texts(query: str, texts: List[str], top_n: int = 3) ->
-    List[str]:`
-    Reranks texts based on relevance to query. Returns top_n most
+*   `{8} rerank_texts(query: str, texts: List[str], top_n: int = 3) ->
+    List[str]:` Reranks texts based on relevance to query. Returns top_n most
     relevant. Example:
     `best_chunks = rerank_texts(query="climate change", texts=chunks)`
     Use this after chunking to find most relevant sections.
 
-*   `embed_texts(texts: List[str]) -> List[List[float]]:`
+*   `{9} embed_texts(texts: List[str]) -> List[List[float]]:`
     Creates vector embeddings for provided texts. Returns list of
     embedding vectors. Example:
     `embeddings = embed_texts(texts=["Text 1", "Text 2"])`
     Useful for semantic clustering or similarity comparison.
 
-*   `wolfram(query: str) -> str:`
+*   `{10} wolfram(query: str) -> str:`
     Asks Wolfram Alpha for calculations or specific factual data.
     Returns the answer string.
     Example: `result = wolfram(query="integrate x^2 dx")`
 
-*   `final_answer(answer: str) -> None:`
+*   `{11} final_answer(answer: str) -> None:`
     Use this **only** when you have the final, synthesized answer.
     Example: `final_answer("The answer is...")`
 
@@ -103,7 +116,7 @@ if url not in visited_urls:
 
 
 **Periodic Planning:**
-Every {planning_interval} steps, you should reassess your search strategy. This involves:
+Every {{planning_interval}} steps, you should reassess your search strategy. This involves:
 1. Evaluating what you've learned so far
 2. Identifying gaps in your knowledge
 3. Adjusting your search approach based on what's been effective
@@ -289,31 +302,44 @@ You are a helpful AI assistant using Python code to solve complex tasks. You hav
 You must now synthesize all the information you've gathered into a comprehensive, accurate and helpful final answer.
 """,
     "post_messages": """
-Based on all the information I've gathered, please provide a comprehensive final answer to the original question:
+Based on all the information I've gathered, please provide a comprehensive final 
+answer to the original question:
 
 {{task}}
 
-Your answer should be well-structured, accurate, and draw from all relevant information collected.
-Include specific facts, figures, and references to sources where appropriate to support your conclusions.
+Your answer should be well-structured, accurate, and draw from all relevant 
+information collected.
+Include specific facts, figures, and references to sources where appropriate to 
+support your conclusions.
 
-IMPORTANT: You have gathered and analyzed information in English, but you MUST provide the final answer in the SAME LANGUAGE as the original user query. If the original query was in English, answer in English. If it was in another language (e.g., Chinese, Spanish, French, etc.), translate your comprehensive answer into that language.
+IMPORTANT: You have gathered and analyzed information in English, but you MUST 
+provide the final answer in the SAME LANGUAGE as the original user query. If the 
+original query was in English, answer in English. If it was in another language 
+(e.g., Chinese, Spanish, French, etc.), translate your comprehensive answer into 
+that language.
 
 FORMATTING REQUIREMENTS:
 
-1. Format your answer as a well-structured markdown report with appropriate headings, bullet points, and sections.
+1. Format your answer as a well-structured markdown report with appropriate 
+   headings, bullet points, and sections.
 
-2. For the source references, provide them at the end of your answer in a "## Sources" section with numbered Markdown URL references. For example:
+2. For the source references, provide them at the end of your answer in a 
+   "## Sources" section with numbered Markdown URL references. For example:
    1. [Source title](URL)
    2. [Another source](URL)
 
 3. Your answer MUST be formatted as a JSON object with the following structure:
+
+```json
 {
   "title": "A descriptive title for your answer",
   "content": "Your comprehensive markdown-formatted answer including sources section at the end",
   "sources": ["URL1", "URL2", "..."]
 }
+```
 
-The answer must be returned as a properly formatted JSON string using json.dumps() with ensure_ascii=False.
+The answer must be returned as a properly formatted JSON string using 
+json.dumps() with ensure_ascii=False.
 """
 }
 
@@ -345,7 +371,8 @@ Here is the final answer from your managed agent '{{name}}':
 def merge_prompt_templates(base_templates: Dict[str, Any],
                            extensions: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Merge base templates with extensions, correctly handling TypedDict structures
+    Merge base templates with extensions, correctly handling TypedDict
+    structures
 
     Args:
         base_templates: base templates loaded from smolagents
@@ -358,10 +385,31 @@ def merge_prompt_templates(base_templates: Dict[str, Any],
     if not isinstance(base_templates, dict):
         raise TypeError("base_templates must be a dictionary")
 
+    from src.core.config.settings import settings
+    planning_interval = getattr(settings, "CODACT_PLANNING_INTERVAL", 4)
+
+    system_prompt = CODACT_SYSTEM_EXTENSION
+    system_prompt = system_prompt.replace("{{planning_interval}}", str(planning_interval))
+    system_prompt = system_prompt.replace("{0}", THINKING_EMOJI)
+    system_prompt = system_prompt.replace("{1}", PLANNING_EMOJI)
+    system_prompt = system_prompt.replace("{2}", ACTION_EMOJI)
+    system_prompt = system_prompt.replace("{3}", REPLANNING_EMOJI)
+    system_prompt = system_prompt.replace("{4}", FINAL_EMOJI)
+    system_prompt = system_prompt.replace("{5}", TOOL_ICONS["search_links"])
+    system_prompt = system_prompt.replace("{6}", TOOL_ICONS["read_url"])
+    system_prompt = system_prompt.replace("{7}", TOOL_ICONS["chunk_text"])
+    system_prompt = system_prompt.replace("{8}", TOOL_ICONS["rerank_texts"])
+    system_prompt = system_prompt.replace("{9}", TOOL_ICONS["embed_texts"])
+    system_prompt = system_prompt.replace("{10}", TOOL_ICONS["wolfram"])
+    system_prompt = system_prompt.replace("{11}", TOOL_ICONS["final_answer"])
+
     # Create a normal dictionary instead of "instantiating" TypedDict
     merged = {
         # System prompt: appending rather than replacing
-        "system_prompt": base_templates.get("system_prompt", "") + "\n\n" + CODACT_SYSTEM_EXTENSION,
+        "system_prompt": (
+            base_templates.get("system_prompt", "") + "\n\n" +
+            system_prompt
+        ),
 
         # Planning templates: preserving base structure
         "planning": {
@@ -371,11 +419,15 @@ def merge_prompt_templates(base_templates: Dict[str, Any],
             ),
             "update_plan_pre_messages": PLANNING_TEMPLATES.get(
                 "update_plan_pre_messages",
-                base_templates.get("planning", {}).get("update_plan_pre_messages", "")
+                base_templates.get("planning", {}).get(
+                    "update_plan_pre_messages", ""
+                )
             ),
             "update_plan_post_messages": PLANNING_TEMPLATES.get(
                 "update_plan_post_messages",
-                base_templates.get("planning", {}).get("update_plan_post_messages", "")
+                base_templates.get("planning", {}).get(
+                    "update_plan_post_messages", ""
+                )
             ),
         },
 
