@@ -188,6 +188,16 @@ make app
 python src/app.py
 ```
 
+### (4) Running the MCP Server
+
+The FastMCP server exposes DeepSearchAgents via a Streamable HTTP API.
+Ensure `fastmcp>=2.3.0` is installed then run:
+
+```bash
+python src/agents/servers/run_fastmcp.py --agent-type codact --port 8100
+```
+
+
 ## 4. 🛠️ Architecture and Modules
 
 The core system architecture includes:
