@@ -16,7 +16,7 @@ Build with 💖 for Humanity with AI
 
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![version](https://img.shields.io/badge/version-v0.2.7.dev-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.7.dev)
+[![version](https://img.shields.io/badge/version-v0.2.8-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.8)
 
 </h2>
 
@@ -62,12 +62,13 @@ The project supports command-line interface (CLI), standard FastAPI services, an
 1. CLI integration supports Docker containerization for rapid deployment;
 2. [DONE] Encapsulate various FastAPI Agents as MCP (Model Context Protocol) Servers, providing MCP tools services;
 3. [DONE] DeepSearchAgents' Toolbox adds MCP Client/MCP tools HUB, supporting MCP Tools configuration and invocation;
-4. Deep search strategies offer more strategy parameters, supporting Tokens budget parameters;
-5. Experimentally add DeepSearchAgents' Agent Runs evaluator (independent evaluation of DeepSearchAgents' deep search paths & result evaluation Agent);
-6. Adapt to code_sandbox Docker automated configuration, adding more remote code_sandbox secure environment SDK support;
-7. Integrate full-process agent runs telemetry adaptation (Langfuse);
-8. Human-in-the-loop tentative & multi-path branch backtracking for agent runs;
-9. Agent runs in concurrent arena mode;
+4. [DONE] Multiple search engine support (added XCom alongside Serper) with configurable provider selection;
+5. Deep search strategies offer more strategy parameters, supporting Tokens budget parameters;
+6. Experimentally add DeepSearchAgents' Agent Runs evaluator (independent evaluation of DeepSearchAgents' deep search paths & result evaluation Agent);
+7. Adapt to code_sandbox Docker automated configuration, adding more remote code_sandbox secure environment SDK support;
+8. Integrate full-process agent runs telemetry adaptation (Langfuse);
+9. Human-in-the-loop tentative & multi-path branch backtracking for agent runs;
+10. Agent runs in concurrent arena mode;
 
 ## 3. 🚀 Quick Start (CLI & FastAPI)
 
@@ -260,7 +261,7 @@ The core system architecture includes:
 6. **GaiaUI Web Interface (`src/app.py`)**: Gradio-based web GUI for interacting with agents.
 7. **MCP Server (`src/agents/servers/run_fastmcp.py`)**: FastMCP server providing MCP tools services with Streamable HTTP transport.
 
-*Architecture diagram updated for version `v0.2.7.dev`*
+*Architecture diagram updated for version `v0.2.8`*
 
 ```mermaid
 ---
