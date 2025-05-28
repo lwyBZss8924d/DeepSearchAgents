@@ -7,11 +7,17 @@
 Search Engines API for web search tools.
 """
 
-from .serper import (
+from .search_serper import (
     SerperAPIException,
     SearchResult,
     SerperAPI,
     SerperConfig,
+)
+
+from .search_xcom import (
+    XAISearchClient,
+    detect_x_query,
+    extract_x_handles,
 )
 
 __all__ = [
@@ -19,4 +25,7 @@ __all__ = [
     "SearchResult",
     "SerperAPI",
     "SerperConfig",
+    "XAISearchClient",
+    "detect_x_query",
+    "extract_x_handles",
 ]

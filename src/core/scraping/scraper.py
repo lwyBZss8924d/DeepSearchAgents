@@ -72,9 +72,8 @@ class JinaReaderScraper:
             'X-Respond-With': model,
             'X-Return-Format': output_format,
             'X-No-Cache': 'true',  # Force fresh fetch
-            'X-Timeout': '120',  # Explicit timeout in seconds
-            'X-With-Links-Summary': 'true',  # Include links summary
-            'X-With-Images-Summary': 'true',  # Include images summary
+            'X-Timeout': '600',  # Explicit timeout in seconds
+            'X-With-Links-Summary': 'all',  # Include links summary
             'X-Engine': 'browser'  # Use browser engine as it's more robust
         }
         self.output_format = output_format

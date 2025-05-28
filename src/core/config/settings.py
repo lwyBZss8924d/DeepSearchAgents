@@ -73,6 +73,7 @@ class Settings(BaseSettings):
     litellm_base_url: Optional[str] = None
     serper_api_key: Optional[str] = None
     jina_api_key: Optional[str] = None
+    xai_api_key: Optional[str] = None
     wolfram_alpha_app_id: Optional[str] = None
     hf_token: Optional[str] = None  # Hugging Face token for private repos
 

@@ -18,16 +18,17 @@ AGENT_EMOJIS = {
     "error": "❌"
 }
 
-# Agent Tools icons
+# Define the tool icons here to avoid circular imports
 TOOL_ICONS = {
-    "search_links": "🔍",
-    "read_url": "📖",
-    "chunk_text": "✂️",
-    "embed_texts": "🧩",
-    "rerank_texts": "🏆",
-    "wolfram": "🎓",
-    "final_answer": "✏️",
-    "python_interpreter": "🐍"
+    "search_links": "🔍",  # search
+    "read_url": "📄",      # read URL
+    "xcom_read_url": "🐦",  # X.com read URL
+    "chunk_text": "✂️",    # chunk text
+    "embed_texts": "🧩",   # embed texts
+    "rerank_texts": "🏆",  # rerank texts
+    "wolfram": "🧮",       # wolfram
+    "final_answer": "✅",   # final answer
+    "python_interpreter": "🐍"  # Python interpreter
 }
 
 # Colors definition
@@ -46,6 +47,7 @@ COLORS = {
 TOOL_COLORS = {
     "search_links": "bold magenta",
     "read_url": "bold blue",
+    "xcom_read_url": "bold blue",
     "chunk_text": "bold green",
     "embed_texts": "bold yellow",
     "rerank_texts": "bold cyan",
