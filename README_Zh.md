@@ -16,7 +16,7 @@
 
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![version](https://img.shields.io/badge/version-v0.2.7.dev-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.7.dev)
+[![version](https://img.shields.io/badge/version-v0.2.8-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.8)
 
 </h2>
 
@@ -61,12 +61,13 @@ DeepSearchAgent 项目是一个基于 ReAct（Reasoning + Acting）推理行动�
 1. CLI 集成版本支持 Docker 容器化快速部署;
 2. [DONE] 封装 FastAPI 各种 Agents 为 MCP (Model Context Protocol) Server, 提供 MCP tools 服务;
 3. [DONE] DeepSearchAgents 的 ToolCollection 增加 MCP Client/MCP tools HUB, 支持 MCP Tools 配置和调用;
-4. 深度搜索策略提供更多策略参数, 支持 Tokens 预算参数;
-5. 实验性增加 DeepSearchAgents 的 Agent Runs 评估器(独立评估DeepSearchAgents 的 深度搜索路径&结果评估Agent);
-6. 适配 code_sandbox Docker 自动化配置, 增加更多远程 code_sandbox 安全环境 SDK支持;
-7. 集成全流程 agent runs 遥测适配(Langfuse);
-8. human-in-the-loop 暂定& agent runs 多路径分支回溯;
-9. agent runs 并发竞技场模式;
+4. [DONE] 多搜索引擎支持（在Serper基础上增加XCom）并支持可配置的提供商选择;
+5. 深度搜索策略提供更多策略参数, 支持 Tokens 预算参数;
+6. 实验性增加 DeepSearchAgents 的 Agent Runs 评估器(独立评估DeepSearchAgents 的 深度搜索路径&结果评估Agent);
+7. 适配 code_sandbox Docker 自动化配置, 增加更多远程 code_sandbox 安全环境 SDK支持;
+8. 集成全流程 agent runs 遥测适配(Langfuse);
+9. human-in-the-loop 暂定& agent runs 多路径分支回溯;
+10. agent runs 并发竞技场模式;
 
 ## 3. 🚀 快速开始 (CLI, FastAPI) | Quick Start
 
@@ -260,7 +261,7 @@ python -m src.main --enable-fastmcp --agent-type codact
 6.  **GaiaUI Web 界面 (`src/app.py`)**：基于 Gradio 的 Web GUI，与智能体交互。
 7.  **MCP 工具服务器 (`src/agents/servers/run_fastmcp.py`)**：提供 MCP 协议的流式 Streamable HTTP 服务。
 
-*架构图已更新至版本 `v0.2.7.dev`*
+*架构图已更新至版本 `v0.2.8`*
 
 ```mermaid
 ---
