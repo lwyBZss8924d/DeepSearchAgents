@@ -1,4 +1,4 @@
-# DeepSearchAgents Version Upgrade: v0.2.6/v0.2.7.dev to v0.2.8
+# DeepSearchAgents v0.2.6/v0.2.7.dev to v0.2.8 Release
 
 ## Major Features and Improvements
 
