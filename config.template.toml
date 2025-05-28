@@ -1,14 +1,13 @@
 # DeepSearchAgents config file - Simplified Version
-# Without Streamable HTTP & SSE functionality
 
 # Debug mode (enable verbose output)
 debug = true
 
 # Model configuration
 [models]
-orchestrator_id = "openai/o4-mini-high"  # for main LLM orchestration
-search_id = "openai/o4-mini-high"        # for search (if different)
-reranker_type = "jina-reranker-m0"
+orchestrator_id = "gemini/gemini-2.5-pro-preview-05-06"  # for main LLM orchestration
+search_id = "anthropic/claude-sonnet-4-20250514"        # for search (if different)
+reranker_type = "jina-reranker-m0" # reranker model for reranking search results(optional)
 
 # Tools configuration
 [tools]
@@ -47,13 +46,14 @@ verbose_tool_callbacks = true  # if true, show full tool input/output
 [agents.react]
 max_steps = 25                # maximum number of reasoning steps
 planning_interval = 7         # agent planning step interval
+verbosity_level = 2           # 0=minimum, 1=normal, 2=detailed
 
 # CodeAct agent specific settings
 [agents.codact]
 executor_type = "local"       # local or lambda
 max_steps = 25                # maximum number of steps in execution
+planning_interval = 5         # agent planning step interval
 verbosity_level = 2           # 0=minimum, 1=normal, 2=detailed
-planning_interval = 4         # agent planning step interval
 
 # This is an empty dictionary and an empty array
 executor_kwargs = {}          # executor additional parameters
@@ -63,7 +63,7 @@ additional_authorized_imports = []  # additional Python modules allowed to impor
 [service]
 host = "0.0.0.0"
 port = 8000
-version = "0.2.6"
+version = "0.2.8"
 deepsearch_agent_mode = "codact"  # "react" or "codact"
 
 # Logging configuration
@@ -78,15 +78,15 @@ format = "minimal"            # use simplified format
 
 # Tested and working model list
 [[model_list]]
-model_name = "claude-3-7-sonnet-20250219"
+model_name = "openai-codex-mini"
 [model_list.litellm_params]
-model = "claude-3-7-sonnet-20250219" 
+model = "openai/codex-mini" 
 api_base = "LITELLM_BASE_URL"
 api_key = "LITELLM_MASTER_KEY"
 
 [[model_list]]
-model_name = "gemini-2.5-pro-preview-05-06"
+model_name = "o4-mini-high"
 [model_list.litellm_params]
-model = "openai/gemini-2.5-pro-preview-05-06"
+model = "openai/o4-mini-high"
 api_base = "LITELLM_BASE_URL"
 api_key = "LITELLM_MASTER_KEY"

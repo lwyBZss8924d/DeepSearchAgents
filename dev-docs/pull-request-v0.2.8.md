@@ -4,7 +4,7 @@
 This PR upgrades DeepSearchAgents from v0.2.6/v0.2.7.dev to v0.2.8, adding multiple search engine support with XCom integration and enhancing the MCP server capabilities.
 
 ## Changes Overview
-- Add support for XCom search engine and specialized content scraping
+- Add support for `x.com` search engine and specialized content scraping
 - Refactor search engine infrastructure to support multiple providers
 - Improve FastMCP server implementation and MCP tool response handling
 - Update agent prompts and tool descriptions for multi-provider support
