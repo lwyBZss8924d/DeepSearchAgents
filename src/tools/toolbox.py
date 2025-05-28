@@ -19,6 +19,7 @@ from smolagents import Tool, ToolCollection
 # Import all DeepSearchAgent system agent's tools classes
 from .search import SearchLinksTool
 from .readurl import ReadURLTool
+from .xcom_readurl import XcomReadURLTool
 from .chunk import ChunkTextTool
 from .embed import EmbedTextsTool
 from .rerank import RerankTextsTool
@@ -28,6 +29,7 @@ from .final_answer import EnhancedFinalAnswerTool
 TOOL_ICONS = {
     "search_links": "🔍",  # search
     "read_url": "📄",      # read URL
+    "xcom_read_url": "🐦",  # X.com read URL
     "chunk_text": "✂️",    # chunk text
     "embed_texts": "🧩",   # embed texts
     "rerank_texts": "🏆",  # rerank texts
@@ -42,6 +44,7 @@ logger = logging.getLogger(__name__)
 BUILTIN_TOOLS = {
     "search_links": SearchLinksTool,
     "read_url": ReadURLTool,
+    "xcom_read_url": XcomReadURLTool,
     "chunk_text": ChunkTextTool,
     "embed_texts": EmbedTextsTool,
     "rerank_texts": RerankTextsTool,
@@ -81,8 +84,11 @@ def _create_tool_instance(
     # Add API keys based on tool class naming patterns
     if "SearchLinksTool" in tool_cls.__name__:
         tool_args["serper_api_key"] = api_keys.get("serper_api_key")
-    elif "ReadURLTool" in tool_cls.__name__:
+        tool_args["xai_api_key"] = api_keys.get("xai_api_key")
+    elif "ReadURLTool" in tool_cls.__name__ and "XcomReadURLTool" not in tool_cls.__name__:
         tool_args["jina_api_key"] = api_keys.get("jina_api_key")
+    elif "XcomReadURLTool" in tool_cls.__name__:
+        tool_args["xai_api_key"] = api_keys.get("xai_api_key")
     elif "ChunkTextTool" in tool_cls.__name__:
         tool_args["jina_api_key"] = api_keys.get("jina_api_key")
     elif "EmbedTextsTool" in tool_cls.__name__:
@@ -276,6 +282,7 @@ class DeepSearchToolbox:
                 "jina_api_key": settings.jina_api_key,
                 "serper_api_key": settings.serper_api_key,
                 "wolfram_app_id": settings.wolfram_alpha_app_id,
+                "xai_api_key": settings.xai_api_key,
             }
 
             # Load Hub collections if configured

@@ -8,7 +8,8 @@ this file to extend the smolagents base prompts.
 """
 
 from typing import Dict, Any
-from src.agents.ui_common.constants import AGENT_EMOJIS, TOOL_ICONS
+from src.agents.ui_common.constants import AGENT_EMOJIS
+from src.tools.toolbox import TOOL_ICONS
 
 THINKING_EMOJI = AGENT_EMOJIS["thinking"]
 PLANNING_EMOJI = AGENT_EMOJIS["planning"]
@@ -16,7 +17,6 @@ REPLANNING_EMOJI = AGENT_EMOJIS["replanning"]
 ACTION_EMOJI = AGENT_EMOJIS["action"]
 FINAL_EMOJI = AGENT_EMOJIS["final"]
 ERROR_EMOJI = AGENT_EMOJIS["error"]
-TOOL_ICONS = TOOL_ICONS
 
 # DeepSearch CodeAgent system prompt extension
 CODACT_SYSTEM_EXTENSION = """
@@ -47,12 +47,36 @@ and finally provide the answer using the `final_answer` tool.
 
 **Available Tools (Callable as Python functions):**
 
-*   `{5} search_links(query: str, num_results: int = 10, location: str = 'us') 
-    -> str:` Performs a web search. Returns a JSON string list of results 
-    (title, link, snippet). Example: 
+*   `{5} search_links(query: str, num_results: int = 10, location: str = 'us', 
+    source: str = 'auto', x_handles: List[str] = None, from_date: str = None, 
+    to_date: str = None) -> str:` Performs a web search or X.com/Twitter search. 
+    Returns a JSON string list of results (title, link, snippet/content). Example: 
     `results_json = search_links(query="...", num_results=10)`
-    If you need get more web search URLs results, you can set `num_results` to a 
-    larger number.
+
+    This tool supports multiple search sources:
+    - "auto" (default): Auto-detects if the query is related to X.com/Twitter
+    - "serper": Google search via Serper API
+    - "xcom": X.com (Twitter) search via xAI API
+
+    For X.com/Twitter search:
+    ```python
+    # Search for tweets from specific X.com handles
+    x_results = search_links(
+        query="climate change",
+        source="xcom",
+        x_handles=["elonmusk", "SpaceX", "OpenAI", "sama"]
+    )
+
+    # Search with date range
+    x_results = search_links(
+        query="AI developments",
+        source="xcom",
+        from_date="2025-05-01",
+        to_date="2025-05-28"
+    )
+    ```
+
+    If you need more web search URLs results, you can set `num_results` to a larger number.
 
 *   `{6} read_url(url: str, output_format: str = 'markdown') -> str:`
     Reads the content of a URL. Returns the content as a string
@@ -61,6 +85,13 @@ and finally provide the answer using the `final_answer` tool.
     This tool already handles webpage fetching, parsing, and clean
     formatting. DO NOT use low-level python libraries like 'requests', 'bs4',
     'urllib', or 'html' for URL content - use this tool instead.
+    
+*   `{12} xcom_read_url(url: str, output_format: str = 'markdown') -> str:`
+    Reads the content of an X.com (Twitter) URL using xAI's Live Search API.
+    Returns structured content from posts, profiles, or search results. Example:
+    `content = xcom_read_url(url="https://x.com/username/status/123456789")`
+    This specialized tool provides more detailed information from X.com content
+    than the regular read_url tool.
 
 *   `{7} chunk_text(text: str, chunk_size: int = 150, chunk_overlap: int = 50)
     -> str:` Splits text into smaller chunks using Jina AI Segmenter API. 
@@ -218,6 +249,11 @@ IMPORTANT FORMATTING REQUIREMENTS:
 - **Term variation**: Try different search terms for the same concept to find diverse sources
 - **Cross-validation**: Compare information across multiple sources before accepting as fact
 - **Quote search**: Use direct quotes to find specific information in longer texts
+- **Multi-source search**: Combine regular web search (Google) with X.com/Twitter search for real-time information
+- **X.com/Twitter search**: For recent events, trending topics, or specific user opinions, use source="xcom" parameter with search_links
+- **X.com handle targeting**: For specific user perspectives, use x_handles parameter with the search_links tool
+- **X.com content extraction**: For detailed analysis of X.com posts, profiles, or search results, use the specialized xcom_read_url tool
+- **X.com date range search**: For time-specific X.com content, use from_date and to_date parameters with search_links source="xcom"
 
 Now, begin! Write the Python code to solve the following task.
 """
@@ -402,6 +438,7 @@ def merge_prompt_templates(base_templates: Dict[str, Any],
     system_prompt = system_prompt.replace("{9}", TOOL_ICONS["embed_texts"])
     system_prompt = system_prompt.replace("{10}", TOOL_ICONS["wolfram"])
     system_prompt = system_prompt.replace("{11}", TOOL_ICONS["final_answer"])
+    system_prompt = system_prompt.replace("{12}", TOOL_ICONS["xcom_read_url"])
 
     # Create a normal dictionary instead of "instantiating" TypedDict
     merged = {

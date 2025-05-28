@@ -7,7 +7,8 @@ src/agents/agent.py normal ReAct Agent mode uses this prompt template.
 """
 
 from smolagents import PromptTemplates
-from src.agents.ui_common.constants import AGENT_EMOJIS, TOOL_ICONS
+from src.agents.ui_common.constants import AGENT_EMOJIS
+from src.tools.toolbox import TOOL_ICONS
 
 THINKING_EMOJI = AGENT_EMOJIS["thinking"]
 PLANNING_EMOJI = AGENT_EMOJIS["planning"]
@@ -15,7 +16,6 @@ REPLANNING_EMOJI = AGENT_EMOJIS["replanning"]
 ACTION_EMOJI = AGENT_EMOJIS["action"]
 FINAL_EMOJI = AGENT_EMOJIS["final"]
 ERROR_EMOJI = AGENT_EMOJIS["error"]
-TOOL_ICONS = TOOL_ICONS
 
 REACT_SYSTEM_TEMPLATE = """
 You are an expert research assistant AI capable of performing deep,
@@ -37,7 +37,10 @@ tools in a search-read-reason cycle.
 
 **Key Principles:**
 *   **Iterative Search & Read:** Start with `{4} search_links`, analyze results, and
-    use `{5} read_url` for promising sources.
+    use `{5} read_url` for promising sources. The search_links tool supports both
+    regular web search (Google) and X.com/Twitter content search. For X.com content,
+    you can also use the specialized `{12} xcom_read_url` tool to extract more detailed
+    information from X.com posts, profiles and search results.
 *   **Content Processing (Optional):** If `read_url` returns very long text or if
     you need finer-grained relevance filtering:
     *   Use `{6} chunk_text` to split the content into smaller segments 
@@ -206,7 +209,7 @@ Observation: "1.959 × 10^-25"
 **Rules:**
 1.  **ALWAYS provide a valid Action JSON blob.** Start with `Action:` followed by the JSON code block.
 2.  **Think step-by-step** before each action.
-3.  **Use `{4} search_links` first** to discover potential information sources.
+3.  **Use `{4} search_links` first** to discover potential information sources. For X.com/Twitter content, use source="xcom" parameter or let it auto-detect when your query contains X.com/Twitter-related terms or @usernames.
 4.  **Analyze search results (JSON string)** and decide which URLs to `{5} read_url`.
     Parse the JSON in your thought process.
 5.  **Consider using `{6} chunk_text` and `{7} rerank_texts`** if `read_url` content is long or needs focus.
@@ -237,7 +240,9 @@ REACT_PROMPT = PromptTemplates(
         TOOL_ICONS["rerank_texts"],
         TOOL_ICONS["embed_texts"],
         TOOL_ICONS["wolfram"],
-        TOOL_ICONS["final_answer"]
+        TOOL_ICONS["final_answer"],
+        "",  # placeholder for future use
+        TOOL_ICONS["xcom_read_url"]
     ),
     user_prompt="""
 {{task}}

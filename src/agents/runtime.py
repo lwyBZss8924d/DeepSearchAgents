@@ -145,6 +145,7 @@ class AgentRuntime:
             "jina_api_key": settings.get_api_key("JINA_API_KEY"),
             "wolfram_app_id": settings.get_api_key("WOLFRAM_ALPHA_APP_ID"),
             "litellm_base_url": settings.get_api_key("LITELLM_BASE_URL"),
+            "xai_api_key": settings.get_api_key("XAI_API_KEY"),
         }
 
     def _validate_api_keys(self) -> bool:
@@ -157,7 +158,7 @@ class AgentRuntime:
 
         if not self.api_keys.get("serper_api_key"):
             print("Error: SERPER_API_KEY is missing, "
-                  "SearchLinksTool will not work")
+                  "SearchLinksTool with Google search will not work")
             valid_keys = False
 
         if not self.api_keys.get("jina_api_key"):
@@ -169,6 +170,10 @@ class AgentRuntime:
         if not self.api_keys.get("wolfram_app_id"):
             print("Warning: WOLFRAM_ALPHA_APP_ID is missing, "
                   "WolframAlphaTool will not work")
+
+        if not self.api_keys.get("xai_api_key"):
+            print("Warning: XAI_API_KEY is missing, "
+                  "SearchLinksTool with X.com search will not work")
 
         return valid_keys
 
@@ -251,7 +256,7 @@ class AgentRuntime:
             "visited_urls": set(),  # fix: changed from list to set
             "search_queries": [],  # Search queries executed
             "key_findings": {},  # Key findings indexed by topic
-            "search_depth": 0,  # Current search depth
+            "search_depth": {},  # Current search depth
             "reranking_history": [],  # Reranking history
             "content_quality": {}
         }
