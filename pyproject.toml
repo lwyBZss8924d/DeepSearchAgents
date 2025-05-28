@@ -1,12 +1,13 @@
 [project]
 name = "DeepSearchAgents"
-version = "0.2.6"
+version = "0.2.8.dev"
 description = "🤗 Awesome CodeAct Deep Web Search Agents framework"
 authors = [
     {name = "ArthurWang", email = "deepsearchagent4dev@gpt4coursera.com"},
 ]
 dependencies = [
     "fastapi",
+    "fastmcp",
     "sse-starlette>=2.3.3",
     "httpx>=0.27.0",
     "uvicorn[standard]>=0.29.0",
