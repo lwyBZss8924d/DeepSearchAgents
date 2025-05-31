@@ -299,6 +299,8 @@ config:
     edgeLabelBackground: '#1a1a2e'
     textColor: '#00fff9'
   layout: elk
+  flowchart:
+    curve: linear
 ---
 flowchart TB
     subgraph Interfaces["Interfaces"]
@@ -482,7 +484,7 @@ In ReAct mode, the agent operates in the classic reasoning+acting manner, with a
 | **Streaming Support** | Support | Support |
 | **Planning Capability** | Periodic planning every N steps | Periodic planning every N steps |
 
-## 6. 🔧 Toolchain Mechanism
+## 6. 🔧 Agent Toolbox Chain
 
 DeepSearchAgent comes with an extensible toolchain that helps the agent retrieve and process information. These tools work in concert to form a complete query-answering pipeline:
 
