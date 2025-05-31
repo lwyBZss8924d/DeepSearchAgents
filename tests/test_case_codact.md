@@ -31,3 +31,9 @@ Hello! Please search about [Executable Code Actions Elicit Better LLM Agents](ht
 ```bash
 Hello! Please Web-Search about 1. Open AI —— "[Codex] Software engineering Agent `chatgpt.com/codex`" New Product info (https://platform.openai.com/docs/codex) 2. Use Zh(中文) summary AI Agent Report for me. --- Current time: {{ CURRENT_TIME: 2025-05-16 }}
 ```
+
+===
+
+```bash
+Hi! Please Web Search latest news and twitter(x.com)Trending Top tweets about the deepseek-r1 latest releases version(deepseek-r1-0528) LLM update news and new version multiple-Benchmark(Platforms e.g. coding / Math reasoning / Computer Use / long context comprehension/etc.). Get all you need deep-search info for analysis. End of research job summary output with a fulltable report with MUST use Zh(中文) for me --- CURRENT_TIME: {{ CURRENT_TIME: 2025-05-29 }} ---
+```
