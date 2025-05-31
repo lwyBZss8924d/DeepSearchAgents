@@ -59,18 +59,33 @@ The project supports command-line interface (CLI), standard FastAPI services, an
   - FinalAnswer:
     ![CodeAct FinalAnswer](docs/examples/codact-model-tests-250517-002/CodeAct-Agent-FinalAnswer.png)
 
-**The ongoing intensive development plan:**
+**Development Plan Currently Under Intensive Iteration:**
 
-1. CLI integration supports Docker containerization for rapid deployment;
-2. [DONE] Encapsulate various FastAPI Agents as MCP (Model Context Protocol) Servers, providing MCP tools services;
-3. [DONE] DeepSearchAgents' Toolbox adds MCP Client/MCP tools HUB, supporting MCP Tools configuration and invocation;
-4. [DONE] Multiple search engine support (added XCom alongside Serper) with configurable provider selection;
-5. Deep search strategies offer more strategy parameters, supporting Tokens budget parameters;
-6. Experimentally add DeepSearchAgents' Agent Runs evaluator (independent evaluation of DeepSearchAgents' deep search paths & result evaluation Agent);
-7. Adapt to code_sandbox Docker automated configuration, adding more remote code_sandbox secure environment SDK support;
-8. Integrate full-process agent runs telemetry adaptation (Langfuse);
-9. Human-in-the-loop tentative & multi-path branch backtracking for agent runs;
-10. Agent runs in concurrent arena mode;
+1. Package the DeepSearchAgents backend + frontend into a Docker containerized plug-and-play app;
+
+2. [DONE] Added MCP Client/MCP tools HUB to DeepSearchAgents' DeepSearchToolbox, supporting MCP Tools configuration and invocation;
+
+3. [DONE] Provided packaging of DeepSearchAgents as an MCP server, offering DeepSearchAgent MCP tools services;
+
+4. [DONE] Supported multi-vertical search engine source aggregation (adding social network URL index sources like x.com on top of Google) with configurable provider selection;
+
+5. [TODO] Add a `DeepWiki` Remote MCP tool to enhance the `GitHub URLs` vertical crawler/parser;
+
+6. Provide more strategy parameters for deep search strategies, adding support for token-budget-based strategy parameters;
+
+7. Implement auxiliary methods and tools for Agent Action search width & depth based on Monte Carlo Tree Search strategies in DeepSearchAgents, along with strategy control parameters;
+
+8. Experimentally add an Agent Runs evaluator for DeepSearchAgents (independently evaluating deep search paths & results);
+
+9. Add agent persistent memory functionality & provide users with persistent search history;
+
+10. Adapt code_sandbox Docker automated configuration; increase support for more remote code_sandbox secure environment SDKs;
+
+11. Integrate full-process agent runs inspecting adaptation ("OpenTelemetry" & "Langfuse");
+
+12. Tentative human-in-the-loop & multi-path branch backtracking in Agent Runs;
+
+13. Concurrent arena mode for Agent Runs;
 
 ## 3. 🚀 Quick Start (CLI & FastAPI)
 
@@ -298,28 +313,39 @@ flowchart TB
         CoreAgents{{"Core Agents
 (Handles Mode Selection)"}}
         ConfigLoader["Config Loader (toml, .env)"]
-        StreamingSupport["Streaming Support"]
+        StreamingSupport["Streaming Support
+(Integrated in v0.2.6+)"]
+        ToolboxManager["Toolbox Manager
+(Registry & Factory)"]
         subgraph Agents["Agent Logic"]
             direction LR
             ToolAgent[["ToolCallingAgent
-(Normal-ReAct)"]]
+(ReAct with Streaming)"]]
             CodeAgent[["CodeAgent
-(CodeAct-ReAct)"]]
-            StreamingReactAgent[["StreamingReactAgent"]]
-            StreamingCodeAgent[["StreamingCodeAgent"]]
+(CodeAct with Streaming)"]]
         end
     end
-    subgraph Toolbox["Toolbox"]
+    subgraph Toolbox["Toolbox Collection"]
         direction TB
-        SearchLinks[/search_links/]
-        ReadURL[/read_url/]
-        ChunkText[/chunk_text/]
-        EmbedTexts[/embed_texts/]
-        RerankTexts[/rerank_texts/]
-        Wolfram[/"wolfram computational"/]
-        FinalAnswer[/final_answer/]
+        subgraph SearchTools["Search Tools"]
+            SearchLinks[/search_links/]
+            SearchEngines["🔍 Multi-Search Engines
+• Serper (Google)
+• X.com (xAI API)"]
+        end
+        subgraph ContentTools["Content Processing Tools"]
+            ReadURL[/read_url/]
+            XcomReadURL[/xcom_read_url/]
+            ChunkText[/chunk_text/]
+            EmbedTexts[/embed_texts/]
+            RerankTexts[/rerank_texts/]
+        end
+        subgraph UtilityTools["Utility Tools"]
+            Wolfram[/"wolfram computational"/]
+            FinalAnswer[/final_answer/]
+        end
         ExternalAPIs{{External APIs
-Serper, Jina, Wolfram...}}
+Serper • Jina AI • xAI • Wolfram}}
     end
     subgraph Execution["Execution"]
         PythonEnv[("Python Execution
@@ -332,16 +358,17 @@ Environment (for CodeAct)")]
     MCPServer -- "Tool Call" --> CoreAgents
     CoreAgents -- "Select Mode: ReAct" --> ToolAgent
     CoreAgents -- "Select Mode: CodeAct" --> CodeAgent
-    CoreAgents -- "Select Mode: StreamingReAct" --> StreamingReactAgent
-    CoreAgents -- "Select Mode: StreamingCodeAct" --> StreamingCodeAgent
     CoreAgents -- "Uses Config" --> ConfigLoader
-    StreamingReactAgent -- "Inherits From" --> ToolAgent
-    StreamingCodeAgent -- "Inherits From" --> CodeAgent
-    StreamingReactAgent -- "Uses" --> StreamingSupport
-    StreamingCodeAgent -- "Uses" --> StreamingSupport
+    CoreAgents -- "Manages Tools" --> ToolboxManager
+    ToolAgent -- "Uses Integrated" --> StreamingSupport
+    CodeAgent -- "Uses Integrated" --> StreamingSupport
 
+    ToolboxManager -- "Creates Collection" --> Toolbox
+    SearchLinks -- "Auto-detects Source" --> SearchEngines
+    
     ToolAgent == "Calls Tools" ==> SearchLinks
     ToolAgent == "Calls Tools" ==> ReadURL
+    ToolAgent == "Calls Tools" ==> XcomReadURL
     ToolAgent == "Calls Tools" ==> ChunkText
     ToolAgent == "Calls Tools" ==> EmbedTexts
     ToolAgent == "Calls Tools" ==> RerankTexts
@@ -349,10 +376,9 @@ Environment (for CodeAct)")]
     ToolAgent == "Calls Tools" ==> FinalAnswer
 
     CodeAgent == "Generates Code" ==> PythonEnv
-    PythonEnv[("Python Execution
-Environment (for CodeAct)")]
     PythonEnv -- "Calls Tools via Code" --> SearchLinks
     PythonEnv -- "Calls Tools via Code" --> ReadURL
+    PythonEnv -- "Calls Tools via Code" --> XcomReadURL
     PythonEnv -- "Calls Tools via Code" --> ChunkText
     PythonEnv -- "Calls Tools via Code" --> EmbedTexts
     PythonEnv -- "Calls Tools via Code" --> RerankTexts
@@ -361,19 +387,20 @@ Environment (for CodeAct)")]
 
     SearchLinks -- "Uses External API" --> ExternalAPIs
     ReadURL -- "Uses External API" --> ExternalAPIs
+    XcomReadURL -- "Uses External API" --> ExternalAPIs
     EmbedTexts -- "Uses External API" --> ExternalAPIs
     RerankTexts -- "Uses External API" --> ExternalAPIs
     Wolfram -- "Uses External API" --> ExternalAPIs
-    ExternalAPIs -.-> Toolbox
+    ExternalAPIs --> Toolbox
 
-    ToolAgent -. "Final Answer" .-> CoreAgents
-    CodeAgent -. "Final Answer" .-> CoreAgents
-    StreamingReactAgent -. "Streaming Output" .-> CLI
-    StreamingCodeAgent -. "Streaming Output" .-> CLI
-    StreamingReactAgent -. "Streaming Output" .-> GaiaUI
-    StreamingCodeAgent -. "Streaming Output" .-> GaiaUI
-    CoreAgents -. "Response" .-> Interfaces
-    CoreAgents -. "Tool Result" .-> MCPServer
+    ToolAgent -- "Final Answer" --> CoreAgents
+    CodeAgent -- "Final Answer" --> CoreAgents
+    ToolAgent -- "Streaming Output" --> CLI
+    CodeAgent -- "Streaming Output" --> CLI
+    ToolAgent -- "Streaming Output" --> GaiaUI
+    CodeAgent -- "Streaming Output" --> GaiaUI
+    CoreAgents -- "Response" --> Interfaces
+    CoreAgents -- "Tool Result" --> MCPServer
 
     classDef default fill:#1a1a2e,stroke:#7700ff,stroke-width:2px,color:#00fff9
     classDef interface fill:#16213e,stroke:#ff00f7,stroke-width:3px,color:#00fff9
@@ -385,6 +412,7 @@ Environment (for CodeAct)")]
     classDef config fill:#0f0f1a,stroke:#7700ff,stroke-width:1px,color:#00fff9
     classDef streaming fill:#16213e,stroke:#00fff9,stroke-width:3px,color:#ff00f7
     classDef mcpserver fill:#16213e,stroke:#ff00f7,stroke-width:3px,color:#00fff9
+    classDef searchengine fill:#0f0f1a,stroke:#ff00f7,stroke-width:2px,color:#00fff9
 
     CLI:::interface
     FastAPI:::interface
@@ -393,11 +421,12 @@ Environment (for CodeAct)")]
     CoreAgents:::manager
     ToolAgent:::agent
     CodeAgent:::agent
-    StreamingReactAgent:::agent
-    StreamingCodeAgent:::agent
     StreamingSupport:::streaming
+    ToolboxManager:::manager
     SearchLinks:::tool
+    SearchEngines:::searchengine
     ReadURL:::tool
+    XcomReadURL:::tool
     ChunkText:::tool
     EmbedTexts:::tool
     RerankTexts:::tool
@@ -408,7 +437,7 @@ Environment (for CodeAct)")]
     ConfigLoader:::config
 ```
 
-## 5. ⚙️ Agent Modes (ReAct vs CodeAct)
+## 5. ⚙️ Agent Modes (ToolCalling ReAct vs CodeAct)
 
 DeepSearchAgent supports two modes of agent operation: the CodeAct code-execution mode and the ReAct tool-calling mode. The default mode used by the `/run_deepsearch_agent` endpoint is configured in `config.toml` (`service.deepsearch_agent_mode`) or via the `DEEPSEARCH_AGENT_MODE` environment variable.
 
@@ -443,29 +472,85 @@ In ReAct mode, the agent operates in the classic reasoning+acting manner, with a
 
 ### Comparison and Use Cases
 
-| Differences | ReAct Mode | CodeAct Mode |
+| Differences | ToolCalling ReAct Mode | CodeAct Mode |
 |-------------|------------|--------------|
 | **Action Representation** | Structured JSON instructions | Executable Python code |
 | **Complex Operation Capability** | Multiple steps for complex logic | Can combine multiple steps with programming constructs |
 | **Model Requirements** | General conversational ability | Requires code generation capability |
 | **Debugging & Interpretability** | Human-readable thoughts and actions | Code traces with error feedback |
 | **Best For** | Simple queries, fixed workflows | Complex tasks, flexible tool orchestration |
-| **Streaming Support** | Full streaming (all steps) | Final answer streaming |
+| **Streaming Support** | Support | Support |
 | **Planning Capability** | Periodic planning every N steps | Periodic planning every N steps |
 
 ## 6. 🔧 Toolchain Mechanism
 
 DeepSearchAgent comes with an extensible toolchain that helps the agent retrieve and process information. These tools work in concert to form a complete query-answering pipeline:
 
-- **`search_links`**: Accepts a query string and uses an external search engine API to retrieve web results with titles, snippets, and URLs.
-- **`read_url`**: Fetches HTML content from a webpage and extracts formatted text for analysis.
-- **`chunk_text`**: Splits long text into manageable segments for detailed analysis.
+### Search and Discovery Tools
+
+- **`search_links`**: Accepts a query string and uses external search engine APIs to retrieve web results with titles, snippets, and URLs. **NEW in v0.2.8**: Now supports multiple search engines:
+  - **Serper API (Google)**: Traditional web search for comprehensive coverage
+  - **X.com (xAI API)**: Real-time social media content from X.com/Twitter with live data access
+  - **Auto-detection**: Automatically selects the appropriate search engine based on query content (e.g., X.com-specific terms, @handles, hashtags)
+
+### Content Retrieval and Processing Tools
+
+- **`read_url`**: Fetches HTML content from standard web pages and extracts formatted text for analysis using Jina AI Reader API.
+- **`xcom_read_url`**: **NEW in v0.2.8**: Specialized tool for reading X.com (Twitter) content using xAI's Live Search API. Provides real-time access to posts, profiles, and search results with enhanced extraction capabilities for social media content.
+- **`chunk_text`**: Splits long text into manageable segments for detailed analysis using intelligent segmentation.
 - **`embed_texts`**: Encodes text chunks into vector representations for semantic similarity operations.
 - **`rerank_texts`**: Ranks text chunks by relevance to a given query for finding the most relevant information.
-- **`wolfram`**: Calls the WolframAlpha API for mathematical or computational queries.
-- **`final_answer`**: Signals that the agent has reached a conclusion and terminates the reasoning loop.
 
-In a typical sequence, the agent first uses `search_links` to find information sources, then `read_url` to obtain content. For complex content, it can use `chunk_text`, `embed_texts`, and `rerank_texts` to identify key passages. When calculations are needed, it calls `wolfram`. This cycle continues until the agent determines it has sufficient information to call `final_answer`.
+### Computational and Answer Tools
+
+- **`wolfram`**: Calls the WolframAlpha API for mathematical or computational queries.
+- **`final_answer`**: Signals that the agent has reached a conclusion and terminates the reasoning loop with structured output.
+
+### Toolbox Management System
+
+**NEW in v0.2.8**: The `toolbox.py` module provides a unified interface for managing DeepSearchAgent tools:
+
+- **Tool Registry**: Centralized registration system for all built-in and external tools
+- **Factory Methods**: Automated tool instantiation with proper API key configuration
+- **Extension Support**: Integration with Hugging Face Hub collections and MCP (Model Context Protocol) servers
+- **Configuration Loading**: Automatic tool loading based on `config.toml` settings
+
+#### Toolbox Features:
+
+```python
+# Create tool collection with specific tools
+toolbox.create_tool_collection(
+    api_keys=api_keys,
+    tool_names=["search_links", "read_url", "xcom_read_url"],
+    verbose=True
+)
+
+# Load tools from Hub collections
+toolbox.load_from_hub("collection_slug", trust_remote_code=True)
+
+# Load tools from MCP servers
+with toolbox.load_from_mcp(server_params, trust_remote_code=True):
+    # Use tools from MCP server
+    pass
+```
+
+### Enhanced Search Workflow
+
+In a typical v0.2.8 enhanced sequence:
+
+1. **Intelligent Search**: The agent uses `search_links` which automatically detects if the query relates to X.com content (mentions @handles, hashtags, trending topics) and routes to the appropriate search engine
+2. **Content Retrieval**: Based on the source, uses either `read_url` for standard web content or `xcom_read_url` for X.com content
+3. **Processing Pipeline**: For complex content, employs `chunk_text`, `embed_texts`, and `rerank_texts` to identify key passages
+4. **Computation**: When calculations are needed, calls `wolfram` for mathematical analysis
+5. **Conclusion**: This cycle continues until the agent determines it has sufficient information to call `final_answer`
+
+### Multi-Source Intelligence
+
+The enhanced toolchain now provides:
+- **Dual search capabilities**: Both traditional web search and real-time social media intelligence
+- **Source-aware processing**: Different extraction strategies for different content types
+- **Unified interface**: Consistent tool calling regardless of underlying data source
+- **Real-time data**: Access to live social media content through xAI integration
 
 ## 7. 📺 Streaming and Rendering Features
 
@@ -556,12 +641,7 @@ Special thanks to the following open-source projects (as well as other equally i
 > - [LLMCompiler: An LLM Compiler for Parallel Function Calling](https://arxiv.org/abs/2312.04511v3) `arXiv:2312.04511v3`
 > - [ReWOO: Decoupling Reasoning from Observations for Efficient Augmented Language Models](https://arxiv.org/abs/2305.18323) `arXiv:2305.18323v1`
 > - [smolagents.agents.CodeAgent](https://github.com/huggingface/smolagents/blob/7983378593da4b393a95335aad8431f6c9d2ac23/src/smolagents/agents.py)
-> - [Hugging Face smolagents library](https://huggingface.co/docs/smolagents/index)
 > - [Jina AI DeepResearch repository](https://github.com/jina-ai/node-DeepResearch)
-> - [A Practical Guide to Implementing DeepSearch/DeepResearch](https://jina.ai/news/a-practical-guide-to-implementing-deepsearch-deepresearch/)
-> - [DeepSearch on Private Visual Documents: An Enterprise Case Study](https://jina.ai/news/deepsearch-on-private-visual-documents-an-enterprise-case-study/)
-> - [Snippet Selection and URL Ranking in DeepSearch/DeepResearch](https://jina.ai/news/snippet-selection-and-url-ranking-in-deepsearch-deepresearch/)
-> - [LLM-as-SERP: Search Engine Result Pages from Large Language Models](https://jina.ai/news/llm-as-serp-search-engine-result-pages-from-large-language-models/)
 > - [A Practical Guide to Implementing DeepSearch/DeepResearch](https://jina.ai/news/a-practical-guide-to-implementing-deepsearch-deepresearch/)
 
 ## 14. 👨‍💻 AI Coder Pair Programming Assistance Reference
@@ -642,41 +722,81 @@ As the project evolves, we encourage contributors to update and expand these rul
 
 ```tree
 src/
-├── main.py                # Main application entry point
-├── cli.py                 # Command-line interface
-├── app.py                 # Gradio UI web application
-├── agents/               # Agent implementations
-│   ├── __init__.py        # Package initialization
-│   ├── base_agent.py      # Base agent interface
-│   ├── codact_agent.py    # CodeAct agent implementation
-│   ├── react_agent.py     # ReAct agent implementation
-│   ├── runtime.py         # Agent runtime manager
-│   ├── prompt_templates/  # Modular prompt template system
+├── agents/                   # Agent implementations and core logic
+│   ├── prompt_templates/     # Modular prompt template system
 │   │   ├── __init__.py
-│   │   ├── codact_prompts.py
-│   │   └── react_prompts.py
-│   ├── servers/           # Server implementations 
+│   │   ├── codact_prompts.py # CodeAct agent prompts and templates
+│   │   └── react_prompts.py  # ReAct agent prompts and templates
+│   ├── servers/              # Server implementations
 │   │   ├── __init__.py
-│   │   ├── run_fastmcp.py # FastMCP MCP server implementation
-│   │   ├── run_gaia.py    # Gradio UI web server
-│   │   └── gradio_patch.py # Gradio patch functions
-│   └── ui_common/         # Shared UI components
-├── api/                   # FastAPI service components
-│   └── v1/                # API version 1 endpoints
-├── core/                  # Core system components
-│   ├── chunk/             # Text chunking components
-│   ├── config/            # Configuration handling
-│   ├── ranking/           # Content ranking
-│   ├── scraping/          # Web content scraping
-│   └── search_engines/    # Search engine integrations
-└── tools/                 # Tool implementations
-    ├── __init__.py
-    ├── chunk.py           # Text chunking tool
-    ├── embed.py           # Text embedding tool
-    ├── final_answer.py    # Final answer generation tool
-    ├── readurl.py         # URL content reading tool
-    ├── rerank.py          # Content reranking tool
-    ├── search.py          # Web search tool
-    ├── toolbox.py         # Tool management utilities
-    └── wolfram.py         # Wolfram Alpha computational tool
+│   │   ├── gradio_patch.py   # Gradio UI enhancements and patches
+│   │   ├── run_fastmcp.py    # FastMCP MCP server implementation
+│   │   └── run_gaia.py       # Gradio UI web server
+│   ├── ui_common/            # Shared UI components and utilities
+│   │   ├── __init__.py
+│   │   ├── agent_step_callback.py  # Agent execution step callbacks
+│   │   ├── console_formatter.py    # Console output formatting
+│   │   ├── constants.py            # UI-related constants
+│   │   ├── gradio_adapter.py       # Gradio interface adapters
+│   │   └── gradio_helpers.py       # Gradio utility functions
+│   ├── __init__.py
+│   ├── base_agent.py         # Base agent interface and common functionality
+│   ├── codact_agent.py       # CodeAct agent implementation
+│   ├── react_agent.py        # ReAct agent implementation
+│   └── runtime.py            # Agent runtime manager
+├── api/                      # FastAPI service components
+│   ├── v1/                   # API version 1 implementation
+│   │   ├── endpoints/        # API endpoint definitions
+│   │   │   ├── __init__.py
+│   │   │   ├── agent.py      # Agent-related endpoints
+│   │   │   └── health.py     # Health check endpoints
+│   │   ├── __init__.py
+│   │   └── router.py         # API router configuration
+│   ├── __init__.py
+│   └── api.py                # Main API configuration
+├── core/                     # Core system components
+│   ├── chunk/                # Text chunking components
+│   │   └── segmenter.py      # Jina AI Segmenter implementation
+│   ├── config/               # Configuration handling
+│   │   ├── __init__.py
+│   │   └── settings.py       # Settings management and configuration loading
+│   ├── ranking/              # Content ranking and embedding
+│   │   ├── __init__.py
+│   │   ├── base_ranker.py    # Base ranking interface
+│   │   ├── chunker.py        # Text chunking utilities
+│   │   ├── jina_embedder.py  # Jina AI embedding implementation
+│   │   └── jina_reranker.py  # Jina AI reranking implementation
+│   ├── scraping/             # Web content scraping
+│   │   ├── __init__.py
+│   │   ├── result.py         # Scraping result data structures
+│   │   ├── scraper.py        # General web scraping implementation
+│   │   ├── utils.py          # Scraping utility functions
+│   │   └── xcom_scraper.py   # X.com (Twitter) specialized scraper
+│   ├── search_engines/       # Search engine integrations
+│   │   ├── __init__.py
+│   │   ├── search_serper.py  # Serper API (Google) search engine
+│   │   └── search_xcom.py    # X.com (xAI API) search engine
+│   └── __init__.py
+├── tools/                    # Tool implementations
+│   ├── __init__.py
+│   ├── chunk.py              # Text chunking tool
+│   ├── embed.py              # Text embedding tool
+│   ├── final_answer.py       # Final answer generation tool
+│   ├── readurl.py            # Standard URL content reading tool
+│   ├── rerank.py             # Content reranking tool
+│   ├── search.py             # Multi-engine web search tool
+│   ├── toolbox.py            # Tool management and registry system
+│   ├── wolfram.py            # Wolfram Alpha computational tool
+│   └── xcom_readurl.py       # X.com (Twitter) URL reading tool
+├── app.py                    # Gradio UI web application entry point
+├── cli.py                    # Command-line interface
+└── main.py                   # FastAPI application entry point
 ```
+
+### Key Directory Descriptions
+
+- **`agents/`**: Core agent implementations with ReAct and CodeAct paradigms, including prompt templates and UI components
+- **`api/`**: FastAPI service infrastructure with versioned endpoints and health checks
+- **`core/`**: Fundamental system components including configuration, search engines, content processing, and scraping capabilities
+- **`tools/`**: Complete toolchain with unified toolbox management, supporting both traditional web search and X.com social media integration
+- **Root files**: Application entry points for different interface modes (CLI, FastAPI, Gradio UI)
