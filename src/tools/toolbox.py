@@ -85,7 +85,8 @@ def _create_tool_instance(
     if "SearchLinksTool" in tool_cls.__name__:
         tool_args["serper_api_key"] = api_keys.get("serper_api_key")
         tool_args["xai_api_key"] = api_keys.get("xai_api_key")
-    elif "ReadURLTool" in tool_cls.__name__ and "XcomReadURLTool" not in tool_cls.__name__:
+    elif ("ReadURLTool" in tool_cls.__name__ and
+          "XcomReadURLTool" not in tool_cls.__name__):
         tool_args["jina_api_key"] = api_keys.get("jina_api_key")
     elif "XcomReadURLTool" in tool_cls.__name__:
         tool_args["xai_api_key"] = api_keys.get("xai_api_key")
