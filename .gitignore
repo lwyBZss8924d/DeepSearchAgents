@@ -187,7 +187,6 @@ uv.lock
 !.env.template
 
 # Project specific ignores
-CLAUDE.md
 config.yaml
 config.toml
 
