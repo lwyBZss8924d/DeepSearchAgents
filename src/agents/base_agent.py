@@ -400,3 +400,68 @@ class BaseAgent:
                 )
             else:
                 raise
+
+    def __enter__(self):
+        """Context manager entry for resource initialization"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit for resource cleanup
+        
+        Args:
+            exc_type: Exception type if an error occurred
+            exc_val: Exception value if an error occurred
+            exc_tb: Exception traceback if an error occurred
+            
+        Returns:
+            False to propagate any exceptions
+        """
+        # Clean up agent resources
+        if hasattr(self, 'agent') and self.agent:
+            # Clean up agent memory
+            if hasattr(self.agent, 'memory'):
+                self.agent.memory = []
+            
+            # Clean up any tool resources
+            if hasattr(self.agent, 'tools') and self.agent.tools:
+                for tool in self.agent.tools:
+                    if hasattr(tool, 'cleanup') and callable(tool.cleanup):
+                        try:
+                            tool.cleanup()
+                        except Exception as e:
+                            logger.warning(
+                                f"Error cleaning up tool {tool.name}: {e}"
+                            )
+            
+            # Clean up any executor resources (for CodeAct)
+            if hasattr(self.agent, 'executor') and hasattr(
+                self.agent.executor, 'close'
+            ):
+                try:
+                    self.agent.executor.close()
+                except Exception as e:
+                    logger.warning(f"Error closing executor: {e}")
+        
+        # Clear model references to free memory
+        self.orchestrator_model = None
+        self.search_model = None
+        
+        return False  # Don't suppress exceptions
+
+    async def __aenter__(self):
+        """Async context manager entry"""
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit for resource cleanup
+        
+        Args:
+            exc_type: Exception type if an error occurred
+            exc_val: Exception value if an error occurred
+            exc_tb: Exception traceback if an error occurred
+            
+        Returns:
+            False to propagate any exceptions
+        """
+        # Use sync cleanup for now
+        return self.__exit__(exc_type, exc_val, exc_tb)
