@@ -467,6 +467,12 @@ class AgentRuntime:
 
         Returns:
             Agent instance
+            
+        Example usage with context manager:
+            runtime = AgentRuntime()
+            with runtime.get_or_create_agent("react") as agent:
+                result = agent.run("What is the weather?")
+                # Resources automatically cleaned up on exit
         """
         if agent_type.lower() == "react":
             if self.react_agent:
