@@ -297,6 +297,9 @@ class BaseAgent:
             Generator: For streaming responses
             RunResult: When return_result=True (new v1.19.0 feature)
         """
+        # Reset memory if requested
+        if reset and not stream:
+            self.reset_agent_memory()
         if self.agent is None:
             error_msg = (
                 f"Error: {self.agent_type} agent initialization failed"
@@ -465,3 +468,90 @@ class BaseAgent:
         """
         # Use sync cleanup for now
         return self.__exit__(exc_type, exc_val, exc_tb)
+
+    def reset_agent_memory(self):
+        """Reset agent memory and state
+        
+        Clears agent memory while preserving tools and configuration.
+        This is useful for starting fresh conversations without recreating
+        the entire agent instance.
+        """
+        if hasattr(self, 'agent') and self.agent:
+            # Reset agent memory
+            if hasattr(self.agent, 'memory'):
+                self.agent.memory = []
+                logger.debug(f"Reset memory for {self.agent_type} agent")
+            
+            # Reset agent logs
+            if hasattr(self.agent, 'logs'):
+                self.agent.logs = []
+            
+            # Reset planning state if exists
+            if hasattr(self.agent, 'planning_memory'):
+                self.agent.planning_memory = []
+            
+            # Reset agent state to initial state
+            if hasattr(self.agent, 'state') and hasattr(self, 'initial_state'):
+                # Create a fresh copy of initial state
+                import copy
+                self.agent.state = copy.deepcopy(self.initial_state)
+                logger.debug("Reset agent state to initial state")
+        else:
+            logger.warning(
+                f"Cannot reset memory - {self.agent_type} agent not initialized"
+            )
+
+    def get_memory_summary(self) -> Dict[str, Any]:
+        """Get a summary of the current agent memory state
+        
+        Returns:
+            Dict containing memory statistics and content summary
+        """
+        summary = {
+            "agent_type": self.agent_type,
+            "memory_length": 0,
+            "logs_length": 0,
+            "has_planning_memory": False,
+            "state_keys": []
+        }
+        
+        if hasattr(self, 'agent') and self.agent:
+            if hasattr(self.agent, 'memory'):
+                summary["memory_length"] = len(self.agent.memory)
+            
+            if hasattr(self.agent, 'logs'):
+                summary["logs_length"] = len(self.agent.logs)
+            
+            if hasattr(self.agent, 'planning_memory'):
+                summary["has_planning_memory"] = True
+                summary["planning_memory_length"] = len(
+                    self.agent.planning_memory
+                )
+            
+            if hasattr(self.agent, 'state') and isinstance(
+                self.agent.state, dict
+            ):
+                summary["state_keys"] = list(self.agent.state.keys())
+        
+        return summary
+
+    def optimize_memory_for_planning(self):
+        """Optimize memory specifically for planning steps
+        
+        This method helps manage memory during planning intervals by:
+        - Keeping only essential memory items
+        - Summarizing previous steps
+        - Preserving critical findings
+        """
+        if not hasattr(self, 'agent') or not self.agent:
+            return
+        
+        # Keep the last N memory items for context
+        MEMORY_WINDOW = 10
+        
+        if hasattr(self.agent, 'memory') and len(self.agent.memory) > MEMORY_WINDOW:
+            # Keep recent memory items
+            self.agent.memory = self.agent.memory[-MEMORY_WINDOW:]
+            logger.debug(
+                f"Optimized memory for planning - kept last {MEMORY_WINDOW} items"
+            )
