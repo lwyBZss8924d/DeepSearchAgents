@@ -56,8 +56,15 @@ max_steps = 25                # maximum number of steps in execution
 planning_interval = 5         # agent planning step interval
 verbosity_level = 2           # 0=minimum, 1=normal, 2=detailed
 
-# This is an empty dictionary and an empty array
+# Executor security settings (can be overridden but not recommended)
+# Default security settings applied:
+# - timeout: 30 seconds per code execution
+# - max_output_size: 100KB output limit
+# - restricted_paths: ["/etc", "/root", "/home"] are blocked
 executor_kwargs = {}          # executor additional parameters
+
+# Additional Python modules to allow (dangerous modules are auto-filtered)
+# Blocked modules: os, sys, subprocess, eval, exec, compile, etc.
 additional_authorized_imports = []  # additional Python modules allowed to import
 
 # Service configuration

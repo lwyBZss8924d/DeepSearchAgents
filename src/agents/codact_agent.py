@@ -102,7 +102,26 @@ class CodeActAgent(BaseAgent):
 
         # other initialization remains unchanged
         self.executor_type = executor_type
-        self.executor_kwargs = executor_kwargs or {}
+        
+        # Security: Add default safety settings to executor kwargs
+        default_security_kwargs = {
+            "timeout": 30,  # 30 second timeout for code execution
+            "max_output_size": 100000,  # Limit output to 100KB
+            "disable_network": False,  # Keep network for API calls
+            "restricted_paths": ["/etc", "/root", "/home"],  # Block sensitive paths
+        }
+        
+        # Merge user kwargs with security defaults
+        self.executor_kwargs = {**default_security_kwargs, **(executor_kwargs or {})}
+        
+        # Warn if user tries to override security settings
+        if executor_kwargs:
+            overridden = set(executor_kwargs.keys()) & set(default_security_kwargs.keys())
+            if overridden:
+                logger.warning(
+                    f"Security settings overridden by user: {overridden}"
+                )
+        
         self.verbosity_level = verbosity_level
         self.step_callbacks = step_callbacks or []
 
@@ -122,6 +141,48 @@ class CodeActAgent(BaseAgent):
 
         # initialize agent
         self.initialize()
+
+    def validate_code_safety(self, code: str) -> bool:
+        """Validate that code is safe to execute
+        
+        Args:
+            code: Python code string to validate
+            
+        Returns:
+            bool: True if code appears safe, False otherwise
+        """
+        # Security patterns to check for
+        dangerous_patterns = [
+            r"__import__",  # Dynamic imports
+            r"eval\s*\(",  # eval() calls
+            r"exec\s*\(",  # exec() calls
+            r"compile\s*\(",  # compile() calls
+            r"globals\s*\(",  # globals() access
+            r"locals\s*\(",  # locals() access
+            r"vars\s*\(",  # vars() access
+            r"dir\s*\(",  # dir() introspection
+            r"getattr\s*\(",  # getattr() for dynamic access
+            r"setattr\s*\(",  # setattr() for dynamic modification
+            r"delattr\s*\(",  # delattr() for deletion
+            r"open\s*\(",  # file operations
+            r"file\s*\(",  # file operations
+            r"input\s*\(",  # user input
+            r"raw_input\s*\(",  # user input (Python 2)
+            r"\bos\.",  # os module access
+            r"\bsys\.",  # sys module access
+            r"\bsubprocess\.",  # subprocess module
+            r"\.\.\/",  # Path traversal
+            r"\/etc\/",  # System paths
+            r"\/root\/",  # Root paths
+        ]
+        
+        import re
+        for pattern in dangerous_patterns:
+            if re.search(pattern, code, re.IGNORECASE):
+                logger.warning(f"Potentially dangerous pattern detected: {pattern}")
+                return False
+        
+        return True
 
     def _create_prompt_templates(self):
         """Create extended prompt templates
@@ -156,21 +217,36 @@ class CodeActAgent(BaseAgent):
         Returns:
             List[str]: List of authorized import modules
         """
-        # Set default allowed import modules
+        # Set default allowed import modules with security restrictions
         default_authorized_imports = [
             "json", "re", "collections", "datetime",
             "time", "calendar", "math", "csv", "itertools", "copy",
             "requests", "bs4", "urllib", "html",
-            "io", "os", "aiohttp", "asyncio", "dotenv",
-            "logging", "sys", "pandas", "numpy", "tabulate",
+            "io", "aiohttp", "asyncio",
+            "logging", "pandas", "numpy", "tabulate",
             "rich"
         ]
+        # Security: Removed dangerous imports like 'os', 'sys', 'dotenv'
+        # These can be used for file system access or environment manipulation
 
         if self.additional_authorized_imports:
+            # Security check: Filter out dangerous modules
+            dangerous_modules = {
+                "os", "sys", "subprocess", "eval", "exec", 
+                "compile", "__builtins__", "open", "file",
+                "input", "raw_input", "execfile", "dotenv"
+            }
+            safe_additions = [
+                mod for mod in self.additional_authorized_imports 
+                if mod not in dangerous_modules
+            ]
+            if len(safe_additions) < len(self.additional_authorized_imports):
+                logger.warning(
+                    "Some requested imports were blocked for security: "
+                    f"{set(self.additional_authorized_imports) - set(safe_additions)}"
+                )
             # Merge and deduplicate import module lists
-            return list(set(
-                default_authorized_imports + self.additional_authorized_imports
-            ))
+            return list(set(default_authorized_imports + safe_additions))
         else:
             return default_authorized_imports
 
