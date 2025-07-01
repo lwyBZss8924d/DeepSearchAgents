@@ -10,10 +10,13 @@ Base Agent class for DeepSearchAgents
 from typing import (
     Dict, Any, List, Literal, Generator, Union
 )
+import time
 
 from smolagents import Tool, LiteLLMModel
 from smolagents.models import ChatMessage, ChatMessageStreamDelta
 
+from .run_result import RunResult
+from .stream_aggregator import StreamAggregator, ModelStreamWrapper
 import logging
 
 logger = logging.getLogger(__name__)
@@ -59,59 +62,14 @@ class MultiModelRouter:
         Returns:
             ChatMessage: Response from the appropriate model
         """
-        # Detect if this is a planning-related call
-        is_planning = False
-        is_final_answer = False
-
-        for msg in messages:
-            content = msg.get("content", "")
-            if isinstance(content, list):
-                for item in content:
-                    if isinstance(item, dict) and item.get("type") == "text":
-                        text = item.get("text", "")
-                        if (
-                            "Facts survey" in text
-                            or "Updated facts survey" in text
-                            or "facts survey" in text.lower()
-                            or "plan" in text.lower()
-                        ):
-                            is_planning = True
-                        elif (
-                            "final answer to the original question" in text
-                            or "final answer" in text.lower()
-                        ):
-                            is_final_answer = True
-            elif isinstance(content, str):
-                if (
-                    "Facts survey" in content
-                    or "Updated facts survey" in content
-                    or "facts survey" in content.lower()
-                    or "plan" in content.lower()
-                ):
-                    is_planning = True
-                elif (
-                    "final answer to the original question" in content
-                    or "final answer" in content.lower()
-                ):
-                    is_final_answer = True
-
-        # Use orchestrator model for planning and final answers
-        if is_planning or is_final_answer:
-            self._last_used_model = self.orchestrator_model
-            result = self.orchestrator_model(messages, **kwargs)
-        else:
-            # Use search model for everything else
-            self._last_used_model = self.search_model
-            result = self.search_model(messages, **kwargs)
-
-        # update token count information
-        if hasattr(self._last_used_model, "last_input_token_count"):
-            self.last_input_token_count = (
-                self._last_used_model.last_input_token_count
-            )
-            self.last_output_token_count = (
-                self._last_used_model.last_output_token_count
-            )
+        # Use helper method to select model
+        active_model = self._select_model_for_messages(messages)
+        
+        # Call the selected model
+        result = active_model(messages, **kwargs)
+        
+        # Update token counts
+        self._update_token_counts_from_model(active_model)
 
         return result
 
@@ -147,7 +105,7 @@ class MultiModelRouter:
         messages: List[Dict[str, Any]],
         **kwargs
     ) -> Generator[ChatMessageStreamDelta, None, None]:
-        """Stream generation results
+        """Stream generation results using StreamAggregator (v1.19.0 pattern)
 
         Args:
             messages: List of messages to process
@@ -155,6 +113,41 @@ class MultiModelRouter:
 
         Returns:
             Generator yielding message chunks
+        """
+        # Determine which model to use
+        active_model = self._select_model_for_messages(messages)
+        
+        # Create stream wrapper with aggregator
+        stream_wrapper = ModelStreamWrapper(active_model)
+        
+        try:
+            # Use the wrapper to handle streaming with aggregation
+            for delta in stream_wrapper.generate_stream(messages, **kwargs):
+                yield delta
+            
+            # Update token counts after streaming completes
+            self._update_token_counts_from_model(active_model)
+            
+        except Exception as e:
+            import traceback
+            error_msg = (
+                f"Error in streaming generation: {str(e)}\\n"
+                f"{traceback.format_exc()}"
+            )
+            logging.error(error_msg)
+            yield ChatMessageStreamDelta(content=f"Error: {str(e)}")
+    
+    def _select_model_for_messages(
+        self, 
+        messages: List[Dict[str, Any]]
+    ) -> Any:
+        """Select appropriate model based on message content
+        
+        Args:
+            messages: List of messages to analyze
+            
+        Returns:
+            Selected model (orchestrator or search)
         """
         is_planning = False
         is_final_answer = False
@@ -182,7 +175,7 @@ class MultiModelRouter:
                     "Facts survey" in content
                     or "Updated facts survey" in content
                     or "facts survey" in content.lower()
-                    or "plan" in text.lower()
+                    or "plan" in content.lower()
                 ):
                     is_planning = True
                 elif (
@@ -191,70 +184,24 @@ class MultiModelRouter:
                 ):
                     is_final_answer = True
 
-        active_model_for_stream = None
+        # Select model based on content
         if is_planning or is_final_answer:
             self._last_used_model = self.orchestrator_model
-            active_model_for_stream = self.orchestrator_model
+            return self.orchestrator_model
         else:
             self._last_used_model = self.search_model
-            active_model_for_stream = self.search_model
-
-        try:
-            if hasattr(active_model_for_stream, 'generate_stream'):
-                model_kwargs = kwargs.copy()
-                if (hasattr(active_model_for_stream, 'api_key') and
-                        active_model_for_stream.api_key):
-                    model_kwargs['api_key'] = active_model_for_stream.api_key
-                if (hasattr(active_model_for_stream, 'api_base') and
-                        active_model_for_stream.api_base):
-                    model_kwargs['api_base'] = active_model_for_stream.api_base
-
-                # Yield all deltas from the underlying model's stream
-                # This loop must complete for token counts to be updated
-                # from the underlying model
-                stream_generator = (
-                    active_model_for_stream.generate_stream(
-                        messages, **model_kwargs
-                    )
-                )
-                for delta in stream_generator:
-                    if delta.content is None:
-                        yield ChatMessageStreamDelta(content="")
-                    else:
-                        yield delta
-
-                # After the stream is exhausted, update self's token counts
-                if hasattr(self._last_used_model, "last_input_token_count"):
-                    self.last_input_token_count = (
-                        self._last_used_model.last_input_token_count
-                    )
-                if hasattr(self._last_used_model, "last_output_token_count"):
-                    self.last_output_token_count = (
-                        self._last_used_model.last_output_token_count
-                    )
-            else:
-                # Fallback if no stream method on the active model
-                response = active_model_for_stream(messages, **kwargs)
-                # Update token counts even in non-streaming fallback
-                if hasattr(self._last_used_model, "last_input_token_count"):
-                    self.last_input_token_count = (
-                        self._last_used_model.last_input_token_count
-                    )
-                if hasattr(self._last_used_model, "last_output_token_count"):
-                    self.last_output_token_count = (
-                        self._last_used_model.last_output_token_count
-                    )
-                yield ChatMessageStreamDelta(
-                    content=response.content or ""
-                )
-        except Exception as e:
-            import traceback
-            error_msg = (
-                f"Error in streaming generation: {str(e)}\\\\n"
-                f"{traceback.format_exc()}"
-            )
-            logging.error(error_msg)
-            yield ChatMessageStreamDelta(content=f"Error: {str(e)}")
+            return self.search_model
+    
+    def _update_token_counts_from_model(self, model):
+        """Update token counts from the model after generation
+        
+        Args:
+            model: The model that was used for generation
+        """
+        if hasattr(model, "last_input_token_count"):
+            self.last_input_token_count = model.last_input_token_count
+        if hasattr(model, "last_output_token_count"):
+            self.last_output_token_count = model.last_output_token_count
 
 
 class BaseAgent:
@@ -330,8 +277,9 @@ class BaseAgent:
         images: List = None,  # Add images parameter for compatibility
         reset: bool = True,   # Add reset parameter for compatibility
         additional_args: Dict[str, Any] = None,  # additional_args parameter
+        return_result: bool = False,  # New parameter for RunResult
         **kwargs
-    ) -> Union[str, Generator]:
+    ) -> Union[str, Generator, RunResult]:
         """Run agent to process user input
 
         Args:
@@ -341,16 +289,28 @@ class BaseAgent:
             stream_to_gradio)
             reset: Whether to reset agent state
             additional_args: Additional arguments for the agent
+            return_result: Whether to return RunResult object (v1.19.0 feature)
             **kwargs: Additional keyword arguments
 
         Returns:
-            str: Agent response or generator for streaming
+            str: Agent response (backward compatibility)
+            Generator: For streaming responses
+            RunResult: When return_result=True (new v1.19.0 feature)
         """
         if self.agent is None:
             error_msg = (
                 f"Error: {self.agent_type} agent initialization failed"
             )
+            if return_result:
+                return RunResult(
+                    final_answer=error_msg,
+                    error=error_msg,
+                    agent_type=self.agent_type
+                )
             return error_msg
+
+        # Track execution time
+        start_time = time.time()
 
         # Enable streaming if requested
         if stream:
@@ -374,8 +334,69 @@ class BaseAgent:
             if 'additional_args' in run_params and additional_args is not None:
                 run_kwargs['additional_args'] = additional_args
 
-            # Return a generator for streaming
+            # Return a generator for streaming (no RunResult for streaming)
             return self.agent.run(user_input, **run_kwargs)
 
         # Default non-streaming mode
-        return self.agent.run(user_input)
+        try:
+            result = self.agent.run(user_input)
+            
+            # If not returning RunResult, just return the string
+            if not return_result:
+                return result
+            
+            # Create RunResult object
+            execution_time = time.time() - start_time
+            
+            # Collect token usage from model router
+            token_usage = {"input": 0, "output": 0, "total": 0}
+            if hasattr(self, 'orchestrator_model') and isinstance(
+                self.orchestrator_model, MultiModelRouter
+            ):
+                router_tokens = self.orchestrator_model.get_token_counts()
+                token_usage["input"] = router_tokens.get("input", 0)
+                token_usage["output"] = router_tokens.get("output", 0)
+                token_usage["total"] = token_usage["input"] + token_usage["output"]
+            
+            # Collect model info
+            model_info = {}
+            if hasattr(self, 'orchestrator_model'):
+                if hasattr(self.orchestrator_model, 'model_id'):
+                    model_info["orchestrator"] = self.orchestrator_model.model_id
+            if hasattr(self, 'search_model'):
+                if hasattr(self.search_model, 'model_id'):
+                    model_info["search"] = self.search_model.model_id
+            
+            # Create and return RunResult
+            run_result = RunResult(
+                final_answer=result,
+                execution_time=execution_time,
+                token_usage=token_usage,
+                agent_type=self.agent_type,
+                model_info=model_info
+            )
+            
+            # Try to collect steps if available
+            if hasattr(self.agent, 'logs') and self.agent.logs:
+                for log_entry in self.agent.logs:
+                    step_info = {
+                        "type": getattr(log_entry, 'type', 'unknown'),
+                        "content": str(log_entry)
+                    }
+                    run_result.add_step(step_info)
+            
+            return run_result
+            
+        except Exception as e:
+            execution_time = time.time() - start_time
+            error_msg = f"Agent execution failed: {str(e)}"
+            
+            if return_result:
+                return RunResult(
+                    final_answer="",
+                    error=error_msg,
+                    execution_time=execution_time,
+                    agent_type=self.agent_type
+                )
+            else:
+                raise

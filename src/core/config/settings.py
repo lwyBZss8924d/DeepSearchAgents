@@ -37,6 +37,7 @@ class Settings(BaseSettings):
     # React agent configuration
     REACT_MAX_STEPS: int = 25
     REACT_PLANNING_INTERVAL: int = 7
+    REACT_MAX_TOOL_THREADS: int = 1
 
     # CodeAct agent configuration
     CODACT_EXECUTOR_TYPE: str = "local"
@@ -174,6 +175,10 @@ def load_toml_config(settings_instance: Settings) -> Settings:
                 if 'planning_interval' in react_config:
                     settings_instance.REACT_PLANNING_INTERVAL = (
                         react_config['planning_interval']
+                    )
+                if 'max_tool_threads' in react_config:
+                    settings_instance.REACT_MAX_TOOL_THREADS = (
+                        react_config['max_tool_threads']
                     )
 
             # Update CodeAct agent configuration

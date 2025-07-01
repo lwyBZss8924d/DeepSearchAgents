@@ -30,6 +30,7 @@ class ReactAgent(BaseAgent):
         enable_streaming: bool = False,
         max_steps: int = 25,
         planning_interval: int = 7,
+        max_tool_threads: int = 1,
         cli_console=None,
         **kwargs
     ):
@@ -43,9 +44,11 @@ class ReactAgent(BaseAgent):
             enable_streaming: Whether to enable streaming output
             max_steps: Maximum number of execution steps
             planning_interval: Interval for planning steps
+            max_tool_threads: Maximum threads for parallel tool execution
             cli_console: CLI console object
             **kwargs: Additional parameters for future extensions
         """
+        self.max_tool_threads = max_tool_threads
         # Call parent class initialization
         super().__init__(
             agent_type="react",
@@ -87,6 +90,8 @@ class ReactAgent(BaseAgent):
             state=self.initial_state,
             # Pass step callbacks
             step_callbacks=self.kwargs.get("step_callbacks", []),
+            # Enable parallel tool execution
+            max_tool_threads=self.max_tool_threads,
         )
 
         return agent
