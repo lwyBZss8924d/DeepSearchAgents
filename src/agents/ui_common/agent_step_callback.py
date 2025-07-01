@@ -562,11 +562,18 @@ class AgentStepCallback:
 
         # extract Python code
         model_output_str = str(model_output)
-        code_blocks = re.findall(
+        # Support both markdown and XML formats
+        markdown_blocks = re.findall(
             r'```python\s*(.*?)\s*```',
             model_output_str,
             re.DOTALL
         )
+        xml_blocks = re.findall(
+            r'<code>\s*(.*?)\s*</code>',
+            model_output_str,
+            re.DOTALL
+        )
+        code_blocks = markdown_blocks + xml_blocks
 
         if not code_blocks:
             return []

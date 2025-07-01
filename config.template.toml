@@ -46,6 +46,7 @@ verbose_tool_callbacks = true  # if true, show full tool input/output
 [agents.react]
 max_steps = 25                # maximum number of reasoning steps
 planning_interval = 7         # agent planning step interval
+max_tool_threads = 1          # max threads for parallel tool execution (1=sequential)
 verbosity_level = 2           # 0=minimum, 1=normal, 2=detailed
 
 # CodeAct agent specific settings

@@ -17,10 +17,13 @@ from .runtime import AgentRuntime
 # from .servers.agent_callbacks import AgentStepCallback
 # agent memory callback UI message formatter
 from .ui_common.console_formatter import ConsoleFormatter
+# v1.19.0 feature: RunResult for rich metadata
+from .run_result import RunResult
 
 __all__ = [
     "AgentRuntime",
     # "agent_observer",  # ensure observer is initialized first
     # "AgentStepCallback",  # removed temporarily, class has been refactored
-    "ConsoleFormatter"
+    "ConsoleFormatter",
+    "RunResult"  # v1.19.0 feature
 ]

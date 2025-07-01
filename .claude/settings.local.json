@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)",
+      "Bash(rg:*)",
+      "Bash(git push:*)",
+      "WebFetch(domain:github.com)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "Bash(python test:*)",
+      "Bash(rm:*)",
+      "Bash(grep:*)",
+      "Bash(python:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": false
+}

@@ -362,6 +362,7 @@ class AgentRuntime:
             initial_state=initial_state,
             max_steps=settings.REACT_MAX_STEPS,
             planning_interval=settings.REACT_PLANNING_INTERVAL,
+            max_tool_threads=settings.REACT_MAX_TOOL_THREADS,
             cli_console=None,
             step_callbacks=callbacks
         )
