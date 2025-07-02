@@ -29,7 +29,7 @@ dependencies = [
     "smolagents[toolkit]",
     "smolagents[gradio]",
     "smolagents[mcp]",
-    "litellm>=1.74.6",
+    "litellm>=1.73.6",
     "openai>=1.72.0",
     "langchain>=0.3.19",
     "torch",

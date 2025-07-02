@@ -113,11 +113,10 @@ class CodeActAgent(BaseAgent):
         self.executor_type = executor_type
 
         # Security: Add default safety settings to executor kwargs
+        # Note: Only include parameters supported by smolagents' LocalPythonExecutor
         default_security_kwargs = {
-            "timeout": 300,  # 300 second timeout for code execution
-            "max_output_size": 100000,  # Limit output to 100KB
-            "disable_network": False,  # Keep network for API calls
-            "restricted_paths": ["/etc", "/root", "/home"],  # Block sensitive paths
+            # LocalPythonExecutor in smolagents may not support all these parameters
+            # Keep only what's supported to avoid errors
         }
 
         # Merge user kwargs with security defaults
@@ -314,7 +313,7 @@ class CodeActAgent(BaseAgent):
                     "required": ["title", "content"]
                 }
             }
-        
+
         # Validation: structured outputs cannot be used with grammar
         if self.use_structured_outputs_internally and json_grammar is not None:
             logger.warning(
@@ -333,9 +332,10 @@ class CodeActAgent(BaseAgent):
         # Note: Even if enable_streaming=True is passed, non-streaming mode
         # will be used
         if self.enable_streaming:
-            # Use normal agent, but output warning
-            print("Warning: Streaming mode is temporarily disabled in "
-                  "this version.")
+            # Use normal agent, but output warning only in verbose mode
+            if self.verbosity_level >= 2:
+                print("Warning: Streaming mode is temporarily disabled in "
+                      "this version.")
             agent = CodeAgent(
                 tools=self.tools,
                 model=model_router,  # Use model router here
@@ -371,34 +371,35 @@ class CodeActAgent(BaseAgent):
         # Initialize agent state
         agent.state.update(self.initial_state)
 
-        # Output log information
-        print(
-            f"DeepSearch CodeAct agent initialized successfully, "
-            f"using executor: {self.executor_type}"
-        )
-        print(f"Allowed import modules: {authorized_imports}")
-        print(
-            f"Configured tools: "
-            f"{[tool.name for tool in agent.tools.values()]}"
-        )
-        if self.planning_interval:
+        # Output log information only if not in streaming mode or verbosity is high
+        if not self.enable_streaming or self.verbosity_level >= 2:
             print(
-                f"Planning interval: "
-                f"Every {self.planning_interval} steps"
+                f"DeepSearch CodeAct agent initialized successfully, "
+                f"using executor: {self.executor_type}"
             )
-        print(
-            f"Using orchestrator model: "
-            f"{self.orchestrator_model.model_id} for planning"
-        )
-        print(
-            f"Using search model: {self.search_model.model_id} "
-            f"for code generation"
-        )
-        if self.use_structured_outputs_internally:
+            print(f"Allowed import modules: {authorized_imports}")
             print(
-                "Structured outputs enabled: Using JSON format for "
-                "internal agent communication"
+                f"Configured tools: "
+                f"{[tool.name for tool in agent.tools.values()]}"
             )
+            if self.planning_interval:
+                print(
+                    f"Planning interval: "
+                    f"Every {self.planning_interval} steps"
+                )
+            print(
+                f"Using orchestrator model: "
+                f"{self.orchestrator_model.model_id} for planning"
+            )
+            print(
+                f"Using search model: {self.search_model.model_id} "
+                f"for code generation"
+            )
+            if self.use_structured_outputs_internally:
+                print(
+                    "Structured outputs enabled: Using JSON format for "
+                    "internal agent communication"
+                )
 
         # ensure callbacks can be accessed and debugged
         if self.step_callbacks and len(self.step_callbacks) > 0:

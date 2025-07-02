@@ -71,9 +71,40 @@ Tools are unified through a common interface supporting both sync/async operatio
 4. Default values (lowest priority)
 
 ### Streaming Architecture
-- Currently disabled due to stability issues (`enable_streaming: false` in config.toml)
+- Streaming is now available but disabled by default for stability
 - When enabled, provides real-time visibility into agent reasoning process
 - Supports both FastAPI SSE and Gradio streaming interfaces
+- CLI now supports streaming output with the new StreamingConsoleFormatter
+
+#### Enabling Streaming
+To enable streaming output in the CLI:
+
+1. **In config.toml**:
+```toml
+[agents.common]
+cli_streaming_enabled = true  # Global toggle for CLI streaming
+
+[agents.react]
+enable_streaming = true  # Enable for React agent
+
+[agents.codact]
+enable_streaming = true  # Enable for CodeAct agent
+```
+
+2. **Via command line**:
+```bash
+# Enable streaming for a single query
+python -m src.cli --agent-type react --enable-streaming --query "your query"
+```
+
+3. **Environment variables** (highest priority):
+```bash
+export REACT_ENABLE_STREAMING=true
+export CODACT_ENABLE_STREAMING=true
+export CLI_STREAMING_ENABLED=true
+```
+
+Note: Streaming support depends on the agent and model capabilities. Not all models support streaming output.
 
 ## Project Structure
 
@@ -139,3 +170,4 @@ src/
 - **Error handling**: Comprehensive try-except with specific error types
 - **Logging**: Use configured loggers, not print statements
 - **Configuration**: All settings through config system, no hardcoded values
+- **Token Counting**: Uses smolagents v1.19.0 TokenUsage API for accurate token tracking

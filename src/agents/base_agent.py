@@ -11,8 +11,11 @@ from typing import (
     Dict, Any, List, Literal, Generator, Union
 )
 import time
+import sys
+import io
+from contextlib import contextmanager
 
-from smolagents import Tool, LiteLLMModel
+from smolagents import Tool, LiteLLMModel, TokenUsage
 from smolagents.models import ChatMessage, ChatMessageStreamDelta
 
 from .run_result import RunResult
@@ -20,6 +23,17 @@ from .stream_aggregator import StreamAggregator, ModelStreamWrapper
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def suppress_output():
+    """Context manager to suppress stdout during streaming"""
+    old_stdout = sys.stdout
+    sys.stdout = io.StringIO()
+    try:
+        yield
+    finally:
+        sys.stdout = old_stdout
 
 
 class MultiModelRouter:
@@ -138,8 +152,8 @@ class MultiModelRouter:
             yield ChatMessageStreamDelta(content=f"Error: {str(e)}")
 
     def _select_model_for_messages(
-        self, 
-        messages: List[Dict[str, Any]]
+        self,
+        messages: List[Union[Dict[str, Any], ChatMessage]]
     ) -> Any:
         """Select appropriate model based on message content
 
@@ -153,7 +167,13 @@ class MultiModelRouter:
         is_final_answer = False
 
         for msg in messages:
-            content = msg.get("content", "")
+            # Handle both dict and ChatMessage objects
+            if hasattr(msg, 'content'):
+                # ChatMessage object
+                content = msg.content or ""
+            else:
+                # Dictionary message
+                content = msg.get("content", "")
             if isinstance(content, list):
                 for item in content:
                     if isinstance(item, dict) and item.get("type") == "text":
@@ -334,6 +354,12 @@ class BaseAgent:
             self.enable_streaming = True
             if hasattr(self.agent, 'stream_outputs'):
                 self.agent.stream_outputs = True
+                
+            # Temporarily reduce verbosity during streaming
+            original_verbosity = None
+            if hasattr(self.agent, 'verbosity_level'):
+                original_verbosity = self.agent.verbosity_level
+                self.agent.verbosity_level = 0
 
             # Prepare run parameters
             run_kwargs = {'stream': True}
@@ -352,11 +378,26 @@ class BaseAgent:
                 run_kwargs['additional_args'] = additional_args
 
             # Return a generator for streaming (no RunResult for streaming)
+            # The verbosity reduction should help minimize console output
             return self.agent.run(user_input, **run_kwargs)
 
         # Default non-streaming mode
         try:
             result = self.agent.run(user_input)
+
+            # Handle JSON response from final_answer tool
+            if isinstance(result, dict) and "content" in result:
+                # Extract content from JSON response
+                result = result["content"]
+            elif isinstance(result, str) and result.strip().startswith('{'):
+                # Try to parse JSON string
+                try:
+                    import json
+                    answer_dict = json.loads(result)
+                    if isinstance(answer_dict, dict) and "content" in answer_dict:
+                        result = answer_dict["content"]
+                except json.JSONDecodeError:
+                    pass
 
             # If not returning RunResult, just return the string
             if not return_result:
@@ -366,14 +407,17 @@ class BaseAgent:
             execution_time = time.time() - start_time
 
             # Collect token usage from model router
-            token_usage = {"input": 0, "output": 0, "total": 0}
+            token_usage = None
             if hasattr(self, 'orchestrator_model') and isinstance(
                 self.orchestrator_model, MultiModelRouter
             ):
                 router_tokens = self.orchestrator_model.get_token_counts()
-                token_usage["input"] = router_tokens.get("input", 0)
-                token_usage["output"] = router_tokens.get("output", 0)
-                token_usage["total"] = token_usage["input"] + token_usage["output"]
+                input_tokens = router_tokens.get("input", 0)
+                output_tokens = router_tokens.get("output", 0)
+                token_usage = TokenUsage(
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens
+                )
 
             # Collect model info
             model_info = {}
@@ -420,14 +464,14 @@ class BaseAgent:
 
     def __call__(self, task: str, additional_args: Dict[str, Any] = None) -> str:
         """Make agent callable as a tool by manager agents
-        
+
         This allows hierarchical agent architectures where manager agents
         can call sub-agents just like they call tools.
-        
+
         Args:
             task: The task/query to execute
             additional_args: Optional additional arguments
-            
+
         Returns:
             str: The agent's response/final answer
         """
@@ -439,19 +483,21 @@ class BaseAgent:
                 additional_args=additional_args,
                 return_result=True
             )
-            
+
             # Extract final answer from RunResult
             if isinstance(result, RunResult):
                 if result.error:
-                    return f"Error executing sub-agent {self.name}: {result.error}"
+                    agent_name = self.name or self.agent_type
+                    return f"Error executing sub-agent {agent_name}: {result.error}"
                 return result.final_answer or "No answer generated"
             else:
                 # Direct string result
                 return str(result)
-                
+
         except Exception as e:
-            logger.error(f"Error in managed agent {self.name}: {str(e)}")
-            return f"Error: Failed to execute sub-agent {self.name}: {str(e)}"
+            agent_name = self.name or self.agent_type
+            logger.error(f"Error in managed agent {agent_name}: {str(e)}")
+            return f"Error: Failed to execute sub-agent {agent_name}: {str(e)}"
 
     def __enter__(self):
         """Context manager entry for resource initialization"""
@@ -470,9 +516,8 @@ class BaseAgent:
         """
         # Clean up agent resources
         if hasattr(self, 'agent') and self.agent:
-            # Clean up agent memory
-            if hasattr(self.agent, 'memory'):
-                self.agent.memory = []
+            # Memory cleanup is handled internally by smolagents in v1.19.0
+            # No need to manually reset it
 
             # Clean up any tool resources
             if hasattr(self.agent, 'tools') and self.agent.tools:
@@ -526,18 +571,18 @@ class BaseAgent:
         the entire agent instance.
         """
         if hasattr(self, 'agent') and self.agent:
-            # Reset agent memory
-            if hasattr(self.agent, 'memory'):
-                self.agent.memory = []
+            # In smolagents v1.19.0, memory is a proper object, not a list
+            # Use the reset() method if available
+            if hasattr(self.agent, 'memory') and hasattr(self.agent.memory, 'reset'):
+                self.agent.memory.reset()
                 logger.debug(f"Reset memory for {self.agent_type} agent")
+            elif hasattr(self.agent, 'reset'):
+                # Some agents might have a reset method
+                self.agent.reset()
+                logger.debug(f"Reset {self.agent_type} agent using reset method")
 
-            # Reset agent logs
-            if hasattr(self.agent, 'logs'):
-                self.agent.logs = []
-
-            # Reset planning state if exists
-            if hasattr(self.agent, 'planning_memory'):
-                self.agent.planning_memory = []
+            # Logs are now read-only in v1.19.0, handled via memory.steps
+            # No need to manually reset logs
 
             # Reset agent state to initial state
             if hasattr(self.agent, 'state') and hasattr(self, 'initial_state'):
