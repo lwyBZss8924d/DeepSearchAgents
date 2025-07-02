@@ -15,6 +15,7 @@ from smolagents import Tool, LiteLLMModel
 from ..core.config.settings import settings
 from .react_agent import ReactAgent
 from .codact_agent import CodeActAgent
+from .manager_agent import ManagerAgent
 from .ui_common.agent_step_callback import AgentStepCallback
 from ..tools import from_toolbox
 from inspect import isawaitable
@@ -126,6 +127,7 @@ class AgentRuntime:
         # Register default agent types
         self.register_agent("react", ReactAgent)
         self.register_agent("codact", CodeActAgent)
+        self.register_agent("manager", ManagerAgent)
 
     def register_agent(self, agent_type: str, agent_class: Type) -> None:
         """Register an agent type with the runtime
@@ -453,6 +455,85 @@ class AgentRuntime:
 
         return agent
 
+    def create_manager_agent(
+        self,
+        managed_agents: List[Union[str, BaseAgent]] = None,
+        session_id: Optional[str] = None,
+        step_callback=None,
+        debug_mode=True
+    ):
+        """Create a Manager agent for hierarchical orchestration
+
+        Args:
+            managed_agents: List of agent types or agent instances to manage
+            session_id: Optional session ID for step tracking
+            step_callback: Optional custom step callback
+            debug_mode: Whether to enable debug mode
+
+        Returns:
+            ManagerAgent: Initialized manager agent
+        """
+        initial_state = self._get_initial_state()
+
+        # Create managed agents if specified as strings
+        if managed_agents:
+            agents = []
+            for agent_spec in managed_agents:
+                if isinstance(agent_spec, str):
+                    # Create agent from type string
+                    if agent_spec == "react":
+                        agent = self.create_react_agent(debug_mode=False)
+                    elif agent_spec == "codact":
+                        agent = self.create_codact_agent(debug_mode=False)
+                    else:
+                        logger.warning(f"Unknown agent type: {agent_spec}")
+                        continue
+                    agents.append(agent)
+                elif hasattr(agent_spec, 'run'):
+                    # Already an agent instance
+                    agents.append(agent_spec)
+            managed_agents = agents
+
+        # Use provided callback or create a new one
+        callbacks = []
+        if step_callback:
+            callbacks.append(step_callback)
+        else:
+            callbacks.append(self._create_step_callback(
+                session_id=session_id,
+                debug_mode=debug_mode
+            ))
+
+        agent = ManagerAgent(
+            orchestrator_model=self._create_llm_model(
+                model_id=settings.ORCHESTRATOR_MODEL_ID
+            ),
+            search_model=self._create_llm_model(
+                model_id=settings.SEARCH_MODEL_NAME
+            ),
+            tools=self._tools,
+            initial_state=initial_state,
+            managed_agents=managed_agents or [],
+            max_steps=settings.REACT_MAX_STEPS,
+            planning_interval=settings.REACT_PLANNING_INTERVAL,
+            max_tool_threads=settings.REACT_MAX_TOOL_THREADS,
+            cli_console=None,
+            step_callbacks=callbacks
+        )
+
+        # Store in active sessions
+        if session_id:
+            _active_sessions[session_id] = agent
+
+        # Ensure agent object has stream_outputs and memory attributes
+        if not hasattr(agent, 'stream_outputs'):
+            agent.stream_outputs = False
+
+        if not hasattr(agent, 'memory'):
+            agent.memory = []
+
+        return agent
+
     def get_or_create_agent(
         self,
         agent_type="codact",
@@ -637,6 +718,48 @@ class AgentRuntime:
 
                 return agent
 
+        elif agent_type.lower() == "manager":
+            # Create a new Manager agent with default managed agents
+            agent = self.create_manager_agent(
+                managed_agents=["react", "codact"],  # Default managed agents
+                step_callback=step_callback,
+                debug_mode=debug_mode
+            )
+            
+            # Ensure agent object has required properties
+            if not hasattr(agent, 'name'):
+                agent.name = "DeepSearch Manager Agent"
+            if not hasattr(agent, 'description'):
+                agent.description = (
+                    "Orchestrates multiple specialized agents to solve "
+                    "complex tasks through intelligent delegation"
+                )
+            
+            # Ensure run method proxies to smolagents needed interface
+            if not hasattr(agent, 'original_run'):
+                agent.original_run = agent.run
+                
+                async def run_wrapper(user_input, *args, **kwargs):
+                    """Wrap run method to match expectations"""
+                    condition = (not args and not kwargs and
+                                 isinstance(user_input, str))
+                    if condition:
+                        result = agent.original_run(user_input)
+                        if isawaitable(result):
+                            return await result
+                        return result
+                    
+                    result = agent.original_run(
+                        user_input, *args, **kwargs
+                    )
+                    if isawaitable(result):
+                        return await result
+                    return result
+                
+                agent.run = run_wrapper
+            
+            return agent
+            
         else:
             raise ValueError(f"Unsupported agent type: {agent_type}")
 
