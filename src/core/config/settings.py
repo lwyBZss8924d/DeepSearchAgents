@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     CODACT_PLANNING_INTERVAL: int = 4
     CODACT_EXECUTOR_KWARGS: Dict[str, Any] = Field(default_factory=dict)
     CODACT_ADDITIONAL_IMPORTS: List[str] = Field(default_factory=list)
+    CODACT_USE_STRUCTURED_OUTPUTS: bool = False
 
     # Tools configuration
     TOOLS_HUB_COLLECTIONS: List[str] = Field(default_factory=list)
@@ -207,6 +208,10 @@ def load_toml_config(settings_instance: Settings) -> Settings:
                 if 'additional_authorized_imports' in codact_config:
                     settings_instance.CODACT_ADDITIONAL_IMPORTS = (
                         codact_config['additional_authorized_imports']
+                    )
+                if 'use_structured_outputs' in codact_config:
+                    settings_instance.CODACT_USE_STRUCTURED_OUTPUTS = (
+                        codact_config['use_structured_outputs']
                     )
 
             # Update logging configuration

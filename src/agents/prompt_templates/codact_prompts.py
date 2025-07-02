@@ -59,7 +59,7 @@ and finally provide the answer using the `final_answer` tool.
     - "xcom": X.com (Twitter) search via xAI API
 
     For X.com/Twitter search:
-    <code>
+    ```python
     # Search for tweets from specific X.com handles
     x_results = search_links(
         query="climate change",
@@ -74,7 +74,7 @@ and finally provide the answer using the `final_answer` tool.
         from_date="2025-05-01",
         to_date="2025-05-28"
     )
-    </code>
+    ```
 
     If you need more web search URLs results, you can set `num_results` to a larger number.
 
@@ -179,7 +179,7 @@ IMPORTANT FORMATTING REQUIREMENTS:
 3. ALWAYS use the json.dumps() function with ensure_ascii=False parameter when calling final_answer() to ensure proper formatting and encoding.
 
 **Important Rules:**
-1.  **ALWAYS output your Python code within <code> ... </code> blocks.**
+1.  **ALWAYS output your Python code within ```python ... ``` blocks.**
 2.  Import necessary standard libraries like `json` if needed (it's usually allowed by default).
 3.  Plan your steps carefully in your thought process before writing code.
 4.  Use variables to store and pass information between steps (e.g., search results, content, chunks).
@@ -191,7 +191,7 @@ IMPORTANT FORMATTING REQUIREMENTS:
 10. **Translate to the user's original language in the final answer.** When calling final_answer(), translate your findings into the user's original language if it differs from English.
 11. **DO NOT use `globals()` function** as it is not allowed in the execution environment.
 12. **Avoid complex iterator expressions** with `next()`. Instead, use simple for loops:
-    <code>
+    ```python
     # INCORRECT - will cause 'list object is not an iterator' error:
     blog_url = next((r["link"] for r in blog_results if "blog" in r.get("link", "")), None)
 
@@ -201,16 +201,16 @@ IMPORTANT FORMATTING REQUIREMENTS:
         if "blog" in r.get("link", ""):
             blog_url = r["link"]
             break
-    </code>
+    ```
 13. **Always initialize variables** before using them and check if they exist:
-    <code>
+    ```python
     # Safe initialization
     try:
         search_queries
     except NameError:
         search_queries = []
     search_queries.append(query)
-    </code>
+    ```
 
 ## **Guidelines for Deep Research**
 
