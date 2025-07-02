@@ -6,9 +6,6 @@
 """DeepSearchAgent CLI development version
 Provide interactive and single query modes, supporting React and CodeAct
 two agent types
-
-TODO: clean up get redundant and invalid token stats use to
-TUI display code
 """
 
 import argparse
@@ -34,6 +31,7 @@ from rich.console import Group
 
 from src.agents.runtime import agent_runtime
 from src.agents.ui_common.console_formatter import ConsoleFormatter
+from src.agents.ui_common.streaming_formatter import StreamingConsoleFormatter
 from src.agents.ui_common.agent_step_callback import AgentStepCallback
 from src.agents.ui_common.constants import (
     COLORS, FINAL_COLOR, FINAL_EMOJI, ERROR_COLOR, ERROR_EMOJI,
@@ -115,11 +113,16 @@ def display_welcome(args, console):
         border_color = "blue"
         agent_icon = "🤠⚙️"
         highlight_color = "bold blue"
-    else:  # codact
+    elif args.agent_type == "codact":
         subtitle = "[green]CODACT[/green] 👻⌨️"
         border_color = "green"
         agent_icon = "👻⌨️"
         highlight_color = "bold green"
+    else:  # manager
+        subtitle = "[cyan]MANAGER[/cyan] 🎯🤝"
+        border_color = "cyan"
+        agent_icon = "🎯🤝"
+        highlight_color = "bold cyan"
 
     welcome_title = Text("Welcome to DeepSearch Agent", style="bold")
     title_line = Text()
@@ -235,20 +238,23 @@ def display_welcome(args, console):
         config_table.add_row("Streaming output", stream_text)
 
         if hasattr(agent_runtime, 'react_agent') and agent_runtime.react_agent:
-            tools_list = getattr(agent_runtime.react_agent, 'tools_list', [])
-            if tools_list:
-                tool_names = [tool.name for tool in tools_list]
-                tools_text = Text()
-                for i, tool_name in enumerate(tool_names):
-                    icon, color = get_tool_display_info(tool_name)
-                    if i > 0:
-                        tools_text.append(" • ")
-                    tools_text.append(f"{icon} ", style=color)
-                    tools_text.append(f"{tool_name}", style=color)
+            # Access the inner agent's tools dictionary (smolagents v1.19.0)
+            if hasattr(agent_runtime.react_agent, 'agent') and agent_runtime.react_agent.agent:
+                if hasattr(agent_runtime.react_agent.agent, 'tools'):
+                    tools_dict = agent_runtime.react_agent.agent.tools
+                    if tools_dict:
+                        tool_names = list(tools_dict.keys())
+                        tools_text = Text()
+                        for i, tool_name in enumerate(tool_names):
+                            icon, color = get_tool_display_info(tool_name)
+                            if i > 0:
+                                tools_text.append(" • ")
+                            tools_text.append(f"{icon} ", style=color)
+                            tools_text.append(f"{tool_name}", style=color)
 
-                config_table.add_row("Configured tools", tools_text)
+                        config_table.add_row("Configured tools", tools_text)
 
-    else:  # codact
+    elif args.agent_type == "codact":  # codact
         # Add executor type
         executor_type_map = {
             "local": "Local environment",
@@ -298,18 +304,58 @@ def display_welcome(args, console):
             config_table.add_row("Allowed imports", imports_text)
 
         if codact_agent is not None:
-            tools_list = getattr(codact_agent, 'tools_list', [])
-            if tools_list:
-                tool_names = [tool.name for tool in tools_list]
-                tools_text = Text()
-                for i, tool_name in enumerate(tool_names):
-                    icon, color = get_tool_display_info(tool_name)
-                    if i > 0:
-                        tools_text.append(" • ")
-                    tools_text.append(f"{icon} ", style=color)
-                    tools_text.append(f"{tool_name}", style=color)
+            # Access the inner agent's tools dictionary (smolagents v1.19.0)
+            if hasattr(codact_agent, 'agent') and codact_agent.agent:
+                if hasattr(codact_agent.agent, 'tools'):
+                    tools_dict = codact_agent.agent.tools
+                    if tools_dict:
+                        tool_names = list(tools_dict.keys())
+                        tools_text = Text()
+                        for i, tool_name in enumerate(tool_names):
+                            icon, color = get_tool_display_info(tool_name)
+                            if i > 0:
+                                tools_text.append(" • ")
+                            tools_text.append(f"{icon} ", style=color)
+                            tools_text.append(f"{tool_name}", style=color)
 
-                config_table.add_row("Configured tools", tools_text)
+                        config_table.add_row("Configured tools", tools_text)
+    
+    else:  # manager
+        config_table.add_row("Maximum steps", f"{getattr(settings, 'MANAGER_MAX_STEPS', 30)}")
+        planning_text = (
+            f"Every [yellow]{getattr(settings, 'MANAGER_PLANNING_INTERVAL', 10)}[/yellow] steps"
+        )
+        config_table.add_row("Planning interval", planning_text)
+        
+        # Display team configuration
+        team_type = getattr(args, 'team', 'research')
+        config_table.add_row("Team type", f"[cyan]{team_type.capitalize()}[/cyan]")
+        
+        if team_type == "research":
+            # Show research team composition
+            team_text = Text()
+            team_text.append("🔍 ", style="blue")
+            team_text.append("Web Search Agent", style="blue")
+            team_text.append(" (React)\n", style="dim")
+            team_text.append("📊 ", style="green")
+            team_text.append("Analysis Agent", style="green")
+            team_text.append(" (CodeAct)", style="dim")
+            config_table.add_row("Team members", team_text)
+        elif team_type == "custom" and hasattr(args, 'managed_agents') and args.managed_agents:
+            # Show custom team composition
+            team_text = Text()
+            for i, agent_type in enumerate(args.managed_agents):
+                if i > 0:
+                    team_text.append("\n")
+                icon = "🤠" if agent_type == "react" else "👻"
+                color = "blue" if agent_type == "react" else "green"
+                team_text.append(f"{icon} ", style=color)
+                team_text.append(f"{agent_type.capitalize()} Agent", style=color)
+            config_table.add_row("Team members", team_text)
+        
+        # Show delegation settings
+        config_table.add_row("Max delegation depth", "3")
+        config_table.add_row("Coordination mode", "Hierarchical task delegation")
 
     # Display configuration table panel
     console.print(Panel(
@@ -321,7 +367,12 @@ def display_welcome(args, console):
         expand=False
     ))
 
-    agent_name = "React" if args.agent_type == "react" else "CodeAct"
+    if args.agent_type == "react":
+        agent_name = "React"
+    elif args.agent_type == "codact":
+        agent_name = "CodeAct"
+    else:
+        agent_name = "Research Team"
     console.print(f"[dim]{agent_name} mode is ready![/dim]")
 
 
@@ -453,8 +504,6 @@ def handle_step_update(step_data, console, formatter):
         console: Console object
         formatter: Formatter instance
 
-    TODO: clean up get redundant and invalid token stats use to
-    TUI display code
     """
     try:
         # create a step object for formatter use
@@ -467,8 +516,17 @@ def handle_step_update(step_data, console, formatter):
 
         # check and record token statistics (if exists)
         if step_data.get('token_counts'):
-            input_tokens = step_data['token_counts'].get('input_tokens', 0)
-            output_tokens = step_data['token_counts'].get('output_tokens', 0)
+            token_counts = step_data['token_counts']
+            # Handle both dict and TokenUsage object formats
+            if hasattr(token_counts, 'input_tokens'):
+                # TokenUsage object
+                input_tokens = token_counts.input_tokens or 0
+                output_tokens = token_counts.output_tokens or 0
+            else:
+                # Dictionary format (fallback)
+                input_tokens = token_counts.get('input_tokens', 0)
+                output_tokens = token_counts.get('output_tokens', 0)
+
             logger.debug(
                 f"Found token statistics - input: {input_tokens}, "
                 f"output: {output_tokens}"
@@ -540,19 +598,36 @@ async def process_query_async(query, agent_instance, verbose_mode, console):
         verbose_mode: verbose mode
         console: console object
 
-    TODO: clean up get redundant and invalid token stats use to
-    TUI display code
     """
     console.print(
         f"[bold cyan]⏳ Processing query: {query[:50]}...[/bold cyan]"
     )
 
-    # create UI formatter
-    formatter = ConsoleFormatter(
-        agent_type=agent_instance.agent_type,
-        console=console,
-        debug_mode=verbose_mode
+    # Check if streaming is enabled
+    streaming_enabled = (
+        settings.CLI_STREAMING_ENABLED and
+        (
+            (agent_instance.agent_type == "react" and settings.REACT_ENABLE_STREAMING) or
+            (agent_instance.agent_type == "codact" and settings.CODACT_ENABLE_STREAMING) or
+            (agent_instance.agent_type == "manager" and settings.MANAGER_ENABLE_STREAMING)
+        )
     )
+
+    # create UI formatter (use streaming formatter if streaming is enabled)
+    if streaming_enabled:
+        formatter = StreamingConsoleFormatter(
+            agent_type=agent_instance.agent_type,
+            console=console,
+            debug_mode=verbose_mode
+        )
+        logger.debug("Using StreamingConsoleFormatter")
+    else:
+        formatter = ConsoleFormatter(
+            agent_type=agent_instance.agent_type,
+            console=console,
+            debug_mode=verbose_mode
+        )
+        logger.debug("Using standard ConsoleFormatter")
 
     # get agent_instance's model, ensure correct retrieval
     llm_model = None
@@ -622,16 +697,93 @@ async def process_query_async(query, agent_instance, verbose_mode, console):
             f"[/{THINKING_COLOR}]"
         )
 
-        # check run method whether it's asynchronous or not
-        if asyncio.iscoroutinefunction(agent_instance.run):
-            # directly call asynchronous method
-            final_result = await agent_instance.run(query)
-        else:
-            # use run_in_executor to run synchronous method
-            loop = asyncio.get_running_loop()
-            final_result = await loop.run_in_executor(
-                None, agent_instance.run, query
+        # check if we should enable streaming
+        if streaming_enabled:
+            console.print(
+                f"[dim]Streaming mode enabled for {agent_instance.agent_type} agent[/dim]"
             )
+
+            # Start streaming display
+            if hasattr(formatter, 'on_stream_start'):
+                formatter.on_stream_start()
+
+            try:
+                # Run agent with streaming enabled
+                if asyncio.iscoroutinefunction(agent_instance.run):
+                    # directly call asynchronous method with stream=True
+                    result = await agent_instance.run(query, stream=True)
+                else:
+                    # use run_in_executor to run synchronous method
+                    loop = asyncio.get_running_loop()
+                    result = await loop.run_in_executor(
+                        None, agent_instance.run, query, True  # stream=True
+                    )
+
+                # Check if result is a generator (streaming response)
+                if hasattr(result, '__aiter__'):
+                    # Handle async generator
+                    final_result = ""
+                    async for chunk in result:
+                        # Convert chunk to string if needed
+                        if hasattr(chunk, 'content'):
+                            chunk_str = chunk.content
+                        elif hasattr(chunk, 'text'):
+                            chunk_str = chunk.text
+                        else:
+                            chunk_str = str(chunk)
+                            
+                        # Skip None chunks
+                        if chunk_str is None:
+                            continue
+                            
+                        if hasattr(formatter, 'on_stream_chunk'):
+                            formatter.on_stream_chunk(chunk)
+                        final_result += chunk_str
+                elif hasattr(result, '__iter__') and not isinstance(result, str):
+                    # Handle sync generator
+                    final_result = ""
+                    for chunk in result:
+                        # Convert chunk to string if needed
+                        if hasattr(chunk, 'content'):
+                            chunk_str = chunk.content
+                        elif hasattr(chunk, 'text'):
+                            chunk_str = chunk.text
+                        else:
+                            chunk_str = str(chunk)
+                            
+                        # Skip None chunks
+                        if chunk_str is None:
+                            continue
+                            
+                        if hasattr(formatter, 'on_stream_chunk'):
+                            formatter.on_stream_chunk(chunk)
+                        final_result += chunk_str
+                else:
+                    # Not a generator, just regular result
+                    final_result = result
+
+                # End streaming display
+                if hasattr(formatter, 'on_stream_end'):
+                    formatter.on_stream_end()
+
+            except Exception as e:
+                # Handle streaming error
+                if hasattr(formatter, 'on_stream_error'):
+                    formatter.on_stream_error(str(e))
+                raise
+
+        else:
+            # Non-streaming execution
+            # check run method whether it's asynchronous or not
+            if asyncio.iscoroutinefunction(agent_instance.run):
+                # directly call asynchronous method
+                final_result = await agent_instance.run(query)
+            else:
+                # use run_in_executor to run synchronous method
+                loop = asyncio.get_running_loop()
+                final_result = await loop.run_in_executor(
+                    None, agent_instance.run, query
+                )
 
         # display completion message
         final_text = STATUS_TEXT.get("final", "Completed")
@@ -697,20 +849,21 @@ async def process_query_async(query, agent_instance, verbose_mode, console):
                 # Display token information if available
                 token_counts = stats.get('token_counts', {})
                 if token_counts:
-                    total_tokens = (
-                        token_counts.get('total_input', 0) +
-                        token_counts.get('total_output', 0)
-                    )
+                    # Handle both TokenUsage object and dict formats
+                    if hasattr(token_counts, 'input_tokens'):
+                        # TokenUsage object
+                        input_tokens = token_counts.input_tokens or 0
+                        output_tokens = token_counts.output_tokens or 0
+                    else:
+                        # Dictionary format
+                        input_tokens = token_counts.get('total_input', 0)
+                        output_tokens = token_counts.get('total_output', 0)
+
+                    total_tokens = input_tokens + output_tokens
                     if total_tokens > 0:
                         console.print(f"Total tokens: {total_tokens}")
-                        console.print(
-                            f"Input tokens: "
-                            f"{token_counts.get('total_input', 0)}"
-                        )
-                        console.print(
-                            f"Output tokens: "
-                            f"{token_counts.get('total_output', 0)}"
-                        )
+                        console.print(f"Input tokens: {input_tokens}")
+                        console.print(f"Output tokens: {output_tokens}")
 
         except Exception as stats_error:
             console.print(
@@ -734,11 +887,15 @@ async def run_interactive_cli(
     multiline = False
 
     # Display welcome information for specific agent type
-    agent_emoji = "🤠⚙️" if agent_type == "react" else "👻⌨️"
     if agent_type == "react":
+        agent_emoji = "🤠⚙️"
         agent_style = "blue"
-    else:  # codact
+    elif agent_type == "codact":
+        agent_emoji = "👻⌨️"
         agent_style = "green"
+    else:  # manager
+        agent_emoji = "🎯🤝"
+        agent_style = "cyan"
     if not skip_ready_message:
         console.print(
             f"\n[bold {agent_style}]{agent_emoji} {agent_type.upper()} "
@@ -748,14 +905,20 @@ async def run_interactive_cli(
     while True:
         try:
             # Customize prompt to display different agent types
-            agent_emoji = "🤠⚙️" if agent_type == "react" else "👻⌨️"
             if agent_type == "react":
+                agent_emoji = "🤠⚙️"
                 prompt_text = HTML(
                     "<b><ansiblue>DeepSearchAgent</ansiblue></b> 🤠⚙️ "
                 )
-            else:  # codact
+            elif agent_type == "codact":
+                agent_emoji = "👻⌨️"
                 prompt_text = HTML(
                     "<b><ansigreen>DeepSearchAgent</ansigreen></b> 👻⌨️ "
+                )
+            else:  # manager
+                agent_emoji = "🎯🤝"
+                prompt_text = HTML(
+                    "<b><ansicyan>DeepSearchAgent</ansicyan></b> 🎯🤝 "
                 )
             text = await session.prompt_async(prompt_text, multiline=multiline)
 
@@ -805,9 +968,73 @@ async def run_interactive_cli(
     return 0  # Normal exit
 
 
+# Select team type for manager
+def select_team_type(console):
+    """Select team type for manager agent"""
+    # create selection table
+    team_table = Table(
+        show_header=False,
+        box=None,
+        border_style="cyan",
+        padding=(0, 1, 0, 1),
+        expand=False
+    )
+    
+    # add columns
+    team_table.add_column(
+        "Option", style="bold cyan", justify="center", width=3
+    )
+    team_table.add_column(
+        "Team Type", style="bold white", width=30
+    )
+    team_table.add_column("Description", style="bright_white")
+    
+    # Research team option
+    research_title = Text("", style="bold green")
+    research_title.append("Research Team ", style="bold green")
+    research_title.append("🔍📊", style="bold")
+    
+    research_desc = Text("Specialized team for deep research tasks\n")
+    research_desc.append("• ", style="dim")
+    research_desc.append("Web Research Specialist", style="blue")
+    research_desc.append(" (React): Search & retrieve information\n", style="dim")
+    research_desc.append("• ", style="dim")
+    research_desc.append("Data Analysis Specialist", style="green")
+    research_desc.append(" (CodeAct): Process & synthesize data", style="dim")
+    
+    # Custom team option
+    custom_title = Text("", style="bold yellow")
+    custom_title.append("Custom Team ", style="bold yellow")
+    custom_title.append("⚙️🔧", style="bold")
+    
+    custom_desc = Text("Build your own team composition\n")
+    custom_desc.append("Select which agents to include and configure their roles", style="dim")
+    
+    # add rows
+    team_table.add_row("[1]", research_title, research_desc)
+    team_table.add_row("[2]", custom_title, custom_desc)
+    
+    # display selection table
+    console.print(Panel(
+        team_table,
+        title="[bold cyan]Select Team Configuration[/bold cyan]",
+        border_style="cyan",
+        expand=False
+    ))
+    
+    # add selection prompt
+    choice = Prompt.ask(
+        "[bold cyan]Please select team type[/bold cyan]",
+        choices=["1", "2"],
+        default="1"
+    )
+    
+    return "research" if choice == "1" else "custom"
+
+
 # Select agent type
 def select_agent_type(console):
-    """Select agent type: React or CodeAct"""
+    """Select agent type: React, CodeAct, or Manager"""
     react_name = COLORS['react']['name']
     codact_name = COLORS['codact']['name']
 
@@ -863,9 +1090,27 @@ def select_agent_type(console):
     react_desc.append(" • ", style="dim")
     react_desc.append("Easy to track", style="magenta")
 
+    # Manager option
+    manager_title = Text("", style="bold cyan")
+    manager_title.append("Research Multi-Agent Team ", style="bold cyan")
+    manager_title.append("🎯🤝", style="bold")
+    manager_title.append(" <Code Orchestrator>", style="bright_white")
+    
+    # create description text
+    manager_desc = Text("For complex tasks requiring multiple perspectives, "
+                       "dynamically orchestrates agents through code execution\n")
+    manager_desc.append("📌 ", style="yellow")
+    manager_desc.append("Features: ", style="dim")
+    manager_desc.append("Code-based orchestration", style="green")
+    manager_desc.append(" • ", style="dim")
+    manager_desc.append("Dynamic delegation", style="blue")
+    manager_desc.append(" • ", style="dim")
+    manager_desc.append("Team collaboration", style="magenta")
+
     # add row
     selection_table.add_row("[1]", codact_title, codact_desc)
     selection_table.add_row("[2]", react_title, react_desc)
+    selection_table.add_row("[3]", manager_title, manager_desc)
 
     # display selection table
     console.print(Panel(
@@ -878,10 +1123,15 @@ def select_agent_type(console):
     # add selection prompt
     choice = Prompt.ask(
         "[bold cyan]Please enter the option number[/bold cyan]",
-        choices=["1", "2"],
+        choices=["1", "2", "3"],
         default="1"
     )
-    agent_type = "codact" if choice == "1" else "react"
+    if choice == "1":
+        agent_type = "codact"
+    elif choice == "2":
+        agent_type = "react"
+    else:  # choice == "3"
+        agent_type = "manager"
     return agent_type
 
 
@@ -892,8 +1142,8 @@ def main():
 
     # Select agent type
     parser.add_argument(
-        "--agent-type", "-a", type=str, choices=["react", "codact"],
-        help="Agent type (react or codact)"
+        "--agent-type", "-a", type=str, choices=["react", "codact", "manager"],
+        help="Agent type (react, codact, or manager)"
     )
 
     # Query parameter (one-time mode)
@@ -928,6 +1178,22 @@ def main():
         choices=["local", "docker", "e2b"], default=None,
         help="CodeAct code executor type (default: local)"
     )
+    
+    # Manager specific settings
+    parser.add_argument(
+        "--team", "-t", type=str,
+        choices=["research", "custom"], default="research",
+        help="Preset team configuration for manager mode"
+    )
+    parser.add_argument(
+        "--managed-agents", type=str, nargs="+",
+        help="List of agent types to manage (for custom team)"
+    )
+    parser.add_argument(
+        "--manager-planning-interval", type=int, default=None,
+        help="Manager agent planning interval (default: 10)"
+    )
+    
     parser.add_argument(
         "--enable-streaming", action="store_true",
         help="Enable streaming output (not recommended)"
@@ -945,11 +1211,21 @@ def main():
         # Prompt to select agent type (if not specified)
         if not args.agent_type:
             args.agent_type = select_agent_type(console)
-            agent_style = "blue" if args.agent_type == "react" else "green"
+            if args.agent_type == "react":
+                agent_style = "blue"
+            elif args.agent_type == "codact":
+                agent_style = "green"
+            else:  # manager
+                agent_style = "cyan"
             msg = (f"[green]Selected:[/green] [bold {agent_style}]"
                    f"{args.agent_type.upper()}[/bold {agent_style}] "
                    f"agent mode")
             console.print(msg)
+            
+            # If manager mode selected, also select team type
+            if args.agent_type == "manager" and not args.team:
+                args.team = select_team_type(console)
+                console.print(f"[green]Selected team:[/green] [bold cyan]{args.team.upper()}[/bold cyan]")
 
         # Set specific configurations based on agent type
         if args.agent_type == 'react':
@@ -961,7 +1237,7 @@ def main():
                 settings.REACT_ENABLE_STREAMING = args.enable_streaming
             if args.max_steps is not None:
                 settings.REACT_MAX_STEPS = args.max_steps
-        else:  # codact
+        elif args.agent_type == 'codact':
             # CodeAct specific settings - only override default values
             # if not None
             if args.codact_planning_interval is not None:
@@ -973,6 +1249,21 @@ def main():
                 settings.CODACT_MAX_STEPS = args.max_steps
             if args.enable_streaming is not None:
                 settings.CODACT_ENABLE_STREAMING = args.enable_streaming
+        else:  # manager
+            # Manager specific settings
+            if args.manager_planning_interval is not None:
+                settings.MANAGER_PLANNING_INTERVAL = args.manager_planning_interval
+            else:
+                settings.MANAGER_PLANNING_INTERVAL = 10  # default
+            if args.max_steps is not None:
+                settings.MANAGER_MAX_STEPS = args.max_steps
+            else:
+                settings.MANAGER_MAX_STEPS = 30  # default
+            if args.enable_streaming is not None:
+                settings.MANAGER_ENABLE_STREAMING = args.enable_streaming
+            # Set team configuration
+            settings.MANAGER_TEAM = args.team
+            settings.MANAGER_CUSTOM_AGENTS = args.managed_agents
 
         # Common settings
         settings.VERBOSE_TOOL_CALLBACKS = args.verbose
@@ -1019,8 +1310,10 @@ def main():
                 # showed it
                 if args.agent_type == "react":
                     agent_style = "blue"
-                else:  # codact
+                elif args.agent_type == "codact":
                     agent_style = "green"
+                else:  # manager
+                    agent_style = "cyan"
 
                 exit_code = asyncio.run(
                     run_interactive_cli(

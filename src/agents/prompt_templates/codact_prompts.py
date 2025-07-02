@@ -34,7 +34,7 @@ and finally provide the answer using the `final_answer` tool.
 2.  **{1} Plan:** Decide the sequence of Python code actions needed. This might 
     involve searching, reading URLs, processing text, using WolframAlpha, 
     or combining information.
-3.  **{2} Write Code:** Write a Python code snippet enclosed in ```python ... ``` 
+3.  **{2} Write Code:** Write a Python code snippet enclosed in <code> ... </code> 
     that calls the available tools and implements the planned logic. You can use 
     variables to store intermediate results and manage state.
 4.  **Observe:** The code will be executed, and you will receive the output 
@@ -132,7 +132,7 @@ The following global variables have been initialized for you:
 
 Since these are global variables, access them directly but safely check if they exist first:
 
-```python
+<code>
 # Safe access pattern for persistent variables - DO NOT use globals()
 try:
     visited_urls
@@ -143,7 +143,7 @@ except NameError:
 if url not in visited_urls:
     visited_urls.add(url)
     content = read_url(url)
-```
+</code>
 
 
 **Periodic Planning:**
@@ -155,7 +155,7 @@ Every {{planning_interval}} steps, you should reassess your search strategy. Thi
 
 **Structured Output:**
 When constructing your final answer, use a structured format to organize information:
-```python
+<code>
 import json  # Always import json if you need it
 
 final_answer(json.dumps({
@@ -164,7 +164,7 @@ final_answer(json.dumps({
     "sources": ["URL1", "URL2", "URL3"],  # Sources consulted
     "confidence": 0.85  # Confidence score between 0 and 1
 }, ensure_ascii=False))
-```
+</code>
 
 **Final Answer:**
 IMPORTANT FORMATTING REQUIREMENTS:
@@ -400,6 +400,28 @@ And even if your task resolution is not successful, please return as much contex
     "report": """
 Here is the final answer from your managed agent '{{name}}':
 {{final_answer}}
+""",
+    "manager_instructions": """
+## Calling Sub-Agents
+
+You have access to specialized sub-agents that you can delegate tasks to. Call them as simple Python functions:
+
+```python
+# Example: Delegate a web search task
+result = web_search_agent("Find the latest information about quantum computing breakthroughs in 2024")
+print(result)
+
+# Example: Delegate an analysis task
+analysis = analysis_agent("Analyze the data and compute statistics for the search results")
+print(analysis)
+```
+
+**Important Rules for Sub-Agent Calls:**
+1. Call sub-agents using their function names directly (e.g., `web_search_agent()`, `analysis_agent()`)
+2. DO NOT use `globals()`, `locals()`, or any dynamic function lookup
+3. Pass detailed task descriptions as string arguments
+4. Always check and use the results returned by sub-agents
+5. You can call multiple sub-agents in sequence or based on task requirements
 """
 }
 

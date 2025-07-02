@@ -4,7 +4,7 @@ Build with 💖 for Humanity with AI
 
 <h2>
 
-![Smolagents](https://img.shields.io/badge/Smolagents-1.16.0+-yellow.svg) <img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/smolagents/smolagents.png" alt="Smol Pingu" height="25">
+![Smolagents](https://img.shields.io/badge/Smolagents-1.19.0+-yellow.svg) <img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/smolagents/smolagents.png" alt="Smol Pingu" height="25">
 
 ![MCP](https://img.shields.io/badge/MCP-1.9.0+-009688.svg?logo=mcp&logoColor=white) <img src="https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/main/docs/logo/dark.svg" alt="MCP" height="25">
 
@@ -16,7 +16,7 @@ Build with 💖 for Humanity with AI
 
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![version](https://img.shields.io/badge/version-v0.2.8-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.8)
+[![version](https://img.shields.io/badge/version-v0.2.9.dev-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.9.dev)
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/lwyBZss8924d/DeepSearchAgents)
 
@@ -45,6 +45,13 @@ The project supports command-line interface (CLI), standard FastAPI services, an
 - 📺 **Streaming Output**: Supports real-time streaming of agent steps and final answers, with rich text formatting.
 - 🧮 **Computational Engine**: Integrates WolframAlpha for mathematical and computational queries.
 - 📝 **JSON/Markdown Rendering**: Automatically detects and presents structured outputs in user-friendly formats.
+- 🤝 **Hierarchical Multi-Agent Support** (v0.2.9): Manager agent mode orchestrates teams of specialized agents for collaborative problem-solving.
+- ⚡ **Parallel Tool Execution** (v0.2.9): Multiple concurrent tool calls for improved performance and efficiency.
+- 📊 **Enhanced Execution Metrics** (v0.2.9): RunResult objects provide detailed execution metadata including token usage and timing.
+- 🔒 **Improved Security** (v0.2.9): Latest security patches from smolagents v1.17.0-v1.19.0 applied.
+- 🧠 **Structured Generation** (v0.2.9): Optional structured outputs for CodeAgent improving reliability.
+- 🔄 **Context Manager Support** (v0.2.9): Proper resource cleanup lifecycle for better memory management.
+- 💾 **Enhanced Memory Management** (v0.2.9): Agent memory reset and summary capabilities for long-running sessions.
 
 **Reference Case**
 
@@ -69,23 +76,25 @@ The project supports command-line interface (CLI), standard FastAPI services, an
 
 4. [DONE] Supported multi-vertical search engine source aggregation (adding social network URL index sources like x.com on top of Google) with configurable provider selection;
 
-5. [TODO] Add a `DeepWiki` Remote MCP tool to enhance the `GitHub URLs` vertical crawler/parser;
+5. [DONE] Upgraded to smolagents v1.19.0 with hierarchical agent management, parallel tool execution, and enhanced streaming architecture;
 
-6. Provide more strategy parameters for deep search strategies, adding support for token-budget-based strategy parameters;
+6. [DONE] Add a `DeepWiki` Remote MCP tool to enhance the `GitHub URLs` vertical crawler/parser (v0.2.8);
 
-7. Implement auxiliary methods and tools for Agent Action search width & depth based on Monte Carlo Tree Search strategies in DeepSearchAgents, along with strategy control parameters;
+7. Provide more strategy parameters for deep search strategies, adding support for token-budget-based strategy parameters;
 
-8. Experimentally add an Agent Runs evaluator for DeepSearchAgents (independently evaluating deep search paths & results);
+8. Implement auxiliary methods and tools for Agent Action search width & depth based on Monte Carlo Tree Search strategies in DeepSearchAgents, along with strategy control parameters;
 
-9. Add agent persistent memory functionality & provide users with persistent search history;
+9. Experimentally add an Agent Runs evaluator for DeepSearchAgents (independently evaluating deep search paths & results);
 
-10. Adapt code_sandbox Docker automated configuration; increase support for more remote code_sandbox secure environment SDKs;
+10. Add agent persistent memory functionality & provide users with persistent search history;
 
-11. Integrate full-process agent runs inspecting adaptation ("OpenTelemetry" & "Langfuse");
+11. Adapt code_sandbox Docker automated configuration; increase support for more remote code_sandbox secure environment SDKs;
 
-12. Tentative human-in-the-loop & multi-path branch backtracking in Agent Runs;
+12. Integrate full-process agent runs inspecting adaptation ("OpenTelemetry" & "Langfuse");
 
-13. Concurrent arena mode for Agent Runs;
+13. Tentative human-in-the-loop & multi-path branch backtracking in Agent Runs;
+
+14. Concurrent arena mode for Agent Runs;
 
 ## 3. 🚀 Quick Start (CLI & FastAPI)
 
@@ -168,6 +177,14 @@ Ensure you have installed the CLI dependencies (see Step 4 in Installation & Set
 make cli
 # or directly:
 uv run python -m src.agents.cli
+
+# Run with specific agent mode
+python -m src.cli --agent-type react    # ReAct agent mode
+python -m src.cli --agent-type codact   # CodeAct agent mode
+python -m src.cli --agent-type manager  # Manager agent mode (v0.2.9)
+
+# Manager mode with research team
+python -m src.cli --agent-type manager --team research
 ```
 
 CLI arguments will override settings defined in `config.toml`.
@@ -270,15 +287,15 @@ When run with `--enable-fastmcp`, the main API server mounts the FastMCP server 
 
 The core system architecture includes:
 
-1. **Core Specialist Agents Modules (`src/agents/react_agent.py`, `src/agents/codact_agent.py`)**: Implement ReAct and CodeAct logic based on `smolagents`. `src/agents/runtime.py` serves as the runtime manager, responsible for managing the agent's runtime environment.
-2. **Specialist Core Agent Runtime Module (`src/agents/runtime.py`)**: Responsible for managing the agent's runtime environment.
+1. **Core Specialist Agents Modules (`src/agents/react_agent.py`, `src/agents/codact_agent.py`, `src/agents/manager_agent.py`)**: Implement ReAct, CodeAct, and Manager agent logic based on `smolagents`. Manager agent (v0.2.9) orchestrates teams of specialized agents for collaborative problem-solving.
+2. **Specialist Core Agent Runtime Module (`src/agents/runtime.py`)**: Responsible for managing the agent's runtime environment, including hierarchical agent orchestration.
 3. **Agent Toolkit Collection (`src/tools/`)**: Functions that the agent can invoke (such as web search, reading URLs, etc.).
 4. **FastAPI Service (`src/api`)**: FastAPI service providing REST API related services.
 5. **CLI Interface (`src/cli.py`)**: Provides an interactive command-line interface with rich formatting.
 6. **GaiaUI Web Interface (`src/app.py`)**: Gradio-based web GUI for interacting with agents.
 7. **MCP Server (`src/agents/servers/run_fastmcp.py`)**: FastMCP server providing MCP tools services with Streamable HTTP transport.
 
-*Architecture diagram updated for version `v0.2.8`*
+*Architecture diagram updated for version `v0.2.9`*
 
 ```mermaid
 ---
@@ -325,6 +342,8 @@ flowchart TB
 (ReAct with Streaming)"]]
             CodeAgent[["CodeAgent
 (CodeAct with Streaming)"]]
+            ManagerAgent[["ManagerAgent
+(Hierarchical Orchestration)"]]
         end
     end
     subgraph Toolbox["Toolbox Collection"]
@@ -360,10 +379,14 @@ Environment (for CodeAct)")]
     MCPServer -- "Tool Call" --> CoreAgents
     CoreAgents -- "Select Mode: ReAct" --> ToolAgent
     CoreAgents -- "Select Mode: CodeAct" --> CodeAgent
+    CoreAgents -- "Select Mode: Manager" --> ManagerAgent
     CoreAgents -- "Uses Config" --> ConfigLoader
     CoreAgents -- "Manages Tools" --> ToolboxManager
     ToolAgent -- "Uses Integrated" --> StreamingSupport
     CodeAgent -- "Uses Integrated" --> StreamingSupport
+    ManagerAgent -- "Uses Integrated" --> StreamingSupport
+    ManagerAgent -- "Orchestrates" --> ToolAgent
+    ManagerAgent -- "Orchestrates" --> CodeAgent
 
     ToolboxManager -- "Creates Collection" --> Toolbox
     SearchLinks -- "Auto-detects Source" --> SearchEngines
@@ -397,10 +420,13 @@ Environment (for CodeAct)")]
 
     ToolAgent -- "Final Answer" --> CoreAgents
     CodeAgent -- "Final Answer" --> CoreAgents
+    ManagerAgent -- "Final Answer" --> CoreAgents
     ToolAgent -- "Streaming Output" --> CLI
     CodeAgent -- "Streaming Output" --> CLI
+    ManagerAgent -- "Streaming Output" --> CLI
     ToolAgent -- "Streaming Output" --> GaiaUI
     CodeAgent -- "Streaming Output" --> GaiaUI
+    ManagerAgent -- "Streaming Output" --> GaiaUI
     CoreAgents -- "Response" --> Interfaces
     CoreAgents -- "Tool Result" --> MCPServer
 
@@ -423,6 +449,7 @@ Environment (for CodeAct)")]
     CoreAgents:::manager
     ToolAgent:::agent
     CodeAgent:::agent
+    ManagerAgent:::agent
     StreamingSupport:::streaming
     ToolboxManager:::manager
     SearchLinks:::tool
@@ -484,6 +511,47 @@ In ReAct mode, the agent operates in the classic reasoning+acting manner, with a
 | **Streaming Support** | Support | Support |
 | **Planning Capability** | Periodic planning every N steps | Periodic planning every N steps |
 
+### Manager Mode (Hierarchical Multi-Agent) - v0.2.9
+
+Manager mode introduces hierarchical agent orchestration, where a manager agent coordinates a team of specialized agents to solve complex problems collaboratively. This mode leverages the managed agents support added in smolagents v1.19.0.
+
+**Architecture:**
+
+- **Manager Agent**: High-level orchestrator that breaks down complex queries
+- **Specialized Agents**: Team members with specific expertise (ReAct or CodeAct agents)
+- **Delegation Logic**: Manager assigns subtasks to the most appropriate agent
+
+**Research Team Configuration:**
+
+The default research team includes:
+1. **Web Research Specialist** (ReAct Agent): Focuses on web search, content retrieval, and information gathering
+2. **Data Analysis Specialist** (CodeAct Agent): Handles data processing, computation, and synthesis
+
+**Example Usage:**
+
+```bash
+# CLI with research team
+python -m src.cli --agent-type manager --team research
+
+# Custom team configuration
+python -m src.cli --agent-type manager --team custom --managed-agents react codact
+```
+
+**Benefits:**
+
+- **Collaborative Problem Solving**: Different agents handle their specialty areas
+- **Improved Accuracy**: Combines strengths of different agent paradigms
+- **Scalability**: Easy to add new specialized agents to teams
+- **Task Parallelization**: Manager can delegate multiple subtasks concurrently
+
+| Feature | Manager Mode |
+|---------|--------------|
+| **Agent Coordination** | Hierarchical delegation to specialized agents |
+| **Complex Query Handling** | Breaks down into subtasks for team members |
+| **Model Requirements** | Orchestration + specialized agent capabilities |
+| **Best For** | Multi-faceted research, comparative analysis, complex workflows |
+| **Team Composition** | Configurable teams of ReAct/CodeAct agents |
+
 ## 6. 🔧 Agent Toolbox Chain
 
 DeepSearchAgent comes with an extensible toolchain that helps the agent retrieve and process information. These tools work in concert to form a complete query-answering pipeline:
@@ -538,7 +606,7 @@ with toolbox.load_from_mcp(server_params, trust_remote_code=True):
 
 ### Enhanced Search Workflow
 
-In a typical v0.2.8 enhanced sequence:
+In a typical v0.2.8+ enhanced sequence:
 
 1. **Intelligent Search**: The agent uses `search_links` which automatically detects if the query relates to X.com content (mentions @handles, hashtags, trending topics) and routes to the appropriate search engine
 2. **Content Retrieval**: Based on the source, uses either `read_url` for standard web content or `xcom_read_url` for X.com content
@@ -549,6 +617,7 @@ In a typical v0.2.8 enhanced sequence:
 ### Multi-Source Intelligence
 
 The enhanced toolchain now provides:
+
 - **Dual search capabilities**: Both traditional web search and real-time social media intelligence
 - **Source-aware processing**: Different extraction strategies for different content types
 - **Unified interface**: Consistent tool calling regardless of underlying data source
@@ -661,7 +730,7 @@ This repository contains special Markdown files in the `.cursor/rules/` director
 
 #### Available Rules Files
 
-- **agent-architecture.mdc**: Documents the agent design patterns (ReAct and CodeAct) and their functionalities
+- **agent-architecture.mdc**: Documents the agent design patterns (ReAct, CodeAct, and Manager) and their functionalities
 
 - **configuration.mdc**: Provides detailed explanations of the customized configuration system options
 - **interfaces.mdc**: Describes the available interfaces (CLI, FastAPI, MCP Tool Server)
@@ -736,16 +805,20 @@ src/
 │   │   └── run_gaia.py       # Gradio UI web server
 │   ├── ui_common/            # Shared UI components and utilities
 │   │   ├── __init__.py
-│   │   ├── agent_step_callback.py  # Agent execution step callbacks
-│   │   ├── console_formatter.py    # Console output formatting
-│   │   ├── constants.py            # UI-related constants
-│   │   ├── gradio_adapter.py       # Gradio interface adapters
-│   │   └── gradio_helpers.py       # Gradio utility functions
+│   │   ├── agent_step_callback.py     # Agent execution step callbacks
+│   │   ├── console_formatter.py       # Console output formatting
+│   │   ├── constants.py               # UI-related constants
+│   │   ├── gradio_adapter.py          # Gradio interface adapters
+│   │   ├── gradio_helpers.py          # Gradio utility functions
+│   │   └── streaming_formatter.py     # Streaming output formatter (v0.2.9)
 │   ├── __init__.py
 │   ├── base_agent.py         # Base agent interface and common functionality
 │   ├── codact_agent.py       # CodeAct agent implementation
+│   ├── manager_agent.py      # Manager agent implementation (v0.2.9)
 │   ├── react_agent.py        # ReAct agent implementation
-│   └── runtime.py            # Agent runtime manager
+│   ├── run_result.py         # Agent run result objects (v0.2.9)
+│   ├── runtime.py            # Agent runtime manager
+│   └── stream_aggregator.py  # Stream aggregation logic (v0.2.9)
 ├── api/                      # FastAPI service components
 │   ├── v1/                   # API version 1 implementation
 │   │   ├── endpoints/        # API endpoint definitions
@@ -797,8 +870,16 @@ src/
 
 ### Key Directory Descriptions
 
-- **`agents/`**: Core agent implementations with ReAct and CodeAct paradigms, including prompt templates and UI components
+- **`agents/`**: Core agent implementations with ReAct, CodeAct, and Manager paradigms, including prompt templates and UI components
 - **`api/`**: FastAPI service infrastructure with versioned endpoints and health checks
 - **`core/`**: Fundamental system components including configuration, search engines, content processing, and scraping capabilities
 - **`tools/`**: Complete toolchain with unified toolbox management, supporting both traditional web search and X.com social media integration
 - **Root files**: Application entry points for different interface modes (CLI, FastAPI, Gradio UI)
+
+## Known Issues (v0.2.9.dev)
+
+1. **CLI Streaming Display**: There are known issues with streaming output rendering repeatedly in the terminal. A fix has been identified and will be applied in the next update.
+
+2. **Manager Agent Delegation**: Manager agent invocation for sub-agents may occasionally fail. Root cause analysis is ongoing to improve reliability.
+
+These issues are being actively addressed and do not affect the core functionality of the agents.

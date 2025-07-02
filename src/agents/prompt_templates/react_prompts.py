@@ -227,7 +227,7 @@ Observation: "1.959 × 10^-25"
 Now Begin! Answer the following task.
 """
 
-# 实例化 React Agent 提示模板
+# Instantiate React Agent prompt template
 REACT_PROMPT = PromptTemplates(
     system_prompt=REACT_SYSTEM_TEMPLATE.format(
         THINKING_EMOJI,

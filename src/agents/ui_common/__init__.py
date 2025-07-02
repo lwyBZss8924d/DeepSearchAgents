@@ -19,6 +19,7 @@ from .constants import (
 
 # Export UI formatter
 from .console_formatter import ConsoleFormatter
+from .streaming_formatter import StreamingConsoleFormatter
 
 # Export Gradio adapter
 from .gradio_adapter import (
@@ -37,6 +38,7 @@ __all__ = [
     'CODE_EXECUTION_EMOJI',
     # Classes
     'ConsoleFormatter',
+    'StreamingConsoleFormatter',
     # Gradio Adapter
     'GradioUIAdapter', 'create_gradio_compatible_agent'
 ]
