@@ -30,6 +30,10 @@ class ReactAgent(BaseAgent):
         enable_streaming: bool = False,
         max_steps: int = 25,
         planning_interval: int = 7,
+        max_tool_threads: int = 4,
+        name: str = None,
+        description: str = None,
+        managed_agents: List['BaseAgent'] = None,
         cli_console=None,
         **kwargs
     ):
@@ -43,9 +47,14 @@ class ReactAgent(BaseAgent):
             enable_streaming: Whether to enable streaming output
             max_steps: Maximum number of execution steps
             planning_interval: Interval for planning steps
+            max_tool_threads: Maximum threads for parallel tool execution
+            name: Agent name for identification in hierarchical systems
+            description: Agent description for manager agents
+            managed_agents: List of sub-agents this agent can manage
             cli_console: CLI console object
             **kwargs: Additional parameters for future extensions
         """
+        self.max_tool_threads = max_tool_threads
         # Call parent class initialization
         super().__init__(
             agent_type="react",
@@ -56,6 +65,9 @@ class ReactAgent(BaseAgent):
             enable_streaming=enable_streaming,
             max_steps=max_steps,
             planning_interval=planning_interval,
+            name=name,
+            description=description,
+            managed_agents=managed_agents,
             cli_console=cli_console,
             **kwargs
         )
@@ -83,10 +95,14 @@ class ReactAgent(BaseAgent):
             max_steps=self.max_steps,
             stream_outputs=self.enable_streaming,
             planning_interval=self.planning_interval,
-            # Pass initial state
-            state=self.initial_state,
             # Pass step callbacks
             step_callbacks=self.kwargs.get("step_callbacks", []),
+            # Enable parallel tool execution
+            max_tool_threads=self.max_tool_threads,
         )
+
+        # Set initial state after creation
+        if self.initial_state:
+            agent.state = self.initial_state
 
         return agent
