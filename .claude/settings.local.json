@@ -1,31 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git checkout:*)",
-      "Bash(rg:*)",
-      "Bash(git push:*)",
-      "WebFetch(domain:github.com)",
-      "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs",
-      "Bash(python test:*)",
-      "Bash(rm:*)",
-      "Bash(grep:*)",
-      "Bash(python:*)",
-      "Bash(mkdir:*)",
-      "Bash(chmod:*)",
-      "Bash(uv pip install:*)",
-      "Bash(uv pip show:*)",
-      "Bash(pytest:*)",
-      "Bash(PYTHONPATH=/Users/arthur/dev-space/DeepSearchAgents pytest tests/unit/test_run_result.py -v)",
-      "Bash(uv run pytest:*)",
-      "Bash(uv run:*)",
-      "Bash(env)",
-      "WebFetch(domain:litellms.open2049.com)",
-      "Bash(tree:*)"
-    ]
-  },
-  "enableAllProjectMcpServers": false
+      "Bash(git pull:*)",
+      "Bash(git merge:*)",
+      "Bash(git stash push:*)",
+      "Bash(mv:*)",
+      "Bash(git stash:*)"
+    ],
+    "deny": []
+  }
 }

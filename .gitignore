@@ -192,6 +192,7 @@ config.toml
 
 # Cursor specific files (often user-specific)
 .cursor/
+.claude/
 # allow tracking specific Cursor rules files
 !.cursor/rules/
 !.cursor/rules/agent-architecture.mdc
@@ -226,3 +227,6 @@ mcp.json # If mcp.json can appear elsewhere
 
 # docker
 /docker
+
+# other
+coverage.xml
