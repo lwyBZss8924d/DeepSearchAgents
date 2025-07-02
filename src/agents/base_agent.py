@@ -64,10 +64,10 @@ class MultiModelRouter:
         """
         # Use helper method to select model
         active_model = self._select_model_for_messages(messages)
-        
+
         # Call the selected model
         result = active_model(messages, **kwargs)
-        
+
         # Update token counts
         self._update_token_counts_from_model(active_model)
 
@@ -116,18 +116,18 @@ class MultiModelRouter:
         """
         # Determine which model to use
         active_model = self._select_model_for_messages(messages)
-        
+
         # Create stream wrapper with aggregator
         stream_wrapper = ModelStreamWrapper(active_model)
-        
+
         try:
             # Use the wrapper to handle streaming with aggregation
             for delta in stream_wrapper.generate_stream(messages, **kwargs):
                 yield delta
-            
+
             # Update token counts after streaming completes
             self._update_token_counts_from_model(active_model)
-            
+
         except Exception as e:
             import traceback
             error_msg = (
@@ -136,16 +136,16 @@ class MultiModelRouter:
             )
             logging.error(error_msg)
             yield ChatMessageStreamDelta(content=f"Error: {str(e)}")
-    
+
     def _select_model_for_messages(
         self, 
         messages: List[Dict[str, Any]]
     ) -> Any:
         """Select appropriate model based on message content
-        
+
         Args:
             messages: List of messages to analyze
-            
+
         Returns:
             Selected model (orchestrator or search)
         """
@@ -191,10 +191,10 @@ class MultiModelRouter:
         else:
             self._last_used_model = self.search_model
             return self.search_model
-    
+
     def _update_token_counts_from_model(self, model):
         """Update token counts from the model after generation
-        
+
         Args:
             model: The model that was used for generation
         """
@@ -343,14 +343,14 @@ class BaseAgent:
         # Default non-streaming mode
         try:
             result = self.agent.run(user_input)
-            
+
             # If not returning RunResult, just return the string
             if not return_result:
                 return result
-            
+
             # Create RunResult object
             execution_time = time.time() - start_time
-            
+
             # Collect token usage from model router
             token_usage = {"input": 0, "output": 0, "total": 0}
             if hasattr(self, 'orchestrator_model') and isinstance(
@@ -360,7 +360,7 @@ class BaseAgent:
                 token_usage["input"] = router_tokens.get("input", 0)
                 token_usage["output"] = router_tokens.get("output", 0)
                 token_usage["total"] = token_usage["input"] + token_usage["output"]
-            
+
             # Collect model info
             model_info = {}
             if hasattr(self, 'orchestrator_model'):
@@ -369,7 +369,7 @@ class BaseAgent:
             if hasattr(self, 'search_model'):
                 if hasattr(self.search_model, 'model_id'):
                     model_info["search"] = self.search_model.model_id
-            
+
             # Create and return RunResult
             run_result = RunResult(
                 final_answer=result,
@@ -378,7 +378,7 @@ class BaseAgent:
                 agent_type=self.agent_type,
                 model_info=model_info
             )
-            
+
             # Try to collect steps if available
             if hasattr(self.agent, 'logs') and self.agent.logs:
                 for log_entry in self.agent.logs:
@@ -387,13 +387,13 @@ class BaseAgent:
                         "content": str(log_entry)
                     }
                     run_result.add_step(step_info)
-            
+
             return run_result
-            
+
         except Exception as e:
             execution_time = time.time() - start_time
             error_msg = f"Agent execution failed: {str(e)}"
-            
+
             if return_result:
                 return RunResult(
                     final_answer="",
@@ -410,12 +410,12 @@ class BaseAgent:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit for resource cleanup
-        
+
         Args:
             exc_type: Exception type if an error occurred
             exc_val: Exception value if an error occurred
             exc_tb: Exception traceback if an error occurred
-            
+
         Returns:
             False to propagate any exceptions
         """
@@ -424,7 +424,7 @@ class BaseAgent:
             # Clean up agent memory
             if hasattr(self.agent, 'memory'):
                 self.agent.memory = []
-            
+
             # Clean up any tool resources
             if hasattr(self.agent, 'tools') and self.agent.tools:
                 for tool in self.agent.tools:
@@ -435,7 +435,7 @@ class BaseAgent:
                             logger.warning(
                                 f"Error cleaning up tool {tool.name}: {e}"
                             )
-            
+
             # Clean up any executor resources (for CodeAct)
             if hasattr(self.agent, 'executor') and hasattr(
                 self.agent.executor, 'close'
@@ -444,11 +444,11 @@ class BaseAgent:
                     self.agent.executor.close()
                 except Exception as e:
                     logger.warning(f"Error closing executor: {e}")
-        
+
         # Clear model references to free memory
         self.orchestrator_model = None
         self.search_model = None
-        
+
         return False  # Don't suppress exceptions
 
     async def __aenter__(self):
@@ -457,12 +457,12 @@ class BaseAgent:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit for resource cleanup
-        
+
         Args:
             exc_type: Exception type if an error occurred
             exc_val: Exception value if an error occurred
             exc_tb: Exception traceback if an error occurred
-            
+
         Returns:
             False to propagate any exceptions
         """
@@ -471,7 +471,7 @@ class BaseAgent:
 
     def reset_agent_memory(self):
         """Reset agent memory and state
-        
+
         Clears agent memory while preserving tools and configuration.
         This is useful for starting fresh conversations without recreating
         the entire agent instance.
@@ -481,15 +481,15 @@ class BaseAgent:
             if hasattr(self.agent, 'memory'):
                 self.agent.memory = []
                 logger.debug(f"Reset memory for {self.agent_type} agent")
-            
+
             # Reset agent logs
             if hasattr(self.agent, 'logs'):
                 self.agent.logs = []
-            
+
             # Reset planning state if exists
             if hasattr(self.agent, 'planning_memory'):
                 self.agent.planning_memory = []
-            
+
             # Reset agent state to initial state
             if hasattr(self.agent, 'state') and hasattr(self, 'initial_state'):
                 # Create a fresh copy of initial state
@@ -503,7 +503,7 @@ class BaseAgent:
 
     def get_memory_summary(self) -> Dict[str, Any]:
         """Get a summary of the current agent memory state
-        
+
         Returns:
             Dict containing memory statistics and content summary
         """
@@ -514,30 +514,30 @@ class BaseAgent:
             "has_planning_memory": False,
             "state_keys": []
         }
-        
+
         if hasattr(self, 'agent') and self.agent:
             if hasattr(self.agent, 'memory'):
                 summary["memory_length"] = len(self.agent.memory)
-            
+
             if hasattr(self.agent, 'logs'):
                 summary["logs_length"] = len(self.agent.logs)
-            
+
             if hasattr(self.agent, 'planning_memory'):
                 summary["has_planning_memory"] = True
                 summary["planning_memory_length"] = len(
                     self.agent.planning_memory
                 )
-            
+
             if hasattr(self.agent, 'state') and isinstance(
                 self.agent.state, dict
             ):
                 summary["state_keys"] = list(self.agent.state.keys())
-        
+
         return summary
 
     def optimize_memory_for_planning(self):
         """Optimize memory specifically for planning steps
-        
+
         This method helps manage memory during planning intervals by:
         - Keeping only essential memory items
         - Summarizing previous steps
@@ -545,10 +545,10 @@ class BaseAgent:
         """
         if not hasattr(self, 'agent') or not self.agent:
             return
-        
+
         # Keep the last N memory items for context
         MEMORY_WINDOW = 10
-        
+
         if hasattr(self.agent, 'memory') and len(self.agent.memory) > MEMORY_WINDOW:
             # Keep recent memory items
             self.agent.memory = self.agent.memory[-MEMORY_WINDOW:]

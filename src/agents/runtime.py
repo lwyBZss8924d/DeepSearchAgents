@@ -431,6 +431,7 @@ class AgentRuntime:
             ),
             executor_kwargs=settings.CODACT_EXECUTOR_KWARGS,
             planning_interval=settings.CODACT_PLANNING_INTERVAL,
+            use_structured_outputs_internally=settings.CODACT_USE_STRUCTURED_OUTPUTS,
             cli_console=None,
             step_callbacks=callbacks,
             final_answer_checks=final_answer_checks
@@ -467,7 +468,7 @@ class AgentRuntime:
 
         Returns:
             Agent instance
-            
+
         Example usage with context manager:
             runtime = AgentRuntime()
             with runtime.get_or_create_agent("react") as agent:

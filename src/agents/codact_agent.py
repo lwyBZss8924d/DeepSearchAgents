@@ -46,6 +46,7 @@ class CodeActAgent(BaseAgent):
         additional_authorized_imports: Optional[List[str]] = None,
         enable_streaming: bool = False,
         planning_interval: int = 5,
+        use_structured_outputs_internally: bool = False,
         cli_console=None,
         step_callbacks: Optional[List[Any]] = None,
         **kwargs
@@ -65,6 +66,8 @@ class CodeActAgent(BaseAgent):
                 allow importing
             enable_streaming: Whether to enable streaming output
             planning_interval: Interval for planning steps
+            use_structured_outputs_internally: Enable JSON-structured
+                output format (experimental)
             cli_console: CLI console object
             step_callbacks: List of step callbacks
             **kwargs: Additional parameters for future extensions
@@ -102,18 +105,18 @@ class CodeActAgent(BaseAgent):
 
         # other initialization remains unchanged
         self.executor_type = executor_type
-        
+
         # Security: Add default safety settings to executor kwargs
         default_security_kwargs = {
-            "timeout": 30,  # 30 second timeout for code execution
+            "timeout": 300,  # 300 second timeout for code execution
             "max_output_size": 100000,  # Limit output to 100KB
             "disable_network": False,  # Keep network for API calls
             "restricted_paths": ["/etc", "/root", "/home"],  # Block sensitive paths
         }
-        
+
         # Merge user kwargs with security defaults
         self.executor_kwargs = {**default_security_kwargs, **(executor_kwargs or {})}
-        
+
         # Warn if user tries to override security settings
         if executor_kwargs:
             overridden = set(executor_kwargs.keys()) & set(default_security_kwargs.keys())
@@ -121,8 +124,9 @@ class CodeActAgent(BaseAgent):
                 logger.warning(
                     f"Security settings overridden by user: {overridden}"
                 )
-        
+
         self.verbosity_level = verbosity_level
+        self.use_structured_outputs_internally = use_structured_outputs_internally
         self.step_callbacks = step_callbacks or []
 
         # call parent class constructor
@@ -144,10 +148,10 @@ class CodeActAgent(BaseAgent):
 
     def validate_code_safety(self, code: str) -> bool:
         """Validate that code is safe to execute
-        
+
         Args:
             code: Python code string to validate
-            
+
         Returns:
             bool: True if code appears safe, False otherwise
         """
@@ -175,13 +179,13 @@ class CodeActAgent(BaseAgent):
             r"\/etc\/",  # System paths
             r"\/root\/",  # Root paths
         ]
-        
+
         import re
         for pattern in dangerous_patterns:
             if re.search(pattern, code, re.IGNORECASE):
                 logger.warning(f"Potentially dangerous pattern detected: {pattern}")
                 return False
-        
+
         return True
 
     def _create_prompt_templates(self):
@@ -190,12 +194,33 @@ class CodeActAgent(BaseAgent):
         Returns:
             dict: Extended prompt templates
         """
-        # Load base CodeAgent prompt templates
-        base_prompts = yaml.safe_load(
-            importlib.resources.files(
-                "smolagents.prompts"
-            ).joinpath("code_agent.yaml").read_text()
-        )
+        # Select appropriate base templates based on structured outputs setting
+        if self.use_structured_outputs_internally:
+            # Try to load structured templates from smolagents
+            try:
+                base_prompts = yaml.safe_load(
+                    importlib.resources.files(
+                        "smolagents.prompts"
+                    ).joinpath("structured_code_agent.yaml").read_text()
+                )
+                logger.info("Using structured code agent prompts")
+            except FileNotFoundError:
+                # Fallback to regular prompts if structured not available
+                logger.warning(
+                    "Structured prompts not found, falling back to regular prompts"
+                )
+                base_prompts = yaml.safe_load(
+                    importlib.resources.files(
+                        "smolagents.prompts"
+                    ).joinpath("code_agent.yaml").read_text()
+                )
+        else:
+            # Load regular CodeAgent prompt templates
+            base_prompts = yaml.safe_load(
+                importlib.resources.files(
+                    "smolagents.prompts"
+                ).joinpath("code_agent.yaml").read_text()
+            )
 
         # Create extension content
         extension_content = {
@@ -280,6 +305,14 @@ class CodeActAgent(BaseAgent):
                     "required": ["title", "content"]
                 }
             }
+        
+        # Validation: structured outputs cannot be used with grammar
+        if self.use_structured_outputs_internally and json_grammar is not None:
+            logger.warning(
+                "Cannot use structured outputs with grammar parameter. "
+                "Disabling structured outputs."
+            )
+            self.use_structured_outputs_internally = False
 
         # Create model router to use different models for different prompts
         model_router = MultiModelRouter(
@@ -303,9 +336,10 @@ class CodeActAgent(BaseAgent):
                 executor_kwargs=self.executor_kwargs,
                 max_steps=self.max_steps,
                 verbosity_level=self.verbosity_level,
-                grammar=json_grammar,
+                grammar=json_grammar if not self.use_structured_outputs_internally else None,
                 planning_interval=self.planning_interval,
-                step_callbacks=self.step_callbacks
+                step_callbacks=self.step_callbacks,
+                use_structured_outputs_internally=self.use_structured_outputs_internally
             )
         else:
             agent = CodeAgent(
@@ -317,9 +351,10 @@ class CodeActAgent(BaseAgent):
                 executor_kwargs=self.executor_kwargs,
                 max_steps=self.max_steps,
                 verbosity_level=self.verbosity_level,
-                grammar=json_grammar,
+                grammar=json_grammar if not self.use_structured_outputs_internally else None,
                 planning_interval=self.planning_interval,
-                step_callbacks=self.step_callbacks
+                step_callbacks=self.step_callbacks,
+                use_structured_outputs_internally=self.use_structured_outputs_internally
             )
 
         # Initialize agent state
@@ -348,6 +383,11 @@ class CodeActAgent(BaseAgent):
             f"Using search model: {self.search_model.model_id} "
             f"for code generation"
         )
+        if self.use_structured_outputs_internally:
+            print(
+                "Structured outputs enabled: Using JSON format for "
+                "internal agent communication"
+            )
 
         # ensure callbacks can be accessed and debugged
         if self.step_callbacks and len(self.step_callbacks) > 0:
