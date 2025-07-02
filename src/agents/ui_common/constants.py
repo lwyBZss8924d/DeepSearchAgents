@@ -40,7 +40,8 @@ COLORS = {
     "final": "bold green",
     "error": "bold red",
     "react": {"name": "bold blue", "border": "blue"},
-    "codact": {"name": "bold green", "border": "green"}
+    "codact": {"name": "bold green", "border": "green"},
+    "manager": {"name": "bold cyan", "border": "cyan"}
 }
 
 # Agent Tools colors mapping

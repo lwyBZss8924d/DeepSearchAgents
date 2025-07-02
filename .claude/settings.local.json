@@ -13,7 +13,18 @@
       "Bash(python test:*)",
       "Bash(rm:*)",
       "Bash(grep:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(mkdir:*)",
+      "Bash(chmod:*)",
+      "Bash(uv pip install:*)",
+      "Bash(uv pip show:*)",
+      "Bash(pytest:*)",
+      "Bash(PYTHONPATH=/Users/arthur/dev-space/DeepSearchAgents pytest tests/unit/test_run_result.py -v)",
+      "Bash(uv run pytest:*)",
+      "Bash(uv run:*)",
+      "Bash(env)",
+      "WebFetch(domain:litellms.open2049.com)",
+      "Bash(tree:*)"
     ]
   },
   "enableAllProjectMcpServers": false

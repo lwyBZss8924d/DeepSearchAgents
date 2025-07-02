@@ -400,6 +400,28 @@ And even if your task resolution is not successful, please return as much contex
     "report": """
 Here is the final answer from your managed agent '{{name}}':
 {{final_answer}}
+""",
+    "manager_instructions": """
+## Calling Sub-Agents
+
+You have access to specialized sub-agents that you can delegate tasks to. Call them as simple Python functions:
+
+```python
+# Example: Delegate a web search task
+result = web_search_agent("Find the latest information about quantum computing breakthroughs in 2024")
+print(result)
+
+# Example: Delegate an analysis task
+analysis = analysis_agent("Analyze the data and compute statistics for the search results")
+print(analysis)
+```
+
+**Important Rules for Sub-Agent Calls:**
+1. Call sub-agents using their function names directly (e.g., `web_search_agent()`, `analysis_agent()`)
+2. DO NOT use `globals()`, `locals()`, or any dynamic function lookup
+3. Pass detailed task descriptions as string arguments
+4. Always check and use the results returned by sub-agents
+5. You can call multiple sub-agents in sequence or based on task requirements
 """
 }
 

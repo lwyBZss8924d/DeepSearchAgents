@@ -13,6 +13,7 @@ from typing import (
 )
 from smolagents import Tool, LiteLLMModel
 from ..core.config.settings import settings
+from .base_agent import BaseAgent
 from .react_agent import ReactAgent
 from .codact_agent import CodeActAgent
 from .manager_agent import ManagerAgent
@@ -234,6 +235,10 @@ class AgentRuntime:
         api_key = self.api_keys.get("litellm_master_key")
         api_base = self.api_keys.get("litellm_base_url")
 
+        # Strip trailing slash from api_base to avoid double slashes
+        if api_base and api_base.endswith('/'):
+            api_base = api_base.rstrip('/')
+
         # Check if API key exists
         if not api_key:
             logger.warning("Missing LITELLM_MASTER_KEY - API calls will fail")
@@ -378,10 +383,10 @@ class AgentRuntime:
 
         # Ensure agent object has stream_outputs and memory attributes
         if not hasattr(agent, 'stream_outputs'):
-            agent.stream_outputs = False
+            agent.stream_outputs = settings.REACT_ENABLE_STREAMING
 
-        if not hasattr(agent, 'memory'):
-            agent.memory = []
+        # Memory is handled internally by smolagents in v1.19.0
+        # No need to set it manually
 
         return agent
 
@@ -418,22 +423,22 @@ class AgentRuntime:
 
         agent = CodeActAgent(
             orchestrator_model=self._create_llm_model(
-                model_id=settings.ORCHESTRATOR_MODEL_ID
+                model_id=self.settings.ORCHESTRATOR_MODEL_ID
             ),
             search_model=self._create_llm_model(
-                model_id=settings.SEARCH_MODEL_NAME
+                model_id=self.settings.SEARCH_MODEL_NAME
             ),
             tools=self._tools,
             initial_state=initial_state,
-            executor_type=settings.CODACT_EXECUTOR_TYPE,
-            max_steps=settings.CODACT_MAX_STEPS,
-            verbosity_level=settings.CODACT_VERBOSITY_LEVEL,
+            executor_type=self.settings.CODACT_EXECUTOR_TYPE,
+            max_steps=self.settings.CODACT_MAX_STEPS,
+            verbosity_level=self.settings.CODACT_VERBOSITY_LEVEL,
             additional_authorized_imports=(
-                settings.CODACT_ADDITIONAL_IMPORTS
+                self.settings.CODACT_ADDITIONAL_IMPORTS
             ),
-            executor_kwargs=settings.CODACT_EXECUTOR_KWARGS,
-            planning_interval=settings.CODACT_PLANNING_INTERVAL,
-            use_structured_outputs_internally=settings.CODACT_USE_STRUCTURED_OUTPUTS,
+            executor_kwargs=self.settings.CODACT_EXECUTOR_KWARGS,
+            planning_interval=self.settings.CODACT_PLANNING_INTERVAL,
+            use_structured_outputs_internally=self.settings.CODACT_USE_STRUCTURED_OUTPUTS,
             cli_console=None,
             step_callbacks=callbacks,
             final_answer_checks=final_answer_checks
@@ -448,10 +453,10 @@ class AgentRuntime:
 
         # Ensure agent object has stream_outputs and memory attributes
         if not hasattr(agent, 'stream_outputs'):
-            agent.stream_outputs = False
+            agent.stream_outputs = settings.CODACT_ENABLE_STREAMING
 
-        if not hasattr(agent, 'memory'):
-            agent.memory = []
+        # Memory is handled internally by smolagents in v1.19.0
+        # No need to set it manually
 
         return agent
 
@@ -504,6 +509,9 @@ class AgentRuntime:
                 debug_mode=debug_mode
             ))
 
+        # add final_answer_checks
+        final_answer_checks = [self.format_final_answer_for_gradio]
+        
         agent = ManagerAgent(
             orchestrator_model=self._create_llm_model(
                 model_id=settings.ORCHESTRATOR_MODEL_ID
@@ -511,14 +519,20 @@ class AgentRuntime:
             search_model=self._create_llm_model(
                 model_id=settings.SEARCH_MODEL_NAME
             ),
-            tools=self._tools,
+            tools=[],  # Manager typically doesn't use tools directly
             initial_state=initial_state,
             managed_agents=managed_agents or [],
-            max_steps=settings.REACT_MAX_STEPS,
-            planning_interval=settings.REACT_PLANNING_INTERVAL,
-            max_tool_threads=settings.REACT_MAX_TOOL_THREADS,
+            max_steps=getattr(settings, 'MANAGER_MAX_STEPS', 30),
+            planning_interval=getattr(settings, 'MANAGER_PLANNING_INTERVAL', 10),
+            executor_type=settings.CODACT_EXECUTOR_TYPE,
+            executor_kwargs=settings.CODACT_EXECUTOR_KWARGS,
+            verbosity_level=settings.CODACT_VERBOSITY_LEVEL,
+            additional_authorized_imports=settings.CODACT_ADDITIONAL_IMPORTS,
+            enable_streaming=getattr(settings, 'MANAGER_ENABLE_STREAMING', False),
+            use_structured_outputs_internally=settings.CODACT_USE_STRUCTURED_OUTPUTS,
             cli_console=None,
-            step_callbacks=callbacks
+            step_callbacks=callbacks,
+            final_answer_checks=final_answer_checks
         )
 
         # Store in active sessions
@@ -527,10 +541,10 @@ class AgentRuntime:
 
         # Ensure agent object has stream_outputs and memory attributes
         if not hasattr(agent, 'stream_outputs'):
-            agent.stream_outputs = False
+            agent.stream_outputs = getattr(settings, 'MANAGER_ENABLE_STREAMING', False)
 
-        if not hasattr(agent, 'memory'):
-            agent.memory = []
+        # Memory is handled internally by smolagents in v1.19.0
+        # No need to set it manually
 
         return agent
 
@@ -719,26 +733,38 @@ class AgentRuntime:
                 return agent
 
         elif agent_type.lower() == "manager":
-            # Create a new Manager agent with default managed agents
+            # Create a new Manager agent with research team
+            team_type = getattr(settings, 'MANAGER_TEAM', 'research')
+            if team_type == 'research':
+                managed_agents = self._create_research_team()
+            else:
+                # Custom team from settings
+                custom_agents = getattr(settings, 'MANAGER_CUSTOM_AGENTS', None)
+                if custom_agents:
+                    managed_agents = self._create_custom_team(custom_agents)
+                else:
+                    # Default to research team if no custom agents specified
+                    managed_agents = self._create_research_team()
+                
             agent = self.create_manager_agent(
-                managed_agents=["react", "codact"],  # Default managed agents
+                managed_agents=managed_agents,
                 step_callback=step_callback,
                 debug_mode=debug_mode
             )
-            
+
             # Ensure agent object has required properties
             if not hasattr(agent, 'name'):
-                agent.name = "DeepSearch Manager Agent"
+                agent.name = "Research Multi-Agent Team"
             if not hasattr(agent, 'description'):
                 agent.description = (
-                    "Orchestrates multiple specialized agents to solve "
-                    "complex tasks through intelligent delegation"
+                    "Orchestrates a team of specialized research agents through "
+                    "intelligent code-based delegation and coordination"
                 )
-            
+
             # Ensure run method proxies to smolagents needed interface
             if not hasattr(agent, 'original_run'):
                 agent.original_run = agent.run
-                
+
                 async def run_wrapper(user_input, *args, **kwargs):
                     """Wrap run method to match expectations"""
                     condition = (not args and not kwargs and
@@ -748,20 +774,112 @@ class AgentRuntime:
                         if isawaitable(result):
                             return await result
                         return result
-                    
+
                     result = agent.original_run(
                         user_input, *args, **kwargs
                     )
                     if isawaitable(result):
                         return await result
                     return result
-                
+
                 agent.run = run_wrapper
-            
+
             return agent
-            
+
         else:
             raise ValueError(f"Unsupported agent type: {agent_type}")
+    
+    def create_agent_team(self, team_type="research", custom_agents=None):
+        """Create a team of agents for manager orchestration
+        
+        Args:
+            team_type: Type of team ("research" or "custom")
+            custom_agents: List of agent types for custom team
+            
+        Returns:
+            List[BaseAgent]: List of configured agents
+        """
+        if team_type == "research":
+            return self._create_research_team()
+        elif team_type == "custom" and custom_agents:
+            return self._create_custom_team(custom_agents)
+        else:
+            # Default to research team
+            return self._create_research_team()
+    
+    def _create_research_team(self):
+        """Create the research team with specialized agents
+        
+        Returns:
+            List[BaseAgent]: Research team agents
+        """
+        team = []
+        
+        # Create Web Research Specialist (React agent)
+        research_agent = self.create_react_agent(
+            step_callback=None,
+            debug_mode=False
+        )
+        # Use valid Python identifier for callable name
+        research_agent.name = "web_search_agent"
+        research_agent.display_name = "Research Team: Web Search Agent"
+        research_agent.description = (
+            "A team member specialized in web search, content retrieval, and "
+            "information gathering using tool-calling approach"
+        )
+        team.append(research_agent)
+        
+        # Create Data Analysis Specialist (CodeAct agent)
+        analysis_agent = self.create_codact_agent(
+            step_callback=None,
+            debug_mode=False
+        )
+        # Use valid Python identifier for callable name
+        analysis_agent.name = "analysis_agent"
+        analysis_agent.display_name = "Research Team: Analysis Agent"
+        analysis_agent.description = (
+            "A team member specialized in data processing, computation, and synthesis "
+            "using code execution approach"
+        )
+        team.append(analysis_agent)
+        
+        logger.info("Created research team with 2 specialized agents")
+        return team
+    
+    def _create_custom_team(self, agent_types):
+        """Create a custom team based on specified agent types
+        
+        Args:
+            agent_types: List of agent type strings
+            
+        Returns:
+            List[BaseAgent]: Custom team agents
+        """
+        team = []
+        
+        for i, agent_type in enumerate(agent_types):
+            if agent_type.lower() == "react":
+                agent = self.create_react_agent(
+                    step_callback=None,
+                    debug_mode=False
+                )
+                agent.name = f"React Agent {i+1}"
+                agent.description = "Tool-calling agent for structured tasks"
+            elif agent_type.lower() == "codact":
+                agent = self.create_codact_agent(
+                    step_callback=None,
+                    debug_mode=False
+                )
+                agent.name = f"CodeAct Agent {i+1}"
+                agent.description = "Code execution agent for computational tasks"
+            else:
+                logger.warning(f"Unknown agent type: {agent_type}, skipping")
+                continue
+            
+            team.append(agent)
+        
+        logger.info(f"Created custom team with {len(team)} agents")
+        return team
 
     async def run_on_session(self, session_id: str) -> str:
         """Run agent on an existing session

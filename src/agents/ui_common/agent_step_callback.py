@@ -21,6 +21,7 @@ from smolagents.memory import (
     FinalAnswerStep, MemoryStep
 )
 from smolagents.monitoring import AgentLogger, Monitor, LogLevel
+from smolagents import TokenUsage
 from rich.console import Console
 
 
@@ -190,7 +191,7 @@ class AgentStepCallback:
     def _extract_token_stats(
         self, memory_step: MemoryStep, step_data: Dict[str, Any]
     ) -> None:
-        """Extract token stats information
+        """Extract token stats information using smolagents v1.19.0 TokenUsage API
 
         Args:
             memory_step: Memory step object
@@ -211,109 +212,32 @@ class AgentStepCallback:
             f"type: {type(memory_step).__name__}"
         )
 
-        # get token counts in multiple ways
+        # get token counts from memory step's token_usage attribute
         input_tokens = 0
         output_tokens = 0
-        tokens_fetched = False
 
-        # try multiple ways to get token counts
-        # TODO: clean up redundant and invalid token stats code
-        if self.model:
-            # way 1: directly use get_token_counts method
-            # (new standard interface)
-            if hasattr(self.model, "get_token_counts"):
-                try:
-                    logger.debug("Trying get_token_counts method")
-                    token_counts = self.model.get_token_counts()
-                    input_tokens = token_counts.get("input", 0)
-                    output_tokens = token_counts.get("output", 0)
-                    tokens_fetched = True
-                    logger.debug(
-                        f"Got tokens via get_token_counts: "
-                        f"in={input_tokens}, out={output_tokens}"
-                    )
-                except Exception as e:
-                    logger.debug(f"Error calling get_token_counts: {e}")
-
-            # way 2: access last_input_token_count attribute
-            # (old interface)
-            if (not tokens_fetched and
-                    hasattr(self.model, "last_input_token_count")):
-                try:
-                    logger.debug("Trying last_input_token_count attribute")
-                    input_tokens = getattr(
-                        self.model, "last_input_token_count", 0
-                    )
-                    output_tokens = getattr(
-                        self.model, "last_output_token_count", 0
-                    )
-                    tokens_fetched = True
-                    logger.debug(
-                        f"Got tokens via direct attributes: "
-                        f"in={input_tokens}, out={output_tokens}"
-                    )
-                except Exception as e:
-                    logger.debug(
-                        f"Error accessing token count attributes: {e}"
-                    )
-
-            # way 3: check if it's a MultiModelRouter and try to
-            # get inner model
-            if (not tokens_fetched and
-                    hasattr(self.model, "orchestrator_model")):
-                try:
-                    logger.debug("Trying orchestrator_model for tokens")
-                    inner_model = self.model.orchestrator_model
-                    if hasattr(inner_model, "last_input_token_count"):
-                        input_tokens = getattr(
-                            inner_model, "last_input_token_count", 0
-                        )
-                        output_tokens = getattr(
-                            inner_model, "last_output_token_count", 0
-                        )
-                        tokens_fetched = True
-                        logger.debug(
-                            f"Got tokens via orchestrator_model: "
-                            f"in={input_tokens}, out={output_tokens}"
-                        )
-                except Exception as e:
-                    logger.debug(f"Error accessing orchestrator_model: {e}")
-
-            # way 4: get tokens from search_model and orchestrator_model
-            if (not tokens_fetched and
-                    hasattr(self.model, "search_model") and
-                    hasattr(self.model, "orchestrator_model")):
-                try:
-                    logger.debug(
-                        "Trying to combine tokens from search_model "
-                        "and orchestrator_model"
-                    )
-                    search_model = self.model.search_model
-                    orchestrator_model = self.model.orchestrator_model
-
-                    if hasattr(search_model, "last_input_token_count"):
-                        input_tokens += getattr(
-                            search_model, "last_input_token_count", 0
-                        )
-                        output_tokens += getattr(
-                            search_model, "last_output_token_count", 0
-                        )
-
-                    if hasattr(orchestrator_model, "last_input_token_count"):
-                        input_tokens += getattr(
-                            orchestrator_model, "last_input_token_count", 0
-                        )
-                        output_tokens += getattr(
-                            orchestrator_model, "last_output_token_count", 0
-                        )
-
-                    tokens_fetched = True
-                    logger.debug(
-                        f"Got combined tokens: in={input_tokens}, "
-                        f"out={output_tokens}"
-                    )
-                except Exception as e:
-                    logger.debug(f"Error combining model tokens: {e}")
+        # Check if step has token_usage attribute (ActionStep, PlanningStep)
+        if hasattr(memory_step, "token_usage") and memory_step.token_usage:
+            token_usage = memory_step.token_usage
+            if isinstance(token_usage, TokenUsage):
+                input_tokens = token_usage.input_tokens or 0
+                output_tokens = token_usage.output_tokens or 0
+                logger.debug(
+                    f"Got tokens from TokenUsage: "
+                    f"in={input_tokens}, out={output_tokens}"
+                )
+            elif isinstance(token_usage, dict):
+                # Fallback for dict-based token usage
+                input_tokens = token_usage.get("input_tokens", 0)
+                output_tokens = token_usage.get("output_tokens", 0)
+                logger.debug(
+                    f"Got tokens from dict: "
+                    f"in={input_tokens}, out={output_tokens}"
+                )
+        else:
+            logger.debug(
+                f"Step type {type(memory_step).__name__} has no token_usage"
+            )
 
         # update step token counts
         self.token_stats["step_tokens"][step_id]["input_tokens"] = input_tokens
@@ -441,25 +365,31 @@ class AgentStepCallback:
         """
         # Base action step data
         base_data.update({
-            "step_number": step.step_number,
+            "step_number": getattr(step, 'step_number', self.step_counter),
             "detailed_type": "action",
-            "model_output": step.model_output,
-            "start_time": step.start_time,
-            "end_time": step.end_time,
-            "duration": step.duration
+            "model_output": getattr(step, 'model_output', None)
         })
 
+        # Add timing data if available
+        if hasattr(step, 'start_time'):
+            base_data["start_time"] = step.start_time
+        if hasattr(step, 'end_time'):
+            base_data["end_time"] = step.end_time
+        if hasattr(step, 'duration'):
+            base_data["duration"] = step.duration
+
         # Calculate LLM thinking time vs tool execution time
-        if step.start_time and step.end_time:
+        if hasattr(step, 'start_time') and hasattr(step, 'end_time') and step.start_time and step.end_time:
             # Track timing details - if there are observations,
             # assume part of the time was spent executing the tool
             tool_execution_time = 0
-            llm_thinking_time = step.duration
+            duration = getattr(step, 'duration', 0)
+            llm_thinking_time = duration
 
             if step.tool_calls and step.observations:
                 # TODO: need to be calculated based on actual timing
-                tool_execution_time = step.duration * 0.7
-                llm_thinking_time = step.duration - tool_execution_time
+                tool_execution_time = duration * 0.7
+                llm_thinking_time = duration - tool_execution_time
 
                 # Record timing stats for the first tool
                 first_tool = (step.tool_calls[0].name

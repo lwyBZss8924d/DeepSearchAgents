@@ -571,14 +571,14 @@ class ConsoleFormatter:
                         # Support both markdown and XML formats
                         markdown_pattern = r'```python\s*(.*?)\s*```'
                         xml_pattern = r'<code>\s*(.*?)\s*</code>'
-                        
+
                         markdown_blocks = re.findall(
                             markdown_pattern, str(model_output), re.DOTALL
                         )
                         xml_blocks = re.findall(
                             xml_pattern, str(model_output), re.DOTALL
                         )
-                        
+
                         code_blocks = markdown_blocks + xml_blocks
 
                         if code_blocks and len(code_blocks) > 0:
@@ -785,7 +785,7 @@ class ConsoleFormatter:
                     model_output_str,
                     re.DOTALL
                 )
-            
+
             if code_blocks:
                 code_content = code_blocks[0]
                 code_panel = Panel(
@@ -1173,16 +1173,32 @@ class ConsoleFormatter:
                 "Total execution time",
                 f"{total_time:.2f}s"
             )
-            stats_table.add_row(
-                "LLM thinking time",
-                f"{stats.get('total_llm_time', 0):.2f}s " +
-                f"({stats.get('total_llm_time', 0)/total_time*100:.1f}%)"
-            )
-            stats_table.add_row(
-                "Tool execution time",
-                f"{stats.get('total_tool_time', 0):.2f}s " +
-                f"({stats.get('total_tool_time', 0)/total_time*100:.1f}%)"
-            )
+
+            # Only calculate percentages if total_time > 0
+            if total_time > 0:
+                llm_percentage = stats.get('total_llm_time', 0)/total_time*100
+                tool_percentage = stats.get('total_tool_time', 0)/total_time*100
+
+                stats_table.add_row(
+                    "LLM thinking time",
+                    f"{stats.get('total_llm_time', 0):.2f}s " +
+                    f"({llm_percentage:.1f}%)"
+                )
+                stats_table.add_row(
+                    "Tool execution time",
+                    f"{stats.get('total_tool_time', 0):.2f}s " +
+                    f"({tool_percentage:.1f}%)"
+                )
+            else:
+                # No percentage if total time is 0
+                stats_table.add_row(
+                    "LLM thinking time",
+                    f"{stats.get('total_llm_time', 0):.2f}s"
+                )
+                stats_table.add_row(
+                    "Tool execution time",
+                    f"{stats.get('total_tool_time', 0):.2f}s"
+                )
 
         # Add token statistics if available
         token_counts = stats.get("token_counts", {})

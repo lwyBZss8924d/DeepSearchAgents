@@ -33,11 +33,19 @@ class Settings(BaseSettings):
 
     # Common agent configuration
     VERBOSE_TOOL_CALLBACKS: bool = True
+    CLI_STREAMING_ENABLED: bool = Field(
+        default=True,
+        description="Global toggle for CLI streaming display"
+    )
 
     # React agent configuration
     REACT_MAX_STEPS: int = 25
     REACT_PLANNING_INTERVAL: int = 7
-    REACT_MAX_TOOL_THREADS: int = 1
+    REACT_MAX_TOOL_THREADS: int = 4
+    REACT_ENABLE_STREAMING: bool = Field(
+        default=True,
+        description="Enable streaming output for React agent"
+    )
 
     # CodeAct agent configuration
     CODACT_EXECUTOR_TYPE: str = "local"
@@ -47,7 +55,23 @@ class Settings(BaseSettings):
     CODACT_EXECUTOR_KWARGS: Dict[str, Any] = Field(default_factory=dict)
     CODACT_ADDITIONAL_IMPORTS: List[str] = Field(default_factory=list)
     CODACT_USE_STRUCTURED_OUTPUTS: bool = True
+    CODACT_ENABLE_STREAMING: bool = Field(
+        default=True,
+        description="Enable streaming output for CodeAct agent"
+    )
 
+    # Manager agent configuration
+    MANAGER_MAX_STEPS: int = 30
+    MANAGER_PLANNING_INTERVAL: int = 10
+    MANAGER_MAX_DELEGATION_DEPTH: int = 3
+    MANAGER_ENABLE_STREAMING: bool = Field(
+        default=False,
+        description="Enable streaming output for Manager agent"
+    )
+    MANAGER_DEFAULT_TEAM: str = "research"
+    MANAGER_TEAM: Optional[str] = None  # Runtime team selection
+    MANAGER_CUSTOM_AGENTS: Optional[List[str]] = None  # Custom agent list
+    
     # Managed agents configuration
     MANAGED_AGENTS_ENABLED: bool = True
     MAX_DELEGATION_DEPTH: int = 3
@@ -165,12 +189,23 @@ def load_toml_config(settings_instance: Settings) -> Settings:
                         tools_config['specific']
                     )
 
+            # Update agent configuration
+            if 'agents' in toml_config:
+                if 'default_agent' in toml_config['agents']:
+                    settings_instance.DEEPSEARCH_AGENT_MODE = (
+                        toml_config['agents']['default_agent']
+                    )
+
             # Update agent common configuration
             if 'agents' in toml_config and 'common' in toml_config['agents']:
                 common_config = toml_config['agents']['common']
                 if 'verbose_tool_callbacks' in common_config:
                     settings_instance.VERBOSE_TOOL_CALLBACKS = (
                         common_config['verbose_tool_callbacks']
+                    )
+                if 'cli_streaming_enabled' in common_config:
+                    settings_instance.CLI_STREAMING_ENABLED = (
+                        common_config['cli_streaming_enabled']
                     )
 
             # Update React agent configuration
@@ -187,6 +222,10 @@ def load_toml_config(settings_instance: Settings) -> Settings:
                 if 'max_tool_threads' in react_config:
                     settings_instance.REACT_MAX_TOOL_THREADS = (
                         react_config['max_tool_threads']
+                    )
+                if 'enable_streaming' in react_config:
+                    settings_instance.REACT_ENABLE_STREAMING = (
+                        react_config['enable_streaming']
                     )
 
             # Update CodeAct agent configuration
@@ -220,17 +259,38 @@ def load_toml_config(settings_instance: Settings) -> Settings:
                     settings_instance.CODACT_USE_STRUCTURED_OUTPUTS = (
                         codact_config['use_structured_outputs']
                     )
+                if 'enable_streaming' in codact_config:
+                    settings_instance.CODACT_ENABLE_STREAMING = (
+                        codact_config['enable_streaming']
+                    )
 
-            # Update managed agents configuration
+            # Update manager agent configuration
             if 'agents' in toml_config and 'manager' in toml_config['agents']:
                 manager_config = toml_config['agents']['manager']
+                if 'max_steps' in manager_config:
+                    settings_instance.MANAGER_MAX_STEPS = (
+                        manager_config['max_steps']
+                    )
+                if 'planning_interval' in manager_config:
+                    settings_instance.MANAGER_PLANNING_INTERVAL = (
+                        manager_config['planning_interval']
+                    )
+                if 'max_delegation_depth' in manager_config:
+                    settings_instance.MANAGER_MAX_DELEGATION_DEPTH = (
+                        manager_config['max_delegation_depth']
+                    )
+                if 'enable_streaming' in manager_config:
+                    settings_instance.MANAGER_ENABLE_STREAMING = (
+                        manager_config['enable_streaming']
+                    )
+                if 'default_team' in manager_config:
+                    settings_instance.MANAGER_DEFAULT_TEAM = (
+                        manager_config['default_team']
+                    )
+                # Legacy support for old configuration names
                 if 'enabled' in manager_config:
                     settings_instance.MANAGED_AGENTS_ENABLED = (
                         manager_config['enabled']
-                    )
-                if 'max_delegation_depth' in manager_config:
-                    settings_instance.MAX_DELEGATION_DEPTH = (
-                        manager_config['max_delegation_depth']
                     )
                 if 'default_managed_agents' in manager_config:
                     settings_instance.DEFAULT_MANAGED_AGENTS = (

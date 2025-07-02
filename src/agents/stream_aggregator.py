@@ -27,9 +27,10 @@ class StreamAggregator:
         self.current_content = ""
         self.token_count = 0
         self.metadata = {}
+        self.current_role = None
 
     def aggregate_stream(
-        self, 
+        self,
         stream_generator: Generator[ChatMessageStreamDelta, None, None],
         track_tokens: bool = True
     ) -> Generator[ChatMessageStreamDelta, None, None]:
@@ -72,6 +73,26 @@ class StreamAggregator:
         self.current_content = ""
         self.token_count = 0
         self.metadata = {}
+
+    def add_chunk(self, chunk: str, **kwargs) -> None:
+        """Add a chunk of content to the aggregator
+
+        Args:
+            chunk: Text chunk to add
+            **kwargs: Additional parameters (for compatibility)
+        """
+        self.current_content += chunk
+        if chunk:
+            # Simple token estimation
+            self.token_count += len(chunk.split())
+
+        # Store role if provided (for compatibility with tests)
+        if 'role' in kwargs:
+            self.current_role = kwargs['role']
+
+    def get_full_content(self) -> str:
+        """Alias for get_aggregated_content for compatibility"""
+        return self.get_aggregated_content()
 
 
 class ModelStreamWrapper:

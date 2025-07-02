@@ -30,7 +30,7 @@ class ReactAgent(BaseAgent):
         enable_streaming: bool = False,
         max_steps: int = 25,
         planning_interval: int = 7,
-        max_tool_threads: int = 1,
+        max_tool_threads: int = 4,
         name: str = None,
         description: str = None,
         managed_agents: List['BaseAgent'] = None,
@@ -95,14 +95,14 @@ class ReactAgent(BaseAgent):
             max_steps=self.max_steps,
             stream_outputs=self.enable_streaming,
             planning_interval=self.planning_interval,
-            # Pass initial state
-            state=self.initial_state,
             # Pass step callbacks
             step_callbacks=self.kwargs.get("step_callbacks", []),
             # Enable parallel tool execution
             max_tool_threads=self.max_tool_threads,
-            # Pass managed agents for hierarchical support
-            managed_agents=self.managed_agents,
         )
+
+        # Set initial state after creation
+        if self.initial_state:
+            agent.state = self.initial_state
 
         return agent
