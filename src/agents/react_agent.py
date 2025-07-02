@@ -31,6 +31,9 @@ class ReactAgent(BaseAgent):
         max_steps: int = 25,
         planning_interval: int = 7,
         max_tool_threads: int = 1,
+        name: str = None,
+        description: str = None,
+        managed_agents: List['BaseAgent'] = None,
         cli_console=None,
         **kwargs
     ):
@@ -45,6 +48,9 @@ class ReactAgent(BaseAgent):
             max_steps: Maximum number of execution steps
             planning_interval: Interval for planning steps
             max_tool_threads: Maximum threads for parallel tool execution
+            name: Agent name for identification in hierarchical systems
+            description: Agent description for manager agents
+            managed_agents: List of sub-agents this agent can manage
             cli_console: CLI console object
             **kwargs: Additional parameters for future extensions
         """
@@ -59,6 +65,9 @@ class ReactAgent(BaseAgent):
             enable_streaming=enable_streaming,
             max_steps=max_steps,
             planning_interval=planning_interval,
+            name=name,
+            description=description,
+            managed_agents=managed_agents,
             cli_console=cli_console,
             **kwargs
         )
@@ -92,6 +101,8 @@ class ReactAgent(BaseAgent):
             step_callbacks=self.kwargs.get("step_callbacks", []),
             # Enable parallel tool execution
             max_tool_threads=self.max_tool_threads,
+            # Pass managed agents for hierarchical support
+            managed_agents=self.managed_agents,
         )
 
         return agent

@@ -220,6 +220,10 @@ class BaseAgent:
         max_steps: int = 25,
         planning_interval: int = 5,
         enable_streaming: bool = False,
+        # Managed agents support
+        name: str = None,
+        description: str = None,
+        managed_agents: List['BaseAgent'] = None,
         # Additional options
         cli_console=None,
         **kwargs
@@ -235,6 +239,9 @@ class BaseAgent:
             max_steps: Maximum number of execution steps
             planning_interval: Interval for planning steps
             enable_streaming: Whether to enable streaming output
+            name: Agent name for identification in hierarchical systems
+            description: Agent description for manager agents
+            managed_agents: List of sub-agents this agent can manage
             cli_console: CLI console object
             **kwargs: Additional parameters
         """
@@ -245,6 +252,13 @@ class BaseAgent:
         self.max_steps = max_steps
         self.planning_interval = planning_interval
         self.enable_streaming = enable_streaming
+
+        # Managed agents support
+        self.name = name or f"DeepSearch {agent_type.title()} Agent"
+        self.description = description or (
+            f"Agent that uses {agent_type} architecture for deep search tasks"
+        )
+        self.managed_agents = managed_agents or []
 
         # Additional options
         self.cli_console = cli_console
@@ -403,6 +417,41 @@ class BaseAgent:
                 )
             else:
                 raise
+
+    def __call__(self, task: str, additional_args: Dict[str, Any] = None) -> str:
+        """Make agent callable as a tool by manager agents
+        
+        This allows hierarchical agent architectures where manager agents
+        can call sub-agents just like they call tools.
+        
+        Args:
+            task: The task/query to execute
+            additional_args: Optional additional arguments
+            
+        Returns:
+            str: The agent's response/final answer
+        """
+        try:
+            # Run the agent with the task
+            result = self.run(
+                user_input=task,
+                stream=False,
+                additional_args=additional_args,
+                return_result=True
+            )
+            
+            # Extract final answer from RunResult
+            if isinstance(result, RunResult):
+                if result.error:
+                    return f"Error executing sub-agent {self.name}: {result.error}"
+                return result.final_answer or "No answer generated"
+            else:
+                # Direct string result
+                return str(result)
+                
+        except Exception as e:
+            logger.error(f"Error in managed agent {self.name}: {str(e)}")
+            return f"Error: Failed to execute sub-agent {self.name}: {str(e)}"
 
     def __enter__(self):
         """Context manager entry for resource initialization"""

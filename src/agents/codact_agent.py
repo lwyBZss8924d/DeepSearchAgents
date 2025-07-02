@@ -47,6 +47,9 @@ class CodeActAgent(BaseAgent):
         enable_streaming: bool = False,
         planning_interval: int = 5,
         use_structured_outputs_internally: bool = False,
+        name: str = None,
+        description: str = None,
+        managed_agents: List['BaseAgent'] = None,
         cli_console=None,
         step_callbacks: Optional[List[Any]] = None,
         **kwargs
@@ -68,6 +71,9 @@ class CodeActAgent(BaseAgent):
             planning_interval: Interval for planning steps
             use_structured_outputs_internally: Enable JSON-structured
                 output format (experimental)
+            name: Agent name for identification in hierarchical systems
+            description: Agent description for manager agents
+            managed_agents: List of sub-agents this agent can manage
             cli_console: CLI console object
             step_callbacks: List of step callbacks
             **kwargs: Additional parameters for future extensions
@@ -139,6 +145,9 @@ class CodeActAgent(BaseAgent):
             enable_streaming=enable_streaming,
             max_steps=max_steps,
             planning_interval=planning_interval,
+            name=name,
+            description=description,
+            managed_agents=managed_agents,
             cli_console=cli_console,
             **kwargs
         )
@@ -339,7 +348,8 @@ class CodeActAgent(BaseAgent):
                 grammar=json_grammar if not self.use_structured_outputs_internally else None,
                 planning_interval=self.planning_interval,
                 step_callbacks=self.step_callbacks,
-                use_structured_outputs_internally=self.use_structured_outputs_internally
+                use_structured_outputs_internally=self.use_structured_outputs_internally,
+                managed_agents=self.managed_agents
             )
         else:
             agent = CodeAgent(
@@ -354,7 +364,8 @@ class CodeActAgent(BaseAgent):
                 grammar=json_grammar if not self.use_structured_outputs_internally else None,
                 planning_interval=self.planning_interval,
                 step_callbacks=self.step_callbacks,
-                use_structured_outputs_internally=self.use_structured_outputs_internally
+                use_structured_outputs_internally=self.use_structured_outputs_internally,
+                managed_agents=self.managed_agents
             )
 
         # Initialize agent state

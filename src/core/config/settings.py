@@ -48,6 +48,13 @@ class Settings(BaseSettings):
     CODACT_ADDITIONAL_IMPORTS: List[str] = Field(default_factory=list)
     CODACT_USE_STRUCTURED_OUTPUTS: bool = True
 
+    # Managed agents configuration
+    MANAGED_AGENTS_ENABLED: bool = True
+    MAX_DELEGATION_DEPTH: int = 3
+    DEFAULT_MANAGED_AGENTS: List[str] = Field(
+        default_factory=lambda: ["react", "codact"]
+    )
+
     # Tools configuration
     TOOLS_HUB_COLLECTIONS: List[str] = Field(default_factory=list)
     TOOLS_TRUST_REMOTE_CODE: bool = False
@@ -212,6 +219,22 @@ def load_toml_config(settings_instance: Settings) -> Settings:
                 if 'use_structured_outputs' in codact_config:
                     settings_instance.CODACT_USE_STRUCTURED_OUTPUTS = (
                         codact_config['use_structured_outputs']
+                    )
+
+            # Update managed agents configuration
+            if 'agents' in toml_config and 'manager' in toml_config['agents']:
+                manager_config = toml_config['agents']['manager']
+                if 'enabled' in manager_config:
+                    settings_instance.MANAGED_AGENTS_ENABLED = (
+                        manager_config['enabled']
+                    )
+                if 'max_delegation_depth' in manager_config:
+                    settings_instance.MAX_DELEGATION_DEPTH = (
+                        manager_config['max_delegation_depth']
+                    )
+                if 'default_managed_agents' in manager_config:
+                    settings_instance.DEFAULT_MANAGED_AGENTS = (
+                        manager_config['default_managed_agents']
                     )
 
             # Update logging configuration
