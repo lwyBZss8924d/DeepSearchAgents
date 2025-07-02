@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     CODACT_PLANNING_INTERVAL: int = 4
     CODACT_EXECUTOR_KWARGS: Dict[str, Any] = Field(default_factory=dict)
     CODACT_ADDITIONAL_IMPORTS: List[str] = Field(default_factory=list)
-    CODACT_USE_STRUCTURED_OUTPUTS: bool = False
+    CODACT_USE_STRUCTURED_OUTPUTS: bool = True
 
     # Tools configuration
     TOOLS_HUB_COLLECTIONS: List[str] = Field(default_factory=list)
