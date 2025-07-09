@@ -18,6 +18,7 @@ from smolagents import Tool, ToolCollection
 
 # Import all DeepSearchAgent system agent's tools classes
 from .search import SearchLinksTool
+from .search_fast import SearchLinksFastTool
 from .readurl import ReadURLTool
 from .xcom_readurl import XcomReadURLTool
 from .chunk import ChunkTextTool
@@ -25,16 +26,19 @@ from .embed import EmbedTextsTool
 from .rerank import RerankTextsTool
 from .wolfram import EnhancedWolframAlphaTool
 from .final_answer import EnhancedFinalAnswerTool
+from .github_qa import GitHubRepoQATool
 
 TOOL_ICONS = {
     "search_links": "🔍",  # search
+    "search_fast": "⚡",   # fast search
     "read_url": "📄",      # read URL
     "xcom_read_url": "🐦",  # X.com read URL
     "chunk_text": "✂️",    # chunk text
     "embed_texts": "🧩",   # embed texts
     "rerank_texts": "🏆",  # rerank texts
     "wolfram": "🧮",       # wolfram
-    "final_answer": "✅"   # final answer
+    "final_answer": "✅",  # final answer
+    "github_repo_qa": "🐙"  # GitHub repo deep analysis
 }
 
 logger = logging.getLogger(__name__)
@@ -43,6 +47,7 @@ logger = logging.getLogger(__name__)
 # Define tool registry
 BUILTIN_TOOLS = {
     "search_links": SearchLinksTool,
+    "search_fast": SearchLinksFastTool,
     "read_url": ReadURLTool,
     "xcom_read_url": XcomReadURLTool,
     "chunk_text": ChunkTextTool,
@@ -50,13 +55,14 @@ BUILTIN_TOOLS = {
     "rerank_texts": RerankTextsTool,
     "wolfram": EnhancedWolframAlphaTool,
     "final_answer": EnhancedFinalAnswerTool,
+    "github_repo_qa": GitHubRepoQATool,
 }
 
 
 def _create_tool_instance(
     tool_cls: Type[Tool],
     api_keys: Dict[str, str],
-    cli_console=None,
+    cli_console=True,
     verbose: bool = False,
     tool_specific_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
     **kwargs
@@ -82,9 +88,20 @@ def _create_tool_instance(
     tool_args = {}
 
     # Add API keys based on tool class naming patterns
-    if "SearchLinksTool" in tool_cls.__name__:
+    if (
+        "SearchLinksTool" in tool_cls.__name__ and
+        "SearchLinksFastTool" not in tool_cls.__name__
+    ):
         tool_args["serper_api_key"] = api_keys.get("serper_api_key")
         tool_args["xai_api_key"] = api_keys.get("xai_api_key")
+    elif "SearchLinksFastTool" in tool_cls.__name__:
+        # SearchLinksFastTool accepts a dict of API keys
+        tool_args["api_keys"] = {
+            "serper": api_keys.get("serper_api_key"),
+            "xai": api_keys.get("xai_api_key"),
+            "jina": api_keys.get("jina_api_key"),
+            "exa": api_keys.get("exa_api_key")
+        }
     elif ("ReadURLTool" in tool_cls.__name__ and
           "XcomReadURLTool" not in tool_cls.__name__):
         tool_args["jina_api_key"] = api_keys.get("jina_api_key")
@@ -99,9 +116,10 @@ def _create_tool_instance(
     elif "WolframAlphaTool" in tool_cls.__name__:
         tool_args["wolfram_app_id"] = api_keys.get("wolfram_app_id")
 
-    # Add common arguments
-    tool_args["cli_console"] = cli_console
-    tool_args["verbose"] = verbose
+    # Add common arguments (except for tools that don't accept them)
+    if "SearchLinksFastTool" not in tool_cls.__name__:
+        tool_args["cli_console"] = cli_console
+        tool_args["verbose"] = verbose
 
     # Add tool-specific arguments if provided and the tool is found
     if tool_specific_kwargs and tool_name in tool_specific_kwargs:
@@ -166,7 +184,7 @@ def _create_tool_instance(
 def from_toolbox(
     api_keys: Dict[str, str],
     tool_names: Optional[List[str]] = None,
-    cli_console=None,
+    cli_console=True,
     verbose: bool = False,
     tool_specific_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
     **kwargs
@@ -228,7 +246,7 @@ def from_toolbox_enhanced(
     cls,
     api_keys: Dict[str, str],
     tool_names: Optional[List[str]] = None,
-    cli_console=None,
+    cli_console=True,
     verbose: bool = False,
     **kwargs
 ) -> "ToolCollection":
@@ -254,9 +272,8 @@ def from_toolbox_enhanced(
     )
 
 
-# Add the methods to ToolCollection class
-ToolCollection.from_toolbox = from_toolbox_enhanced
-
+# Note: from_toolbox functionality is available via the standalone function
+# ToolCollection.from_toolbox = from_toolbox_enhanced
 
 class DeepSearchToolbox:
     """
@@ -460,7 +477,7 @@ class DeepSearchToolbox:
         self,
         api_keys: Dict[str, str],
         tool_names: Optional[List[str]] = None,
-        cli_console=None,
+        cli_console=True,
         verbose: bool = False,
         **kwargs
     ) -> ToolCollection:
@@ -556,7 +573,7 @@ class DeepSearchToolbox:
         self,
         collection_slug: str,
         token: Optional[str] = None,
-        trust_remote_code: bool = False,
+        trust_remote_code: bool = True,
         replace_existing: bool = False
     ) -> List[str]:
         """
@@ -608,7 +625,7 @@ class DeepSearchToolbox:
     def load_from_mcp(
         self,
         server_parameters,
-        trust_remote_code: bool = False,
+        trust_remote_code: bool = True,
         replace_existing: bool = False
     ):
         """

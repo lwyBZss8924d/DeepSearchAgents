@@ -265,7 +265,7 @@ def run_with_fastapi(
             with gr.Column(scale=4):
                 chatbot = gr.Chatbot(
                     type="messages",
-                    height=600,
+                    height=900,
                     show_label=False,
                     render_markdown=True,
                     latex_delimiters=[

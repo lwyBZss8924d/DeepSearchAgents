@@ -29,7 +29,7 @@ class JinaAIReranker:
         api_key: Optional[str] = None,
         model: str = "jina-reranker-m0",  # m0 is the multimodal model
         max_concurrent_requests: int = 3,  # concurrent request limit
-        timeout: int = 600,  # timeout setting (seconds)
+        timeout: int = 900,  # timeout setting (seconds)
         retry_attempts: int = 2  # retry attempts
     ):
         """

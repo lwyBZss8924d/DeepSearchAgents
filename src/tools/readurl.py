@@ -11,9 +11,12 @@ import os
 import asyncio
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 import logging
 from smolagents import Tool
+
+if TYPE_CHECKING:
+    from rich.console import Console
 from src.core.scraping.scraper import JinaReaderScraper
 
 # setup logging
@@ -50,7 +53,7 @@ class ReadURLTool(Tool):
         self,
         jina_api_key: Optional[str] = None,
         reader_model: str = "readerlm-v2",
-        cli_console=None,
+        cli_console: Optional["Console"] = None,
         verbose: bool = False  # for logging (optional)
     ):
         """
@@ -94,7 +97,7 @@ class ReadURLTool(Tool):
                 output_format=output_format,
                 # should read from config
                 max_concurrent_requests=5,
-                timeout=600
+                timeout=1200
             )
 
     async def _async_scrape(self, url: str, output_format: str) -> str:
@@ -118,7 +121,7 @@ class ReadURLTool(Tool):
             async with self.scraper as scraper_instance:
                 result = await asyncio.wait_for(
                     scraper_instance.scrape(url),
-                    timeout=600
+                    timeout=1200
                 )
 
             # check result
@@ -133,7 +136,7 @@ class ReadURLTool(Tool):
                 logger.warning(error_msg)
                 return error_msg
         except asyncio.TimeoutError:
-            error_msg = f"Timeout error scraping URL {url} after 600 seconds"
+            error_msg = f"Timeout error scraping URL {url} after 1200 seconds"
             logger.error(error_msg)
             return error_msg
         except Exception as e:
@@ -170,7 +173,7 @@ class ReadURLTool(Tool):
         future = self._executor.submit(thread_worker)
         try:
             # set a reasonable timeout
-            return future.result(timeout=600)
+            return future.result(timeout=1200)
         except Exception as e:
             logger.error(f"Thread execution error for URL {url}: {str(e)}")
             return f"Error processing URL {url}: {str(e)}"
