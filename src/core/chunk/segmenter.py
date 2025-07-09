@@ -28,7 +28,7 @@ class JinaAISegmenter:
         tokenizer: str = "o200k_base",  # Default tokenizer model
         api_base_url: str = "https://api.jina.ai/v1/segment",
         max_concurrent_requests: int = 3,
-        timeout: int = 600,
+        timeout: int = 900,
         retry_attempts: int = 2
     ):
         """

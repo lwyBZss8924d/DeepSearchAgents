@@ -86,8 +86,10 @@ class EnhancedFinalAnswerTool(BaseFinaAnswerTool):
             }
 
     def _standardize_json_object(self, answer_dict: Dict) -> Dict:
-        """确保JSON对象具有标准格式"""
-        # 基础字段
+        """
+        Ensure JSON object has standard format.
+        """
+        # Basic fields
         standardized = {
             "title": answer_dict.get("title", "Final Answer"),
             "content": "",
@@ -96,7 +98,7 @@ class EnhancedFinalAnswerTool(BaseFinaAnswerTool):
             "format": "markdown"
         }
 
-        # 处理内容字段 - 保持简单
+        # Process content field
         if "content" in answer_dict:
             standardized["content"] = answer_dict["content"]
         elif "answer" in answer_dict:
@@ -106,14 +108,14 @@ class EnhancedFinalAnswerTool(BaseFinaAnswerTool):
         elif "text" in answer_dict:
             standardized["content"] = answer_dict["text"]
 
-        # 处理sources字段
+        # Process sources field
         if (
             "sources" in answer_dict and
             isinstance(answer_dict["sources"], list)
         ):
             standardized["sources"] = answer_dict["sources"]
 
-        # 确保内容中包含sources
+        # Ensure content contains sources
         if (standardized["sources"] and
                 "## Sources" not in standardized["content"]):
             sources_text = "\n\n## Sources\n\n"

@@ -11,6 +11,7 @@ import os
 import aiohttp
 import asyncio
 import random
+import re
 from typing import Optional, Dict, List
 from dotenv import load_dotenv
 from .result import ExtractionResult
@@ -31,8 +32,8 @@ class JinaReaderScraper:
         output_format: str = "markdown",  # or "markdown", "text", "html"
         api_base_url: str = "https://r.jina.ai/",
         max_concurrent_requests: int = 5,
-        timeout: int = 600,  # timeout setting (seconds)
-        retry_attempts: int = 3,  # increased retry attempts
+        timeout: int = 1000,  # timeout setting (seconds)
+        retry_attempts: int = 1,  # increased retry attempts
         retry_delay_base: int = 5  # base delay for exponential backoff
     ):
         """
@@ -72,7 +73,7 @@ class JinaReaderScraper:
             'X-Respond-With': model,
             'X-Return-Format': output_format,
             'X-No-Cache': 'true',  # Force fresh fetch
-            'X-Timeout': '600',  # Explicit timeout in seconds
+            'X-Timeout': '1000',  # Explicit timeout in seconds
             'X-With-Links-Summary': 'all',  # Include links summary
             'X-Engine': 'browser'  # Use browser engine as it's more robust
         }
@@ -117,6 +118,54 @@ class JinaReaderScraper:
         jitter = delay * 0.2
         return delay + random.uniform(-jitter, jitter)
 
+    def _extract_error_info(self, html_content: str, status_code: int) -> str:
+        """
+        Extract clean error information from HTML error pages.
+
+        Args:
+            html_content: The raw HTML response content
+            status_code: The HTTP status code
+
+        Returns:
+            Clean error message without HTML noise
+        """
+        # Handle 524 CloudFlare timeout specifically
+        if status_code == 524 and "524: A timeout occurred" in html_content:
+            return "CloudFlare timeout error (524)"
+
+        # Try to extract text content from HTML
+        if (html_content.startswith("<!DOCTYPE html") or
+                html_content.startswith("<html")):
+            # Extract title tag content
+            title_match = re.search(r'<title>(.*?)</title>',
+                                    html_content, re.IGNORECASE | re.DOTALL)
+            if title_match:
+                title = title_match.group(1).strip()
+                # Clean up common patterns
+                title = re.sub(r'\s+', ' ', title)  # Normalize whitespace
+                if title:
+                    return title
+
+            # Look for error code pattern in content
+            error_match = re.search(r'Error code (\d+)', html_content)
+            if error_match:
+                return f"Error code {error_match.group(1)}"
+
+            # Try to extract h1 or h2 headers
+            header_match = re.search(r'<h[12]>(.*?)</h[12]>',
+                                     html_content, re.IGNORECASE | re.DOTALL)
+            if header_match:
+                header = header_match.group(1).strip()
+                header = re.sub(r'\s+', ' ', header)  # Normalize whitespace
+                if header:
+                    return header
+
+        # For non-HTML or if extraction fails, limit content length
+        max_length = 40000
+        if len(html_content) > max_length:
+            return html_content[:max_length] + "..."
+        return html_content
+
     async def scrape(
         self,
         url: str,
@@ -153,29 +202,43 @@ class JinaReaderScraper:
                     timeout=aiohttp.ClientTimeout(total=self.timeout)
                 ) as response:
                     if response.status != 200:
-                        error_msg = (
-                            f"Jina Reader API returned HTTP error: "
-                            f"{response.status}"
-                        )
-                        try:
-                            error_details = await response.json()
-                            error_msg += (
-                                f" API error details: "
-                                f"{error_details}"
+                        # Handle CloudFlare timeout error specifically
+                        if response.status == 524:
+                            error_msg = (
+                                f"CloudFlare timeout error (524) for URL: {url}. "
+                                f"The origin server took too long to respond. "
+                                f"This often happens with slow or overloaded websites."
                             )
-                        except Exception:
-                            error_msg += (
-                                f" API response content: "
-                                f"{await response.text()}"
+                        else:
+                            error_msg = (
+                                f"Jina Reader API returned HTTP error: "
+                                f"{response.status}"
                             )
+                            try:
+                                error_details = await response.json()
+                                error_msg += (
+                                    f" API error details: "
+                                    f"{error_details}"
+                                )
+                            except Exception:
+                                # Clean up HTML responses
+                                raw_response = await response.text()
+                                cleaned_response = self._extract_error_info(
+                                    raw_response, response.status
+                                )
+                                error_msg += f" Response: {cleaned_response}"
 
-                        # Handle retryable errors (429, 500, 502, 503, 504)
-                        if (response.status in (429, 500, 502, 503, 504)
+                        # Handle retryable errors (429, 500, 502, 503, 504, 524)
+                        if (response.status in (429, 500, 502, 503, 504, 524)
                                 and attempt < self.retry_attempts):
                             # Calculate backoff with jitter
                             retry_delay = self._calculate_retry_delay(attempt)
-                            print(f"Waiting {retry_delay:.1f} seconds "
-                                  f"before retrying {url}")
+                            if response.status == 524:
+                                print(f"CloudFlare timeout (524). Waiting "
+                                      f"{retry_delay:.1f} seconds before retrying {url}")
+                            else:
+                                print(f"HTTP {response.status} error. Waiting "
+                                      f"{retry_delay:.1f} seconds before retrying {url}")
                             await asyncio.sleep(retry_delay)
                             return await self.scrape(url, session, attempt + 1)
 

@@ -224,6 +224,8 @@ mcp.json # If mcp.json can appear elsewhere
 /.gradio
 /uploads
 /tmp_gradio
+/smolagents-Temporary
+/HiRA-Temporary
 
 # docker
 /docker

@@ -7,9 +7,8 @@ src/agents/codact_agent.py CodeAct Agent use
 this file to extend the smolagents base prompts.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from src.agents.ui_common.constants import AGENT_EMOJIS
-from src.tools.toolbox import TOOL_ICONS
 
 THINKING_EMOJI = AGENT_EMOJIS["thinking"]
 PLANNING_EMOJI = AGENT_EMOJIS["planning"]
@@ -22,6 +21,10 @@ ERROR_EMOJI = AGENT_EMOJIS["error"]
 CODACT_SYSTEM_EXTENSION = """
 You are an expert AI deep-researcher assistant capable of performing deep,
 iterative searches by writing and executing Python code to answer complex questions.
+
+---
+CURRENT_TIME: {{ CURRENT_TIME }}
+---
 
 **Your Goal:** Answer the user's task/query thoroughly by writing Python code
 that utilizes the available tools in a search-read-reason cycle. You need to
@@ -45,80 +48,17 @@ and finally provide the answer using the `final_answer` tool.
 6.  **{4} Final Answer:** When you have sufficient information, write code that 
     calls `final_answer("Your synthesized answer here.")`.
 
-**Available Tools (Callable as Python functions):**
-
-*   `{5} search_links(query: str, num_results: int = 10, location: str = 'us', 
-    source: str = 'auto', x_handles: List[str] = None, from_date: str = None, 
-    to_date: str = None) -> str:` Performs a web search or X.com/Twitter search. 
-    Returns a JSON string list of results (title, link, snippet/content). Example: 
-    `results_json = search_links(query="...", num_results=10)`
-
-    This tool supports multiple search sources:
-    - "auto" (default): Auto-detects if the query is related to X.com/Twitter
-    - "serper": Google search via Serper API
-    - "xcom": X.com (Twitter) search via xAI API
-
-    For X.com/Twitter search:
-    ```python
-    # Search for tweets from specific X.com handles
-    x_results = search_links(
-        query="climate change",
-        source="xcom",
-        x_handles=["elonmusk", "SpaceX", "OpenAI", "sama"]
-    )
-
-    # Search with date range
-    x_results = search_links(
-        query="AI developments",
-        source="xcom",
-        from_date="2025-05-01",
-        to_date="2025-05-28"
-    )
-    ```
-
-    If you need more web search URLs results, you can set `num_results` to a larger number.
-
-*   `{6} read_url(url: str, output_format: str = 'markdown') -> str:`
-    Reads the content of a URL. Returns the content as a string
-    (Markdown by default or 'text'). Example:
-    `content = read_url(url="https://...")`
-    This tool already handles webpage fetching, parsing, and clean
-    formatting. DO NOT use low-level python libraries like 'requests', 'bs4',
-    'urllib', or 'html' for URL content - use this tool instead.
-    
-*   `{12} xcom_read_url(url: str, output_format: str = 'markdown') -> str:`
-    Reads the content of an X.com (Twitter) URL using xAI's Live Search API.
-    Returns structured content from posts, profiles, or search results. Example:
-    `content = xcom_read_url(url="https://x.com/username/status/123456789")`
-    This specialized tool provides more detailed information from X.com content
-    than the regular read_url tool.
-
-*   `{7} chunk_text(text: str, chunk_size: int = 150, chunk_overlap: int = 50)
-    -> str:` Splits text into smaller chunks using Jina AI Segmenter API. 
-    Returns array of chunks as JSON string. Example:
-    `chunks = chunk_text(text="Long text...", chunk_size=1000)`
-    Useful for processing long texts that exceed token limits.
-
-*   `{8} rerank_texts(query: str, texts: List[str], top_n: int = 3) ->
-    List[str]:` Reranks texts based on relevance to query. Returns top_n most
-    relevant. Example:
-    `best_chunks = rerank_texts(query="climate change", texts=chunks)`
-    Use this after chunking to find most relevant sections.
-
-*   `{9} embed_texts(texts: List[str]) -> List[List[float]]:`
-    Creates vector embeddings for provided texts. Returns list of
-    embedding vectors. Example:
-    `embeddings = embed_texts(texts=["Text 1", "Text 2"])`
-    Useful for semantic clustering or similarity comparison.
-
-*   `{10} wolfram(query: str) -> str:`
-    Asks Wolfram Alpha for calculations or specific factual data.
-    Returns the answer string.
-    Example: `result = wolfram(query="integrate x^2 dx")`
-
-*   `{11} final_answer(answer: str) -> None:`
-    Use this **only** when you have the final, synthesized answer.
-    Example: `final_answer("The answer is...")`
+**Available Advanced Tools (Callable as Python functions you can programing use):**
+- `search_links`: Deeply search multi-source and parameter-conditioned web pages to query and return a list of URLs and summary content
+- `search_fast`: Search the web for URLs list matching a query (faster)
+- `read_url`: Read the content of a URL
+- `xcom_read_url`: Read the content of X.com/Twitter social network (posts, profiles, search results, etc.)
+- `chunk_text`: Chunk text into smaller pieces help you to process and analyze the text
+- `embed_texts`: Embed text into a vector space to help you to compare and analyze the text
+- `rerank_texts`: Rerank text chunks to help you to prioritize the text
+- `wolfram`: Query WolframAlpha for mathematical calculations
+- `final_answer`: When completed your task, return the final answer
+- `github_repo_qa`: Deeply query and analyze an GitHub repository for research tasks
 
 **State Management:**
 Your code executes in an environment where variables persist between steps.
@@ -255,6 +195,15 @@ IMPORTANT FORMATTING REQUIREMENTS:
 - **X.com content extraction**: For detailed analysis of X.com posts, profiles, or search results, use the specialized xcom_read_url tool
 - **X.com date range search**: For time-specific X.com content, use from_date and to_date parameters with search_links source="xcom"
 
+### 8. **GitHub Repository Analysis**
+- **Repository queries**: For GitHub repository questions, use the `github_repo_qa` tool
+- **Structure exploration**: Start with `operation="structure"` to understand the repo's documentation topics
+- **Documentation reading**: Use `operation="contents"` for comprehensive documentation reading
+- **Specific questions**: Use `operation="query"` with a question parameter for targeted inquiries about the codebase
+- **Repository format**: Always format repositories as "owner/repo" (e.g., "vuejs/vue", "huggingface/transformers", "google-gemini/gemini-cli")
+- **Progressive analysis**: Begin with structure overview, then dive into specific documentation sections based on your needs
+- **AI-powered insights**: The query operation provides context-grounded AI responses about the repository
+
 Now, begin! Write the Python code to solve the following task.
 """
 
@@ -262,6 +211,10 @@ PLANNING_TEMPLATES = {
     "initial_plan": """
 You are a world expert at analyzing a situation to derive facts, and planning code execution steps to solve complex research tasks.
 Below I will present you a task that requires gathering and synthesizing information using Python code.
+
+---
+CURRENT_TIME: {{ CURRENT_TIME }}
+---
 
 ## 1. Facts survey
 You will build a comprehensive preparatory survey of which facts we have at our disposal and which ones we still need.
@@ -297,6 +250,11 @@ I will develop a step-by-step plan using Python code:
     "update_plan_pre_messages": """
 You are a world expert at analyzing a situation, and planning code execution steps towards solving a complex research task.
 You have been given the following task:
+
+---
+CURRENT_TIME: {{ CURRENT_TIME }}
+---
+
 ```
 {{task}}
 ```
@@ -341,6 +299,10 @@ You must now synthesize all the information you've gathered into a comprehensive
 Based on all the information I've gathered, please provide a comprehensive final 
 answer to the original question:
 
+---
+CURRENT_TIME: {{ CURRENT_TIME }}
+---
+
 {{task}}
 
 Your answer should be well-structured, accurate, and draw from all relevant 
@@ -383,6 +345,11 @@ MANAGED_AGENT_TEMPLATES = {
     "task": """
 You're a helpful code execution agent named '{{name}}'.
 You have been submitted this task by your manager.
+
+---
+CURRENT_TIME: {{ CURRENT_TIME }}
+---
+
 ---
 Task:
 {{task}}
@@ -427,7 +394,8 @@ print(analysis)
 
 
 def merge_prompt_templates(base_templates: Dict[str, Any],
-                           extensions: Dict[str, Any]) -> Dict[str, Any]:
+                           extensions: Dict[str, Any],
+                           current_time: str = None) -> Dict[str, Any]:
     """
     Merge base templates with extensions, correctly handling TypedDict
     structures
@@ -435,6 +403,7 @@ def merge_prompt_templates(base_templates: Dict[str, Any],
     Args:
         base_templates: base templates loaded from smolagents
         extensions: custom extensions
+        current_time: Current UTC time string for template rendering
 
     Returns:
         Merged complete template dictionary, matching PromptTemplates structure
@@ -453,14 +422,16 @@ def merge_prompt_templates(base_templates: Dict[str, Any],
     system_prompt = system_prompt.replace("{2}", ACTION_EMOJI)
     system_prompt = system_prompt.replace("{3}", REPLANNING_EMOJI)
     system_prompt = system_prompt.replace("{4}", FINAL_EMOJI)
-    system_prompt = system_prompt.replace("{5}", TOOL_ICONS["search_links"])
-    system_prompt = system_prompt.replace("{6}", TOOL_ICONS["read_url"])
-    system_prompt = system_prompt.replace("{7}", TOOL_ICONS["chunk_text"])
-    system_prompt = system_prompt.replace("{8}", TOOL_ICONS["rerank_texts"])
-    system_prompt = system_prompt.replace("{9}", TOOL_ICONS["embed_texts"])
-    system_prompt = system_prompt.replace("{10}", TOOL_ICONS["wolfram"])
-    system_prompt = system_prompt.replace("{11}", TOOL_ICONS["final_answer"])
-    system_prompt = system_prompt.replace("{12}", TOOL_ICONS["xcom_read_url"])
+    
+    # Replace CURRENT_TIME in all templates if provided
+    if current_time:
+        system_prompt = system_prompt.replace("{{ CURRENT_TIME }}", current_time)
+
+    # Helper function to replace CURRENT_TIME in template string
+    def replace_current_time(template_str: Optional[str]) -> str:
+        if current_time and template_str:
+            return template_str.replace("{{ CURRENT_TIME }}", current_time)
+        return template_str or ""
 
     # Create a normal dictionary instead of "instantiating" TypedDict
     merged = {
@@ -472,46 +443,46 @@ def merge_prompt_templates(base_templates: Dict[str, Any],
 
         # Planning templates: preserving base structure
         "planning": {
-            "initial_plan": PLANNING_TEMPLATES.get(
+            "initial_plan": replace_current_time(PLANNING_TEMPLATES.get(
                 "initial_plan",
                 base_templates.get("planning", {}).get("initial_plan", "")
-            ),
-            "update_plan_pre_messages": PLANNING_TEMPLATES.get(
+            )),
+            "update_plan_pre_messages": replace_current_time(PLANNING_TEMPLATES.get(
                 "update_plan_pre_messages",
                 base_templates.get("planning", {}).get(
                     "update_plan_pre_messages", ""
                 )
-            ),
-            "update_plan_post_messages": PLANNING_TEMPLATES.get(
+            )),
+            "update_plan_post_messages": replace_current_time(PLANNING_TEMPLATES.get(
                 "update_plan_post_messages",
                 base_templates.get("planning", {}).get(
                     "update_plan_post_messages", ""
                 )
-            ),
+            )),
         },
 
         # Final answer templates: preserving base structure
         "final_answer": {
-            "pre_messages": FINAL_ANSWER_EXTENSION.get(
+            "pre_messages": replace_current_time(FINAL_ANSWER_EXTENSION.get(
                 "pre_messages",
                 base_templates.get("final_answer", {}).get("pre_messages", "")
-            ),
-            "post_messages": FINAL_ANSWER_EXTENSION.get(
+            )),
+            "post_messages": replace_current_time(FINAL_ANSWER_EXTENSION.get(
                 "post_messages",
                 base_templates.get("final_answer", {}).get("post_messages", "")
-            ),
+            )),
         },
 
         # Managed agent templates: preserving base structure
         "managed_agent": {
-            "task": MANAGED_AGENT_TEMPLATES.get(
+            "task": replace_current_time(MANAGED_AGENT_TEMPLATES.get(
                 "task",
                 base_templates.get("managed_agent", {}).get("task", "")
-            ),
-            "report": MANAGED_AGENT_TEMPLATES.get(
+            )),
+            "report": replace_current_time(MANAGED_AGENT_TEMPLATES.get(
                 "report",
                 base_templates.get("managed_agent", {}).get("report", "")
-            ),
+            )),
         }
     }
 
