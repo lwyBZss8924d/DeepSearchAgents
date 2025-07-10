@@ -109,7 +109,7 @@ token_stop_sequences = true   # Enable token-specific stop sequences
 [service]
 host = "0.0.0.0"
 port = 8000
-version = "0.2.9.dev"
+version = "0.3.0.dev"
 deepsearch_agent_mode = "codact"  # "react" or "codact"
 
 # Logging configuration

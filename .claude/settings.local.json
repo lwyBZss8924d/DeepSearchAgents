@@ -27,7 +27,8 @@
       "Bash(./test_hira_simple.sh:*)",
       "Bash(git add:*)",
       "Bash(ruff check:*)",
-      "Bash(ruff format:*)"
+      "Bash(ruff format:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }

@@ -71,7 +71,7 @@ class Settings(BaseSettings):
     MANAGER_DEFAULT_TEAM: str = "research"
     MANAGER_TEAM: Optional[str] = None  # Runtime team selection
     MANAGER_CUSTOM_AGENTS: Optional[List[str]] = None  # Custom agent list
-    
+
     # Managed agents configuration
     MANAGED_AGENTS_ENABLED: bool = True
     MAX_DELEGATION_DEPTH: int = 3
