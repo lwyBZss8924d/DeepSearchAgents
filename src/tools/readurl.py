@@ -25,12 +25,12 @@ logger = logging.getLogger(__name__)
 
 class ReadURLTool(Tool):
     """
-    Reads the content of a given URL using Jina Reader API and returns
+    Reads the content of any given URLs using Jina Reader API and returns
     the processed content, typically in Markdown format.
     """
     name = "read_url"
     description = (
-        "Reads the content of a given URL using Jina Reader API and returns "
+        "Reads the content of any given URLs using Jina Reader API and returns "
         "the processed content, typically in Markdown format. This tool "
         "response need some time to complete, when you call this tool, "
         "please wait for some time."
@@ -97,7 +97,7 @@ class ReadURLTool(Tool):
                 output_format=output_format,
                 # should read from config
                 max_concurrent_requests=5,
-                timeout=1200
+                timeout=30000
             )
 
     async def _async_scrape(self, url: str, output_format: str) -> str:

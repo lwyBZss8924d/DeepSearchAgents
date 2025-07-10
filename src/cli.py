@@ -184,7 +184,7 @@ def display_welcome(args, console):
         "github.com/lwyBZss8924d/DeepSearchAgents[/link]"
     )
 
-    version = settings.VERSION or "0.2.6.dev"
+    version = settings.VERSION or "0.3.0.dev"
     project_info.add_row(
         "[bold]Version:[/bold]",
         f"[dim]{version}[/dim]"
@@ -731,11 +731,11 @@ async def process_query_async(query, agent_instance, verbose_mode, console):
                             chunk_str = chunk.text
                         else:
                             chunk_str = str(chunk)
-                            
+
                         # Skip None chunks
                         if chunk_str is None:
                             continue
-                            
+
                         if hasattr(formatter, 'on_stream_chunk'):
                             formatter.on_stream_chunk(chunk)
                         final_result += chunk_str
@@ -750,11 +750,11 @@ async def process_query_async(query, agent_instance, verbose_mode, console):
                             chunk_str = chunk.text
                         else:
                             chunk_str = str(chunk)
-                            
+
                         # Skip None chunks
                         if chunk_str is None:
                             continue
-                            
+
                         if hasattr(formatter, 'on_stream_chunk'):
                             formatter.on_stream_chunk(chunk)
                         final_result += chunk_str
@@ -979,7 +979,7 @@ def select_team_type(console):
         padding=(0, 1, 0, 1),
         expand=False
     )
-    
+
     # add columns
     team_table.add_column(
         "Option", style="bold cyan", justify="center", width=3
@@ -988,12 +988,12 @@ def select_team_type(console):
         "Team Type", style="bold white", width=30
     )
     team_table.add_column("Description", style="bright_white")
-    
+
     # Research team option
     research_title = Text("", style="bold green")
     research_title.append("Research Team ", style="bold green")
     research_title.append("🔍📊", style="bold")
-    
+
     research_desc = Text("Specialized team for deep research tasks\n")
     research_desc.append("• ", style="dim")
     research_desc.append("Web Research Specialist", style="blue")
@@ -1001,19 +1001,19 @@ def select_team_type(console):
     research_desc.append("• ", style="dim")
     research_desc.append("Data Analysis Specialist", style="green")
     research_desc.append(" (CodeAct): Process & synthesize data", style="dim")
-    
+
     # Custom team option
     custom_title = Text("", style="bold yellow")
     custom_title.append("Custom Team ", style="bold yellow")
     custom_title.append("⚙️🔧", style="bold")
-    
+
     custom_desc = Text("Build your own team composition\n")
     custom_desc.append("Select which agents to include and configure their roles", style="dim")
-    
+
     # add rows
     team_table.add_row("[1]", research_title, research_desc)
     team_table.add_row("[2]", custom_title, custom_desc)
-    
+
     # display selection table
     console.print(Panel(
         team_table,
@@ -1021,14 +1021,14 @@ def select_team_type(console):
         border_style="cyan",
         expand=False
     ))
-    
+
     # add selection prompt
     choice = Prompt.ask(
         "[bold cyan]Please select team type[/bold cyan]",
         choices=["1", "2"],
         default="1"
     )
-    
+
     return "research" if choice == "1" else "custom"
 
 
@@ -1095,7 +1095,7 @@ def select_agent_type(console):
     manager_title.append("Research Multi-Agent Team ", style="bold cyan")
     manager_title.append("🎯🤝", style="bold")
     manager_title.append(" <Code Orchestrator>", style="bright_white")
-    
+
     # create description text
     manager_desc = Text("For complex tasks requiring multiple perspectives, "
                        "dynamically orchestrates agents through code execution\n")
@@ -1178,7 +1178,7 @@ def main():
         choices=["local", "docker", "e2b"], default=None,
         help="CodeAct code executor type (default: local)"
     )
-    
+
     # Manager specific settings
     parser.add_argument(
         "--team", "-t", type=str,
@@ -1193,7 +1193,7 @@ def main():
         "--manager-planning-interval", type=int, default=None,
         help="Manager agent planning interval (default: 10)"
     )
-    
+
     parser.add_argument(
         "--enable-streaming", action="store_true",
         help="Enable streaming output (not recommended)"
@@ -1221,7 +1221,7 @@ def main():
                    f"{args.agent_type.upper()}[/bold {agent_style}] "
                    f"agent mode")
             console.print(msg)
-            
+
             # If manager mode selected, also select team type
             if args.agent_type == "manager" and not args.team:
                 args.team = select_team_type(console)

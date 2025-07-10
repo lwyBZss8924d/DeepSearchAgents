@@ -422,7 +422,7 @@ def merge_prompt_templates(base_templates: Dict[str, Any],
     system_prompt = system_prompt.replace("{2}", ACTION_EMOJI)
     system_prompt = system_prompt.replace("{3}", REPLANNING_EMOJI)
     system_prompt = system_prompt.replace("{4}", FINAL_EMOJI)
-    
+
     # Replace CURRENT_TIME in all templates if provided
     if current_time:
         system_prompt = system_prompt.replace("{{ CURRENT_TIME }}", current_time)

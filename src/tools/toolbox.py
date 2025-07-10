@@ -33,12 +33,13 @@ TOOL_ICONS = {
     "search_fast": "⚡",   # fast search
     "read_url": "📄",      # read URL
     "xcom_read_url": "🐦",  # X.com read URL
+    "github_repo_qa": "🐙",  # GitHub repo deep analysis
     "chunk_text": "✂️",    # chunk text
     "embed_texts": "🧩",   # embed texts
     "rerank_texts": "🏆",  # rerank texts
     "wolfram": "🧮",       # wolfram
     "final_answer": "✅",  # final answer
-    "github_repo_qa": "🐙"  # GitHub repo deep analysis
+    "python_interpreter": "🐍"  # Python interpreter
 }
 
 logger = logging.getLogger(__name__)
@@ -50,12 +51,12 @@ BUILTIN_TOOLS = {
     "search_fast": SearchLinksFastTool,
     "read_url": ReadURLTool,
     "xcom_read_url": XcomReadURLTool,
+    "github_repo_qa": GitHubRepoQATool,
     "chunk_text": ChunkTextTool,
     "embed_texts": EmbedTextsTool,
     "rerank_texts": RerankTextsTool,
     "wolfram": EnhancedWolframAlphaTool,
     "final_answer": EnhancedFinalAnswerTool,
-    "github_repo_qa": GitHubRepoQATool,
 }
 
 

@@ -32,7 +32,7 @@ class JinaReaderScraper:
         output_format: str = "markdown",  # or "markdown", "text", "html"
         api_base_url: str = "https://r.jina.ai/",
         max_concurrent_requests: int = 5,
-        timeout: int = 1000,  # timeout setting (seconds)
+        timeout: int = 30000,  # timeout setting (seconds)
         retry_attempts: int = 1,  # increased retry attempts
         retry_delay_base: int = 5  # base delay for exponential backoff
     ):

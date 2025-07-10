@@ -151,18 +151,18 @@ class ManagerAgent(CodeActAgent):
         """
         # Get base templates from parent
         templates = super()._create_prompt_templates()
-        
+
         # Add manager-specific instructions
         from .prompt_templates.codact_prompts import MANAGED_AGENT_TEMPLATES
         manager_instructions = MANAGED_AGENT_TEMPLATES.get("manager_instructions", "")
-        
+
         if manager_instructions:
             # Append to system prompt
             templates["system_prompt"] = (
                 templates.get("system_prompt", "") + "\n\n" + manager_instructions
             )
             logger.debug("Added manager-specific instructions to prompt templates")
-        
+
         return templates
 
     def create_agent(self):
@@ -184,4 +184,3 @@ class ManagerAgent(CodeActAgent):
         )
 
         return agent
-
