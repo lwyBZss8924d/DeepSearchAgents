@@ -44,6 +44,7 @@ htmlcov/
 .tox/
 .nox/
 .coverage
+.coveragerc
 .coverage.*
 .cache
 nosetests.xml
@@ -168,6 +169,9 @@ cython_debug/
 .vscode/
 .history/
 *.vsix
+
+# Claude local settings files
+.claude/settings.local.json
 
 # macOS specific files
 .DS_Store
