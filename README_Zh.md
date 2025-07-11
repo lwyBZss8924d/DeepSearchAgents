@@ -4,7 +4,7 @@
 
 <h2>
 
-![Smolagents](https://img.shields.io/badge/Smolagents-1.16.0+-yellow.svg) <img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/smolagents/smolagents.png" alt="Smol Pingu" height="25">
+![Smolagents](https://img.shields.io/badge/Smolagents-1.19.0+-yellow.svg) <img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/smolagents/smolagents.png" alt="Smol Pingu" height="25">
 
 ![MCP](https://img.shields.io/badge/MCP-1.9.0+-009688.svg?logo=mcp&logoColor=white) <img src="https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/main/docs/logo/dark.svg" alt="MCP" height="25">
 
@@ -16,7 +16,7 @@
 
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![version](https://img.shields.io/badge/version-v0.2.8-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.8)
+[![version](https://img.shields.io/badge/version-v0.2.9.dev-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.9.dev)
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/lwyBZss8924d/DeepSearchAgents)
 
@@ -45,6 +45,13 @@ DeepSearchAgent 项目是一个基于 ReAct（Reasoning + Acting）推理行动�
 - 📺 **流式输出**: 支持智能体专员专员步骤和最终答案的实时流式传输，并提供富文本格式
 - 🧮 **计算引擎**：集成 WolframAlpha 计算引擎，支持数学和计算问题
 - 📝 **JSON/Markdown 渲染**: 自动检测并以用户友好的格式呈现结构化输出
+- 🤝 **分层多智能体支持** (v0.2.9)：管理者智能体模式可协调专业智能体团队进行协作式问题解决
+- ⚡ **并行工具执行** (v0.2.9)：多个并发工具调用以提高性能和效率
+- 📊 **增强的执行指标** (v0.2.9)：RunResult 对象提供详细的执行元数据，包括令牌使用和时间
+- 🔒 **改进的安全性** (v0.2.9)：应用了 smolagents v1.17.0-v1.19.0 的最新安全补丁
+- 🧠 **结构化生成** (v0.2.9)：CodeAgent 的可选结构化输出提高了可靠性
+- 🔄 **上下文管理器支持** (v0.2.9)：适当的资源清理生命周期以改善内存管理
+- 💾 **增强的内存管理** (v0.2.9)：智能体内存重置和摘要功能，适用于长时间运行的会话
 
 **参考用例**
 
@@ -68,23 +75,25 @@ DeepSearchAgent 项目是一个基于 ReAct（Reasoning + Acting）推理行动�
 
 4. [DONE] 多垂直搜索引擎源聚合支持（在 Google 基础上增加 x.com 等社交网络 urls 索引源）并支持可配置的提供商选择;
 
-5. [TODO] 增加基于 `DeepWiki` Remote MCP tool,强化 `GitHub URLs` 垂直采集解析器;
+5. [DONE] 升级到 smolagents v1.19.0，支持分层智能体管理、并行工具执行和增强的流式架构;
 
-6. 深度搜索策略提供更多策略参数, 增加支持基于 Tokens 预算的策略参数;
+6. [DONE] 增加基于 `DeepWiki` Remote MCP tool,强化 `GitHub URLs` 垂直采集解析器(v0.2.8);
 
-7. 实现性增加 DeepSearchAgents 基于深度搜索蒙特卡洛搜索树策略的Agent Action 搜索宽度&深度辅助方法和工具以及策略控制参数;
+7. 深度搜索策略提供更多策略参数, 增加支持基于 Tokens 预算的策略参数;
 
-8. 实验性增加 DeepSearchAgents 的 Agent Runs 评估器(独立评估DeepSearchAgents 的 深度搜索路径&结果评估Agent);
+8. 实现性增加 DeepSearchAgents 基于深度搜索蒙特卡洛搜索树策略的Agent Action 搜索宽度&深度辅助方法和工具以及策略控制参数;
 
-9. 增加 Agent 持久化记忆功能 & 给用户提供持久化搜索记录;
+9. 实验性增加 DeepSearchAgents 的 Agent Runs 评估器(独立评估DeepSearchAgents 的 深度搜索路径&结果评估Agent);
 
-10. 适配 code_sandbox Docker 自动化配置, 增加更多远程 code_sandbox 安全环境 SDK支持;
+10. 增加 Agent 持久化记忆功能 & 给用户提供持久化搜索记录;
 
-11. 集成全流程 Agent Runs 遥测适配("OpenTelemetry" & Langfuse);
+11. 适配 code_sandbox Docker 自动化配置, 增加更多远程 code_sandbox 安全环境 SDK支持;
 
-12. Human-in-the-loop 暂定& Agent Runs 多路径分支回溯;
+12. 集成全流程 Agent Runs 遥测适配("OpenTelemetry" & Langfuse);
 
-13. Agent Runs 并发竞技场模式;
+13. Human-in-the-loop 暂定& Agent Runs 多路径分支回溯;
+
+14. Agent Runs 并发竞技场模式;
 
 ## 3. 🚀 快速开始 (CLI, FastAPI) | Quick Start
 
@@ -167,6 +176,14 @@ DeepSearchAgent 项目是一个基于 ReAct（Reasoning + Acting）推理行动�
 make cli
 # 或直接使用:
 uv run python -m src.agents.cli
+
+# 使用特定智能体模式运行
+python -m src.cli --agent-type react    # ReAct 智能体模式
+python -m src.cli --agent-type codact   # CodeAct 智能体模式
+python -m src.cli --agent-type manager  # 管理者智能体模式 (v0.2.9)
+
+# 管理者模式与研究团队
+python -m src.cli --agent-type manager --team research
 ```
 
 CLI 参数将覆盖 `config.toml` 中定义的设置。
@@ -270,15 +287,15 @@ python -m src.main --enable-fastmcp --agent-type codact
 
 核心系统架构包括：
 
-1.  **核心专员模块（`src/agents/react_agent.py`、`src/agents/codact_agent.py`）**：基于 `smolagents` 实现 ReAct 和 CodeAct 逻辑。`src/agents/runtime.py` 为运行时管理器，负责管理智能体专员运行时环境。
-2.  **专员核心运行时模块（`src/agents/runtime.py`）**：负责管理智能体专员运行时环境。
+1.  **核心专员模块（`src/agents/react_agent.py`、`src/agents/codact_agent.py`、`src/agents/manager_agent.py`）**：基于 `smolagents` 实现 ReAct、CodeAct 和管理者智能体逻辑。管理者智能体 (v0.2.9) 协调专业智能体团队进行协作式问题解决。
+2.  **专员核心运行时模块（`src/agents/runtime.py`）**：负责管理智能体专员运行时环境，包括分层智能体协调。
 3.  **专员工具箱集合（`src/agents/tools/`）**：智能体专员可以调用的函数（网络搜索、读取 URL 等）。
 4.  **FastAPI 服务（`src/api`）**：FastAPI 服务，提供 REST API 相关服务。
 5.  **CLI 接口 (`src/cli.py`)**：提供具有丰富格式的交互式命令行界面。
 6.  **GaiaUI Web 界面 (`src/app.py`)**：基于 Gradio 的 Web GUI，与智能体专员交互。
 7.  **MCP 工具服务器 (`src/agents/servers/run_fastmcp.py`)**：提供 MCP 协议的流式 Streamable HTTP 服务。
 
-*架构图已更新至版本 `v0.2.8`*
+*架构图已更新至版本 `v0.2.9`*
 
 ```mermaid
 ---
@@ -325,6 +342,8 @@ flowchart TB
 (ReAct 带流式输出)"]]
             代码专员[["CodeAgent
 (CodeAct 带流式输出)"]]
+            管理专员[["ManagerAgent
+(分层协调)"]]
         end
     end
     subgraph 工具箱集合["工具箱集合"]
@@ -360,10 +379,14 @@ Serper • Jina AI • xAI • Wolfram}}
     MCPServer -- "工具调用" --> 核心专员
     核心专员 -- "选择模式: ReAct" --> 工具专员
     核心专员 -- "选择模式: CodeAct" --> 代码专员
+    核心专员 -- "选择模式: Manager" --> 管理专员
     核心专员 -- "使用配置" --> 配置加载
     核心专员 -- "管理工具" --> 工具箱管理
     工具专员 -- "使用集成" --> 流式支持
     代码专员 -- "使用集成" --> 流式支持
+    管理专员 -- "使用集成" --> 流式支持
+    管理专员 -- "协调" --> 工具专员
+    管理专员 -- "协调" --> 代码专员
 
     工具箱管理 -- "创建集合" --> 工具箱集合
     搜索链接 -- "自动检测来源" --> 搜索引擎
@@ -397,10 +420,13 @@ Serper • Jina AI • xAI • Wolfram}}
 
     工具专员 -- "最终答案" --> 核心专员
     代码专员 -- "最终答案" --> 核心专员
+    管理专员 -- "最终答案" --> 核心专员
     工具专员 -- "流式输出" --> CLI
     代码专员 -- "流式输出" --> CLI
+    管理专员 -- "流式输出" --> CLI
     工具专员 -- "流式输出" --> GaiaUI
     代码专员 -- "流式输出" --> GaiaUI
+    管理专员 -- "流式输出" --> GaiaUI
     核心专员 -- "响应" --> 接口
     核心专员 -- "工具结果" --> MCPServer
 
@@ -423,6 +449,7 @@ Serper • Jina AI • xAI • Wolfram}}
     核心专员:::manager
     工具专员:::agent
     代码专员:::agent
+    管理专员:::agent
     流式支持:::streaming
     工具箱管理:::manager
     搜索链接:::tool
@@ -484,6 +511,47 @@ final_answer("结果是...")
 | **流式支持** | 支持 | 支持 |
 | **规划能力** | 每 N 步周期性规划 | 每 N 步周期性规划 |
 
+### 管理者模式（分层多智能体）- v0.2.9
+
+管理者模式引入了分层智能体协调，其中管理者智能体协调一组专业智能体来协作解决复杂问题。此模式利用了 smolagents v1.19.0 中添加的管理智能体支持。
+
+**架构：**
+
+- **管理者智能体**：分解复杂查询的高级协调器
+- **专业智能体**：具有特定专长的团队成员（ReAct 或 CodeAct 智能体）
+- **委派逻辑**：管理者将子任务分配给最合适的智能体
+
+**研究团队配置：**
+
+默认研究团队包括：
+1. **网络研究专家**（ReAct 智能体）：专注于网络搜索、内容检索和信息收集
+2. **数据分析专家**（CodeAct 智能体）：处理数据处理、计算和综合
+
+**示例用法：**
+
+```bash
+# CLI 与研究团队
+python -m src.cli --agent-type manager --team research
+
+# 自定义团队配置
+python -m src.cli --agent-type manager --team custom --managed-agents react codact
+```
+
+**优势：**
+
+- **协作式问题解决**：不同的智能体处理其专业领域
+- **提高准确性**：结合不同智能体范式的优势
+- **可扩展性**：易于向团队添加新的专业智能体
+- **任务并行化**：管理者可以同时委派多个子任务
+
+| 功能 | 管理者模式 |
+|------|------------|
+| **智能体协调** | 分层委派给专业智能体 |
+| **复杂查询处理** | 将任务分解为团队成员的子任务 |
+| **模型需求** | 协调 + 专业智能体能力 |
+| **最适合** | 多方面研究、比较分析、复杂工作流 |
+| **团队组成** | 可配置的 ReAct/CodeAct 智能体团队 |
+
 ## 6. 工具箱和工具链 | 🔧 Agent Toolbox Chain
 
 DeepSearchAgent 拥有一套可扩展的工具链，用于辅助智能体专员检索和处理信息。各工具相互配合，形成完整的查询解答流程：
@@ -538,7 +606,7 @@ with toolbox.load_from_mcp(server_params, trust_remote_code=True):
 
 ### 增强搜索工作流
 
-在典型的 v0.2.8 增强序列中：
+在典型的 v0.2.8+ 增强序列中：
 
 1. **智能搜索**：智能体专员使用 `search_links`，它自动检测查询是否与 X.com 内容相关（提及 @用户名、话题标签、热门话题）并路由到合适的搜索引擎
 2. **内容获取**：根据来源，使用 `read_url` 处理标准网页内容，或使用 `xcom_read_url` 处理 X.com 内容
@@ -661,7 +729,7 @@ DeepSearchAgent 项目在设计时考虑了现代 AI 工程师与人类工程师
 
 #### 可用的规则文件
 
-- **agent-architecture.mdc**: 记录了智能体专员设计模式（ReAct 和 CodeAct）及功能
+- **agent-architecture.mdc**: 记录了智能体专员设计模式（ReAct、CodeAct 和管理者）及功能
 - **configuration.mdc**: 详细说明了定制化的配置系统选项
 - **interfaces.mdc**: 描述了可用接口（CLI、FastAPI、MCP Tool Server）
 - **jina-ai-api-rules.mdc**: 包含在代码库中使用 Jina AI 各种 API 的指南
@@ -735,16 +803,20 @@ src/
 │   │   └── run_gaia.py       # Gradio UI 网页服务器
 │   ├── ui_common/            # 共享 UI 组件和工具
 │   │   ├── __init__.py
-│   │   ├── agent_step_callback.py  # 智能体专员执行步骤回调
-│   │   ├── console_formatter.py    # 控制台输出格式化
-│   │   ├── constants.py            # UI 相关常量
-│   │   ├── gradio_adapter.py       # Gradio 接口适配器
-│   │   └── gradio_helpers.py       # Gradio 工具函数
+│   │   ├── agent_step_callback.py     # 智能体专员执行步骤回调
+│   │   ├── console_formatter.py       # 控制台输出格式化
+│   │   ├── constants.py               # UI 相关常量
+│   │   ├── gradio_adapter.py          # Gradio 接口适配器
+│   │   ├── gradio_helpers.py          # Gradio 工具函数
+│   │   └── streaming_formatter.py     # 流式输出格式化器 (v0.2.9)
 │   ├── __init__.py
 │   ├── base_agent.py         # 基础智能体专员接口和通用功能
 │   ├── codact_agent.py       # CodeAct 智能体专员实现
+│   ├── manager_agent.py      # 管理者智能体实现 (v0.2.9)
 │   ├── react_agent.py        # ReAct 智能体专员实现
-│   └── runtime.py            # 智能体专员运行时管理器
+│   ├── run_result.py         # 智能体运行结果对象 (v0.2.9)
+│   ├── runtime.py            # 智能体专员运行时管理器
+│   └── stream_aggregator.py  # 流聚合逻辑 (v0.2.9)
 ├── api/                      # FastAPI 服务组件
 │   ├── v1/                   # API 版本 1 实现
 │   │   ├── endpoints/        # API 端点定义
@@ -796,8 +868,16 @@ src/
 
 ### 主要目录说明
 
-- **`agents/`**: 核心智能体专员实现，包含 ReAct 和 CodeAct 范式，以及提示模板和 UI 组件
+- **`agents/`**: 核心智能体专员实现，包含 ReAct、CodeAct 和管理者范式，以及提示模板和 UI 组件
 - **`api/`**: FastAPI 服务基础设施，包含版本化端点和健康检查
 - **`core/`**: 基础系统组件，包括配置、搜索引擎、内容处理和抓取功能
 - **`tools/`**: 完整的工具链，具有统一的工具箱管理，支持传统网络搜索和 X.com 社交媒体集成
 - **根文件**: 不同接口模式的应用程序入口点（CLI、FastAPI、Gradio UI）
+
+## 已知问题 (v0.2.9.dev)
+
+1. **CLI 流式显示**: 流式输出在终端中重复渲染存在已知问题。已经确定了修复方案，将在下一次更新中应用。
+
+2. **管理者智能体委派**: 管理者智能体对子智能体的调用偶尔可能失败。正在进行根本原因分析以提高可靠性。
+
+这些问题正在积极解决中，不会影响智能体的核心功能。

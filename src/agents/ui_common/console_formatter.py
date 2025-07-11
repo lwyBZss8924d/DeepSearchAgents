@@ -289,7 +289,7 @@ class ConsoleFormatter:
             elif ("final_answer" in model_output_str or
                     "Final Answer:" in model_output_str):
                 return "final_answer"
-            elif ("```python" in model_output_str and
+            elif (("```python" in model_output_str or "<code>" in model_output_str) and
                     self.agent_type == "codact"):
                 return "code"
             elif ("Action:" in model_output_str and
@@ -568,10 +568,18 @@ class ConsoleFormatter:
                     model_output = step.model_output
                     if model_output:
                         # extract code_tools from Python code
-                        code_pattern = r'```python\s*(.*?)\s*```'
-                        code_blocks = re.findall(
-                            code_pattern, str(model_output), re.DOTALL
+                        # Support both markdown and XML formats
+                        markdown_pattern = r'```python\s*(.*?)\s*```'
+                        xml_pattern = r'<code>\s*(.*?)\s*</code>'
+
+                        markdown_blocks = re.findall(
+                            markdown_pattern, str(model_output), re.DOTALL
                         )
+                        xml_blocks = re.findall(
+                            xml_pattern, str(model_output), re.DOTALL
+                        )
+
+                        code_blocks = markdown_blocks + xml_blocks
 
                         if code_blocks and len(code_blocks) > 0:
                             # check system available agent tools names
@@ -763,27 +771,36 @@ class ConsoleFormatter:
             model_output = getattr(step, 'model_output', "")
             model_output_str = str(model_output)
 
+            # Support both markdown and XML formats
+            code_blocks = []
             if "```python" in model_output_str:
                 code_blocks = re.findall(
                     r'```python\s*(.*?)\s*```',
                     model_output_str,
                     re.DOTALL
                 )
-                if code_blocks:
-                    code_content = code_blocks[0]
-                    code_panel = Panel(
-                        Syntax(
-                            code_content, "python",
-                            theme="monokai",
-                            line_numbers=True
-                        ),
-                        title="[bold blue]Executing code[/bold blue]",
-                        border_style="blue",
-                        expand=False
-                    )
-                    step_content_group.renderables.append(code_panel)
-                    add_performance_stats()
-                    return step_content_group
+            elif "<code>" in model_output_str:
+                code_blocks = re.findall(
+                    r'<code>\s*(.*?)\s*</code>',
+                    model_output_str,
+                    re.DOTALL
+                )
+
+            if code_blocks:
+                code_content = code_blocks[0]
+                code_panel = Panel(
+                    Syntax(
+                        code_content, "python",
+                        theme="monokai",
+                        line_numbers=True
+                    ),
+                    title="[bold blue]Executing code[/bold blue]",
+                    border_style="blue",
+                    expand=False
+                )
+                step_content_group.renderables.append(code_panel)
+                add_performance_stats()
+                return step_content_group
 
             # Fallback to displaying model output
             output_panel = Panel(
@@ -1156,16 +1173,32 @@ class ConsoleFormatter:
                 "Total execution time",
                 f"{total_time:.2f}s"
             )
-            stats_table.add_row(
-                "LLM thinking time",
-                f"{stats.get('total_llm_time', 0):.2f}s " +
-                f"({stats.get('total_llm_time', 0)/total_time*100:.1f}%)"
-            )
-            stats_table.add_row(
-                "Tool execution time",
-                f"{stats.get('total_tool_time', 0):.2f}s " +
-                f"({stats.get('total_tool_time', 0)/total_time*100:.1f}%)"
-            )
+
+            # Only calculate percentages if total_time > 0
+            if total_time > 0:
+                llm_percentage = stats.get('total_llm_time', 0)/total_time*100
+                tool_percentage = stats.get('total_tool_time', 0)/total_time*100
+
+                stats_table.add_row(
+                    "LLM thinking time",
+                    f"{stats.get('total_llm_time', 0):.2f}s " +
+                    f"({llm_percentage:.1f}%)"
+                )
+                stats_table.add_row(
+                    "Tool execution time",
+                    f"{stats.get('total_tool_time', 0):.2f}s " +
+                    f"({tool_percentage:.1f}%)"
+                )
+            else:
+                # No percentage if total time is 0
+                stats_table.add_row(
+                    "LLM thinking time",
+                    f"{stats.get('total_llm_time', 0):.2f}s"
+                )
+                stats_table.add_row(
+                    "Tool execution time",
+                    f"{stats.get('total_tool_time', 0):.2f}s"
+                )
 
         # Add token statistics if available
         token_counts = stats.get("token_counts", {})
