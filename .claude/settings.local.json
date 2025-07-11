@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git pull:*)",
+      "Bash(git merge:*)",
+      "Bash(git stash push:*)",
+      "Bash(mv:*)",
+      "Bash(git stash:*)"
+    ],
+    "deny": []
+  }
+}

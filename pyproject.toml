@@ -1,6 +1,6 @@
 [project]
 name = "DeepSearchAgents"
-version = "0.2.8.dev"
+version = "0.2.9.dev"
 description = "🤗 Awesome CodeAct Deep Web Search Agents framework"
 authors = [
     {name = "ArthurWang", email = "deepsearchagent4dev@gpt4coursera.com"},
@@ -19,7 +19,7 @@ dependencies = [
     "requests",
     "python-dotenv",
     "jsonschema>=4.0.0,<5.0.0",
-    "smolagents>=1.16.1",
+    "smolagents>=1.19.0",
     "smolagents[e2b]",
     "smolagents[docker]",
     "smolagents[telemetry]",
@@ -29,7 +29,7 @@ dependencies = [
     "smolagents[toolkit]",
     "smolagents[gradio]",
     "smolagents[mcp]",
-    "litellm>=1.65.4",
+    "litellm>=1.73.6",
     "openai>=1.72.0",
     "langchain>=0.3.19",
     "torch",

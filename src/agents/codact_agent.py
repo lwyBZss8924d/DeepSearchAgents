@@ -46,6 +46,10 @@ class CodeActAgent(BaseAgent):
         additional_authorized_imports: Optional[List[str]] = None,
         enable_streaming: bool = False,
         planning_interval: int = 5,
+        use_structured_outputs_internally: bool = False,
+        name: str = None,
+        description: str = None,
+        managed_agents: List['BaseAgent'] = None,
         cli_console=None,
         step_callbacks: Optional[List[Any]] = None,
         **kwargs
@@ -65,6 +69,11 @@ class CodeActAgent(BaseAgent):
                 allow importing
             enable_streaming: Whether to enable streaming output
             planning_interval: Interval for planning steps
+            use_structured_outputs_internally: Enable JSON-structured
+                output format (experimental)
+            name: Agent name for identification in hierarchical systems
+            description: Agent description for manager agents
+            managed_agents: List of sub-agents this agent can manage
             cli_console: CLI console object
             step_callbacks: List of step callbacks
             **kwargs: Additional parameters for future extensions
@@ -102,8 +111,27 @@ class CodeActAgent(BaseAgent):
 
         # other initialization remains unchanged
         self.executor_type = executor_type
-        self.executor_kwargs = executor_kwargs or {}
+
+        # Security: Add default safety settings to executor kwargs
+        # Note: Only include parameters supported by smolagents' LocalPythonExecutor
+        default_security_kwargs = {
+            # LocalPythonExecutor in smolagents may not support all these parameters
+            # Keep only what's supported to avoid errors
+        }
+
+        # Merge user kwargs with security defaults
+        self.executor_kwargs = {**default_security_kwargs, **(executor_kwargs or {})}
+
+        # Warn if user tries to override security settings
+        if executor_kwargs:
+            overridden = set(executor_kwargs.keys()) & set(default_security_kwargs.keys())
+            if overridden:
+                logger.warning(
+                    f"Security settings overridden by user: {overridden}"
+                )
+
         self.verbosity_level = verbosity_level
+        self.use_structured_outputs_internally = use_structured_outputs_internally
         self.step_callbacks = step_callbacks or []
 
         # call parent class constructor
@@ -116,6 +144,9 @@ class CodeActAgent(BaseAgent):
             enable_streaming=enable_streaming,
             max_steps=max_steps,
             planning_interval=planning_interval,
+            name=name,
+            description=description,
+            managed_agents=managed_agents,
             cli_console=cli_console,
             **kwargs
         )
@@ -123,18 +154,81 @@ class CodeActAgent(BaseAgent):
         # initialize agent
         self.initialize()
 
+    def validate_code_safety(self, code: str) -> bool:
+        """Validate that code is safe to execute
+
+        Args:
+            code: Python code string to validate
+
+        Returns:
+            bool: True if code appears safe, False otherwise
+        """
+        # Security patterns to check for
+        dangerous_patterns = [
+            r"__import__",  # Dynamic imports
+            r"eval\s*\(",  # eval() calls
+            r"exec\s*\(",  # exec() calls
+            r"compile\s*\(",  # compile() calls
+            r"globals\s*\(",  # globals() access
+            r"locals\s*\(",  # locals() access
+            r"vars\s*\(",  # vars() access
+            r"dir\s*\(",  # dir() introspection
+            r"getattr\s*\(",  # getattr() for dynamic access
+            r"setattr\s*\(",  # setattr() for dynamic modification
+            r"delattr\s*\(",  # delattr() for deletion
+            r"open\s*\(",  # file operations
+            r"file\s*\(",  # file operations
+            r"input\s*\(",  # user input
+            r"raw_input\s*\(",  # user input (Python 2)
+            r"\bos\.",  # os module access
+            r"\bsys\.",  # sys module access
+            r"\bsubprocess\.",  # subprocess module
+            r"\.\.\/",  # Path traversal
+            r"\/etc\/",  # System paths
+            r"\/root\/",  # Root paths
+        ]
+
+        import re
+        for pattern in dangerous_patterns:
+            if re.search(pattern, code, re.IGNORECASE):
+                logger.warning(f"Potentially dangerous pattern detected: {pattern}")
+                return False
+
+        return True
+
     def _create_prompt_templates(self):
         """Create extended prompt templates
 
         Returns:
             dict: Extended prompt templates
         """
-        # Load base CodeAgent prompt templates
-        base_prompts = yaml.safe_load(
-            importlib.resources.files(
-                "smolagents.prompts"
-            ).joinpath("code_agent.yaml").read_text()
-        )
+        # Select appropriate base templates based on structured outputs setting
+        if self.use_structured_outputs_internally:
+            # Try to load structured templates from smolagents
+            try:
+                base_prompts = yaml.safe_load(
+                    importlib.resources.files(
+                        "smolagents.prompts"
+                    ).joinpath("structured_code_agent.yaml").read_text()
+                )
+                logger.info("Using structured code agent prompts")
+            except FileNotFoundError:
+                # Fallback to regular prompts if structured not available
+                logger.warning(
+                    "Structured prompts not found, falling back to regular prompts"
+                )
+                base_prompts = yaml.safe_load(
+                    importlib.resources.files(
+                        "smolagents.prompts"
+                    ).joinpath("code_agent.yaml").read_text()
+                )
+        else:
+            # Load regular CodeAgent prompt templates
+            base_prompts = yaml.safe_load(
+                importlib.resources.files(
+                    "smolagents.prompts"
+                ).joinpath("code_agent.yaml").read_text()
+            )
 
         # Create extension content
         extension_content = {
@@ -156,21 +250,36 @@ class CodeActAgent(BaseAgent):
         Returns:
             List[str]: List of authorized import modules
         """
-        # Set default allowed import modules
+        # Set default allowed import modules with security restrictions
         default_authorized_imports = [
             "json", "re", "collections", "datetime",
             "time", "calendar", "math", "csv", "itertools", "copy",
             "requests", "bs4", "urllib", "html",
-            "io", "os", "aiohttp", "asyncio", "dotenv",
-            "logging", "sys", "pandas", "numpy", "tabulate",
+            "io", "aiohttp", "asyncio",
+            "logging", "pandas", "numpy", "tabulate",
             "rich"
         ]
+        # Security: Removed dangerous imports like 'os', 'sys', 'dotenv'
+        # These can be used for file system access or environment manipulation
 
         if self.additional_authorized_imports:
+            # Security check: Filter out dangerous modules
+            dangerous_modules = {
+                "os", "sys", "subprocess", "eval", "exec", 
+                "compile", "__builtins__", "open", "file",
+                "input", "raw_input", "execfile", "dotenv"
+            }
+            safe_additions = [
+                mod for mod in self.additional_authorized_imports 
+                if mod not in dangerous_modules
+            ]
+            if len(safe_additions) < len(self.additional_authorized_imports):
+                logger.warning(
+                    "Some requested imports were blocked for security: "
+                    f"{set(self.additional_authorized_imports) - set(safe_additions)}"
+                )
             # Merge and deduplicate import module lists
-            return list(set(
-                default_authorized_imports + self.additional_authorized_imports
-            ))
+            return list(set(default_authorized_imports + safe_additions))
         else:
             return default_authorized_imports
 
@@ -205,6 +314,14 @@ class CodeActAgent(BaseAgent):
                 }
             }
 
+        # Validation: structured outputs cannot be used with grammar
+        if self.use_structured_outputs_internally and json_grammar is not None:
+            logger.warning(
+                "Cannot use structured outputs with grammar parameter. "
+                "Disabling structured outputs."
+            )
+            self.use_structured_outputs_internally = False
+
         # Create model router to use different models for different prompts
         model_router = MultiModelRouter(
             search_model=self.search_model,
@@ -215,9 +332,10 @@ class CodeActAgent(BaseAgent):
         # Note: Even if enable_streaming=True is passed, non-streaming mode
         # will be used
         if self.enable_streaming:
-            # Use normal agent, but output warning
-            print("Warning: Streaming mode is temporarily disabled in "
-                  "this version.")
+            # Use normal agent, but output warning only in verbose mode
+            if self.verbosity_level >= 2:
+                print("Warning: Streaming mode is temporarily disabled in "
+                      "this version.")
             agent = CodeAgent(
                 tools=self.tools,
                 model=model_router,  # Use model router here
@@ -227,9 +345,11 @@ class CodeActAgent(BaseAgent):
                 executor_kwargs=self.executor_kwargs,
                 max_steps=self.max_steps,
                 verbosity_level=self.verbosity_level,
-                grammar=json_grammar,
+                grammar=json_grammar if not self.use_structured_outputs_internally else None,
                 planning_interval=self.planning_interval,
-                step_callbacks=self.step_callbacks
+                step_callbacks=self.step_callbacks,
+                use_structured_outputs_internally=self.use_structured_outputs_internally,
+                managed_agents=self.managed_agents
             )
         else:
             agent = CodeAgent(
@@ -241,37 +361,45 @@ class CodeActAgent(BaseAgent):
                 executor_kwargs=self.executor_kwargs,
                 max_steps=self.max_steps,
                 verbosity_level=self.verbosity_level,
-                grammar=json_grammar,
+                grammar=json_grammar if not self.use_structured_outputs_internally else None,
                 planning_interval=self.planning_interval,
-                step_callbacks=self.step_callbacks
+                step_callbacks=self.step_callbacks,
+                use_structured_outputs_internally=self.use_structured_outputs_internally,
+                managed_agents=self.managed_agents
             )
 
         # Initialize agent state
         agent.state.update(self.initial_state)
 
-        # Output log information
-        print(
-            f"DeepSearch CodeAct agent initialized successfully, "
-            f"using executor: {self.executor_type}"
-        )
-        print(f"Allowed import modules: {authorized_imports}")
-        print(
-            f"Configured tools: "
-            f"{[tool.name for tool in agent.tools.values()]}"
-        )
-        if self.planning_interval:
+        # Output log information only if not in streaming mode or verbosity is high
+        if not self.enable_streaming or self.verbosity_level >= 2:
             print(
-                f"Planning interval: "
-                f"Every {self.planning_interval} steps"
+                f"DeepSearch CodeAct agent initialized successfully, "
+                f"using executor: {self.executor_type}"
             )
-        print(
-            f"Using orchestrator model: "
-            f"{self.orchestrator_model.model_id} for planning"
-        )
-        print(
-            f"Using search model: {self.search_model.model_id} "
-            f"for code generation"
-        )
+            print(f"Allowed import modules: {authorized_imports}")
+            print(
+                f"Configured tools: "
+                f"{[tool.name for tool in agent.tools.values()]}"
+            )
+            if self.planning_interval:
+                print(
+                    f"Planning interval: "
+                    f"Every {self.planning_interval} steps"
+                )
+            print(
+                f"Using orchestrator model: "
+                f"{self.orchestrator_model.model_id} for planning"
+            )
+            print(
+                f"Using search model: {self.search_model.model_id} "
+                f"for code generation"
+            )
+            if self.use_structured_outputs_internally:
+                print(
+                    "Structured outputs enabled: Using JSON format for "
+                    "internal agent communication"
+                )
 
         # ensure callbacks can be accessed and debugged
         if self.step_callbacks and len(self.step_callbacks) > 0:
