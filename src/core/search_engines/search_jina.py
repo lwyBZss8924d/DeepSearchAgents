@@ -115,6 +115,7 @@ class JinaSearchClient(BaseSearchClient):
         self._request_times: List[datetime] = []
         self._is_premium: Optional[bool] = None
         self._lock = threading.Lock()  # Thread safety for rate limit tracking
+        self._async_lock = asyncio.Lock()  # Async safety for rate limit tracking
 
     def _clean_error_response(self, response_text: str, status_code: int) -> str:
         """
@@ -631,6 +632,18 @@ class JinaSearchClient(BaseSearchClient):
             window_start = current_time - self._rate_limit_window
             self._request_times = [t for t in self._request_times if t > window_start]
 
+    async def _track_request_async(self):
+        """
+        Track a request for rate limiting (async version).
+        """
+        current_time = datetime.now()
+        async with self._async_lock:
+            self._request_times.append(current_time)
+
+            # Clean old entries
+            window_start = current_time - self._rate_limit_window
+            self._request_times = [t for t in self._request_times if t > window_start]
+
     async def search_async(
         self,
         query: str,
@@ -737,7 +750,7 @@ class JinaSearchClient(BaseSearchClient):
             headers["X-Respond-With"] = respond_with
 
         # Track request for rate limiting
-        self._track_request()
+        await self._track_request_async()
 
         # Async request with retry logic
         timeout = aiohttp.ClientTimeout(total=timeout_seconds or self.timeout)

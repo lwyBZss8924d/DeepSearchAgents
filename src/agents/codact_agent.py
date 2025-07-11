@@ -265,7 +265,6 @@ class CodeActAgent(BaseAgent):
             "math", "csv", "pandas", "numpy", "tabulate",
             "arxiv", "wikipedia",
             "pymupdf", "markitdown",
-            "file", "input", "raw_input", "open", "dotenv",
         ]
         # Security: PROD MUST Removed Dev dangerous imports like 'os', 'sys', 'dotenv'
         # These can be used for file system access or environment manipulation
@@ -273,7 +272,10 @@ class CodeActAgent(BaseAgent):
         if self.additional_authorized_imports:
             # Security check: Filter out dangerous modules (PROD MUST config this)
             dangerous_modules = {
-
+                "os", "sys", "subprocess", "shutil", "glob", "pathlib",
+                "file", "input", "raw_input", "open", "dotenv", 
+                "importlib", "exec", "eval", "__import__",
+                "compile", "execfile", "reload", "vars", "locals", "globals"
             }
             safe_additions = [
                 mod for mod in self.additional_authorized_imports

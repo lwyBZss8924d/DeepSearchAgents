@@ -97,7 +97,7 @@ class ReadURLTool(Tool):
                 output_format=output_format,
                 # should read from config
                 max_concurrent_requests=5,
-                timeout=30000
+                timeout=600
             )
 
     async def _async_scrape(self, url: str, output_format: str) -> str:
@@ -121,7 +121,7 @@ class ReadURLTool(Tool):
             async with self.scraper as scraper_instance:
                 result = await asyncio.wait_for(
                     scraper_instance.scrape(url),
-                    timeout=1200
+                    timeout=600
                 )
 
             # check result
@@ -173,7 +173,7 @@ class ReadURLTool(Tool):
         future = self._executor.submit(thread_worker)
         try:
             # set a reasonable timeout
-            return future.result(timeout=1200)
+            return future.result(timeout=600)
         except Exception as e:
             logger.error(f"Thread execution error for URL {url}: {str(e)}")
             return f"Error processing URL {url}: {str(e)}"

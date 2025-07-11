@@ -63,7 +63,7 @@ BUILTIN_TOOLS = {
 def _create_tool_instance(
     tool_cls: Type[Tool],
     api_keys: Dict[str, str],
-    cli_console=True,
+    cli_console=None,
     verbose: bool = False,
     tool_specific_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
     **kwargs
