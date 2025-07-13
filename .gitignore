@@ -241,3 +241,6 @@ mcp.json # If mcp.json can appear elsewhere
 coverage.xml
 .coverage
 .coveragerc
+
+# docs exclude
+!/docs/VIBE/
