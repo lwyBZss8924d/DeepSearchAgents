@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# src/tools/search_simple.py
+# src/tools/search_fast.py
 # code style: PEP 8
 
 """
-Simplified Search Tool for DeepSearchAgents - Optimized for CodeActAgent.
+Fast Web Search Tool for DeepSearchAgents.
 """
 
 import os

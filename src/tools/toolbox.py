@@ -17,29 +17,29 @@ from ..core.config.settings import settings
 from smolagents import Tool, ToolCollection
 
 # Import all DeepSearchAgent system agent's tools classes
-from .search import SearchLinksTool
-from .search_fast import SearchLinksFastTool
-from .readurl import ReadURLTool
-from .xcom_readurl import XcomReadURLTool
-from .chunk import ChunkTextTool
-from .embed import EmbedTextsTool
-from .rerank import RerankTextsTool
-from .wolfram import EnhancedWolframAlphaTool
-from .final_answer import EnhancedFinalAnswerTool
-from .github_qa import GitHubRepoQATool
+from .search import SearchLinksTool  # Universal Hybrid Web Search
+from .search_fast import SearchLinksFastTool  # Fast Web Search
+from .readurl import ReadURLTool  # Read URL (Crawl & Scrape URL transform to LLM friendly format URL content)
+from .github_qa import GitHubRepoQATool  # GitHub repo deep analysis (repo analysis & code analysis)
+from .xcom_qa import XcomDeepQATool  # X.com (Twitter) deep Q&A (search posts & read posts)
+from .chunk import ChunkTextTool  # Chunk Text
+from .embed import EmbedTextsTool  # Embed Texts
+from .rerank import RerankTextsTool  # Rerank Texts
+from .wolfram import EnhancedWolframAlphaTool  # Wolfram|Alpha API symbolic mathematics and Science Query
+from .final_answer import EnhancedFinalAnswerTool  # Final Answer
 
 TOOL_ICONS = {
-    "search_links": "🔍",  # search
-    "search_fast": "⚡",   # fast search
-    "read_url": "📄",      # read URL
-    "xcom_read_url": "🐦",  # X.com read URL
-    "github_repo_qa": "🐙",  # GitHub repo deep analysis
-    "chunk_text": "✂️",    # chunk text
-    "embed_texts": "🧩",   # embed texts
-    "rerank_texts": "🏆",  # rerank texts
-    "wolfram": "🧮",       # wolfram
-    "final_answer": "✅",  # final answer
-    "python_interpreter": "🐍"  # Python interpreter
+    "search_links": "🔍",
+    "search_fast": "⚡🔍",
+    "read_url": "📄",
+    "github_repo_qa": "🐙",
+    "xcom_deep_qa": "🐦",
+    "chunk_text": "✂️",
+    "embed_texts": "🧩",
+    "rerank_texts": "🏆",
+    "wolfram": "🧮",
+    "final_answer": "✅",
+    "python_interpreter": "🐍"
 }
 
 logger = logging.getLogger(__name__)
@@ -50,8 +50,8 @@ BUILTIN_TOOLS = {
     "search_links": SearchLinksTool,
     "search_fast": SearchLinksFastTool,
     "read_url": ReadURLTool,
-    "xcom_read_url": XcomReadURLTool,
     "github_repo_qa": GitHubRepoQATool,
+    "xcom_deep_qa": XcomDeepQATool,
     "chunk_text": ChunkTextTool,
     "embed_texts": EmbedTextsTool,
     "rerank_texts": RerankTextsTool,
@@ -103,10 +103,10 @@ def _create_tool_instance(
             "jina": api_keys.get("jina_api_key"),
             "exa": api_keys.get("exa_api_key")
         }
-    elif ("ReadURLTool" in tool_cls.__name__ and
-          "XcomReadURLTool" not in tool_cls.__name__):
-        tool_args["jina_api_key"] = api_keys.get("jina_api_key")
-    elif "XcomReadURLTool" in tool_cls.__name__:
+    elif "ReadURLTool" in tool_cls.__name__:
+        # ReadURLTool now uses unified scraper, no direct API key needed
+        pass
+    elif "XcomDeepQATool" in tool_cls.__name__:
         tool_args["xai_api_key"] = api_keys.get("xai_api_key")
     elif "ChunkTextTool" in tool_cls.__name__:
         tool_args["jina_api_key"] = api_keys.get("jina_api_key")

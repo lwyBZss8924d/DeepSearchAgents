@@ -206,12 +206,15 @@ config.toml
 !.cursor/rules/periodic-planning.mdc
 !.cursor/rules/project-overview.mdc
 !.cursor/rules/tools.mdc
+!.cursor/rules/commits-rules.mdc
+!.cursor/rules/python-code-style-pep8.mdc
 # other Cursor files are still ignored
 mcp.json # If mcp.json can appear elsewhere
 ~/.cursor/mcp.json # Ignore if path is explicitly added (less likely)
 
 # packages source code
 /smolagents
+/smolagents-Temporary
 
 # dev-docs (exclude all except commits and Issues)
 /dev-docs/*
@@ -236,3 +239,5 @@ mcp.json # If mcp.json can appear elsewhere
 
 # other
 coverage.xml
+.coverage
+.coveragerc

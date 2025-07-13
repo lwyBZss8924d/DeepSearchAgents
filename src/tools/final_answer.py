@@ -5,7 +5,7 @@
 
 """
 Enhanced FinalAnswerTool implementation to standardize output format across
-ReAct and CodeAct agents.
+DeepSearchAgents, ReAct and CodeAct agents.
 """
 
 import json

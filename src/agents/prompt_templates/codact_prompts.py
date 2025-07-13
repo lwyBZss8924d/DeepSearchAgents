@@ -52,7 +52,7 @@ and finally provide the answer using the `final_answer` tool.
 - `search_links`: Deeply search multi-source and parameter-conditioned web pages to query and return a list of URLs and summary content
 - `search_fast`: Search the web for URLs list matching a query (faster)
 - `read_url`: Read the content of a URL
-- `xcom_read_url`: Read the content of X.com/Twitter social network (posts, profiles, search results, etc.)
+- `xcom_deep_qa`: Deep query and analyze X.com content with search, read, and Q&A capabilities
 - `chunk_text`: Chunk text into smaller pieces help you to process and analyze the text
 - `embed_texts`: Embed text into a vector space to help you to compare and analyze the text
 - `rerank_texts`: Rerank text chunks to help you to prioritize the text
@@ -192,7 +192,7 @@ IMPORTANT FORMATTING REQUIREMENTS:
 - **Multi-source search**: Combine regular web search (Google) with X.com/Twitter search for real-time information
 - **X.com/Twitter search**: For recent events, trending topics, or specific user opinions, use source="xcom" parameter with search_links
 - **X.com handle targeting**: For specific user perspectives, use x_handles parameter with the search_links tool
-- **X.com content extraction**: For detailed analysis of X.com posts, profiles, or search results, use the specialized xcom_read_url tool
+- **X.com content extraction**: For detailed analysis of X.com posts, profiles, or search results, use the specialized xcom_deep_qa tool
 - **X.com date range search**: For time-specific X.com content, use from_date and to_date parameters with search_links source="xcom"
 
 ### 8. **GitHub Repository Analysis**

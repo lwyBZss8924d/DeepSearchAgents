@@ -28,7 +28,18 @@
       "Bash(git add:*)",
       "Bash(ruff check:*)",
       "Bash(ruff format:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(cp:*)",
+      "Bash(git restore:*)",
+      "Bash(gh pr create:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "WebFetch(domain:docs.firecrawl.dev)",
+      "Bash(make:*)",
+      "Bash(uv run:*)",
+      "Bash(git tag:*)"
     ],
     "deny": []
   }
