@@ -1,6 +1,6 @@
 [project]
 name = "DeepSearchAgents"
-version = "0.2.9.dev"
+version = "0.3.1"
 description = "🤗 Awesome CodeAct Deep Web Search Agents framework"
 authors = [
     {name = "ArthurWang", email = "deepsearchagent4dev@gpt4coursera.com"},
@@ -30,10 +30,9 @@ dependencies = [
     "smolagents[gradio]",
     "smolagents[mcp]",
     "litellm>=1.73.6",
-    "openai>=1.72.0",
-    "langchain>=0.3.19",
+    "openai>=1.93.1",
+    "langchain<=0.3.26",
     "torch",
-    "jina",
     "wikipedia-api>=0.8.1",
     "wolframalpha",
     "rich>=13.0.0",
@@ -49,6 +48,12 @@ dependencies = [
     "prompt-toolkit>=3.0.0",
     "tomli>=2.2.1; python_version < '3.11'",
     "websockets>=15.0.1",
+    "exa-py>=1.14.15",
+    "xai-sdk>=1.0.0",
+    "PyMuPDF",
+    "markitdown",
+    "mistralai",
+    "firecrawl-py",
 ]
 requires-python = ">=3.13"
 readme = "README.md"

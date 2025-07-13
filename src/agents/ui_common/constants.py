@@ -21,13 +21,15 @@ AGENT_EMOJIS = {
 # Define the tool icons here to avoid circular imports
 TOOL_ICONS = {
     "search_links": "🔍",  # search
+    "search_fast": "⚡🔍",   # fast search
     "read_url": "📄",      # read URL
-    "xcom_read_url": "🐦",  # X.com read URL
+    "xcom_deep_qa": "🐦",  # X.com deep Q&A (search posts & read posts)
+    "github_repo_qa": "🐙",  # GitHub repo deep analysis
     "chunk_text": "✂️",    # chunk text
     "embed_texts": "🧩",   # embed texts
     "rerank_texts": "🏆",  # rerank texts
     "wolfram": "🧮",       # wolfram
-    "final_answer": "✅",   # final answer
+    "final_answer": "✅",  # final answer
     "python_interpreter": "🐍"  # Python interpreter
 }
 
@@ -47,8 +49,10 @@ COLORS = {
 # Agent Tools colors mapping
 TOOL_COLORS = {
     "search_links": "bold magenta",
+    "search_fast": "bold magenta",
     "read_url": "bold blue",
-    "xcom_read_url": "bold blue",
+    "xcom_deep_qa": "bold blue",
+    "github_repo_qa": "bold blue",
     "chunk_text": "bold green",
     "embed_texts": "bold yellow",
     "rerank_texts": "bold cyan",

@@ -72,7 +72,7 @@ class RerankTextsTool(Tool):
         self,
         jina_api_key: Optional[str] = None,
         default_model: str = "jina-reranker-m0",
-        cli_console=None,
+        cli_console=True,
         verbose: bool = False
     ):
         """
