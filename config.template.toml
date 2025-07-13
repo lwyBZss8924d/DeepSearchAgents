@@ -5,8 +5,8 @@ debug = true
 
 # Model configuration
 [models]
-orchestrator_id = "openai/claude-sonnet-4"  # for main LLM orchestration
-search_id = "openai/claude-sonnet-4"        # for search (if different)
+orchestrator_id = "openai/gemini-2.5-pro"  # for main LLM orchestration
+search_id = "openai/gemini-2.5-pro"        # for search (if different)
 reranker_type = "jina-reranker-m0"
 
 # Tools configuration
@@ -15,8 +15,7 @@ reranker_type = "jina-reranker-m0"
 hub_collections = []  # e.g. ["huggingface-tools/diffusion-tools-collection"]
 # Whether to trust remote code for Hub and MCP tools (SECURITY RISK!)
 trust_remote_code = false
-# List of MCP server configurations
-mcp_servers = []
+
 # Example MCP server configuration:
 # [[tools.mcp_servers]]
 # type = "stdio"  # "stdio" or "sse"
@@ -26,6 +25,10 @@ mcp_servers = []
 # [[tools.mcp_servers]]
 # type = "sse" 
 # url = "http://127.0.0.1:8000/sse"
+[[tools.mcp_servers]]
+type = "streamable-http"
+url = "https://mcp.deepwiki.com/mcp"
+# # Alternative: type = "sse", url = "https://mcp.deepwiki.com/sse"
 
 # Tool-specific configurations
 [tools.specific]
@@ -34,9 +37,33 @@ rerank_texts = { default_model = "jina-reranker-m0" }
 # Search tool configuration
 search_links = { num_results = 10, location = "us" }
 # ReadURL tool configuration
-read_url = { reader_model = "readerlm-v2" }
+read_url = { reader_model = "readerlm-v2", default_provider = "auto", fallback_enabled = true }
 # Chunk text tool configuration
 chunk_text = { chunk_size = 150, chunk_overlap = 50 }
+
+# Scraper configuration
+[scrapers]
+# Default provider: "auto", "jina", "firecrawl", "xcom"
+default_provider = "auto"
+# Enable fallback to other scrapers on failure
+fallback_enabled = true
+# Priority order for auto selection
+provider_priority = ["jina", "firecrawl", "xcom"]
+
+# Provider-specific settings
+[scrapers.jina]
+timeout = 6000
+max_retries = 1
+output_format = "markdown"
+
+[scrapers.firecrawl]
+timeout = 6000
+max_retries = 1
+output_format = "markdown"
+
+[scrapers.xcom]
+timeout = 6000
+model = "grok-4"
 
 # Agent common settings
 [agents.common]
@@ -52,7 +79,7 @@ verbosity_level = 2           # 0=minimum, 1=normal, 2=detailed
 [agents.codact]
 executor_type = "local"       # local or lambda
 max_steps = 25                # maximum number of steps in execution
-planning_interval = 5         # agent planning step interval
+planning_interval = 4         # agent planning step interval
 verbosity_level = 2           # 0=minimum, 1=normal, 2=detailed
 
 # This is an empty dictionary and an empty array
@@ -71,7 +98,7 @@ default_team = "research"     # default team configuration
 [service]
 host = "0.0.0.0"
 port = 8000
-version = "0.2.9.dev"
+version = "0.3.1"
 deepsearch_agent_mode = "codact"  # "react" or "codact"
 
 # Logging configuration
@@ -84,27 +111,32 @@ enable_token_counting = true   # enable token counting feature
 log_tokens = true             # enable token logging
 format = "minimal"            # use simplified format
 
-# Logging configuration
-[logging]
-litellm_level = "WARNING"     # use WARNING level to reduce INFO logs
-filter_repeated_logs = false   # enable repeated log filtering
-filter_cost_calculator = false # filter cost calculation related logs
-filter_token_counter = false   # filter token count related logs
-enable_token_counting = true   # enable token counting feature
-log_tokens = true             # enable token logging
-format = "minimal"            # use simplified format
+# Tested and working model list Examples:
 
-# Tested and working model list
+[[model_list]]
+model_name = "claude-opus-4"
+[model_list.litellm_params]
+model = "anthropic/claude-opus-4" 
+api_base = "LITELLM_BASE_URL"
+api_key = "LITELLM_MASTER_KEY"
+
+[[model_list]]
+model_name = "claude-sonnet-4"
+[model_list.litellm_params]
+model = "anthropic/claude-sonnet-4" 
+api_base = "LITELLM_BASE_URL"
+api_key = "LITELLM_MASTER_KEY"
+
 [[model_list]]
 model_name = "openai-codex-mini"
 [model_list.litellm_params]
-model = "openai/codex-mini" 
+model = "openrouter/openai/codex-mini" 
 api_base = "LITELLM_BASE_URL"
 api_key = "LITELLM_MASTER_KEY"
 
 [[model_list]]
 model_name = "o4-mini-high"
 [model_list.litellm_params]
-model = "openai/o4-mini-high"
+model = "openrouter/openai/o4-mini-high"
 api_base = "LITELLM_BASE_URL"
 api_key = "LITELLM_MASTER_KEY"

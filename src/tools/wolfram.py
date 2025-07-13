@@ -116,7 +116,7 @@ class EnhancedWolframAlphaTool(WolframAlphaTool):
         self,
         wolfram_app_id: Optional[str] = None,
         app_id: Optional[str] = None,
-        cli_console: Optional[Any] = None,
+        cli_console: Optional[Any] = True,
         verbose: bool = False
     ):
         """Initialize.

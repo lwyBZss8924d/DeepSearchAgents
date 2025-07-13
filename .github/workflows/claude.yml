@@ -1,5 +1,9 @@
 name: Claude Code
 
+# Security: This workflow uses author association checks to prevent abuse
+# - Trusted contributors (OWNER, MEMBER, COLLABORATOR) have full access
+# - External contributors (CONTRIBUTOR, NONE) have restricted read-only access
+
 on:
   issue_comment:
     types: [created]
@@ -11,12 +15,17 @@ on:
     types: [submitted]
 
 jobs:
-  claude:
+  # Job for trusted contributors with full permissions
+  claude-trusted:
     if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+      github.actor != 'dependabot[bot]' && 
+      (github.event.comment.author_association == 'OWNER' || 
+       github.event.comment.author_association == 'MEMBER' || 
+       github.event.comment.author_association == 'COLLABORATOR') &&
+      ((github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude'))))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -62,3 +71,48 @@ jobs:
           # claude_env: |
           #   NODE_ENV: test
 
+  # Restricted job for external contributors - read-only access
+  claude-external:
+    if: |
+      github.actor != 'dependabot[bot]' && 
+      (github.event.comment.author_association == 'CONTRIBUTOR' || 
+       github.event.comment.author_association == 'NONE') &&
+      ((github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      # Note: No write permissions for external contributors
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code (Restricted Mode)
+        id: claude
+        uses: anthropics/claude-code-action@beta
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          
+          # Restrict tools to read-only operations for security
+          allowed_tools: "Read,Grep,LS"
+          
+          # Custom instructions for external contributor reviews
+          custom_instructions: |
+            You are reviewing code from an external contributor.
+            Focus on:
+            - Code quality and best practices
+            - Potential security vulnerabilities
+            - Performance issues
+            - Suggestions for improvement
+            - Compliance with project standards
+            
+            You have read-only access. Do NOT attempt to:
+            - Execute any commands
+            - Make file modifications
+            - Access sensitive information
+            
+            Provide constructive feedback to help improve the contribution.
