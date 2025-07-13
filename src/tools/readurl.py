@@ -7,14 +7,16 @@
 Read URL Agent Tool for DeepSearchAgents.
 """
 
-import os
 import asyncio
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 import logging
 from smolagents import Tool
-from src.core.scraping.scraper import JinaReaderScraper
+
+if TYPE_CHECKING:
+    from rich.console import Console
+from src.core.scraping.scrape_url import ScrapeUrl
 
 # setup logging
 logger = logging.getLogger(__name__)
@@ -22,15 +24,16 @@ logger = logging.getLogger(__name__)
 
 class ReadURLTool(Tool):
     """
-    Reads the content of a given URL using Jina Reader API and returns
-    the processed content, typically in Markdown format.
+    Reads the content of any given URLs using multiple scraping providers
+    (JinaReader, Firecrawl, etc.) and returns the processed content,
+    typically in Markdown format.
     """
     name = "read_url"
     description = (
-        "Reads the content of a given URL using Jina Reader API and returns "
-        "the processed content, typically in Markdown format. This tool "
-        "response need some time to complete, when you call this tool, "
-        "please wait for some time."
+        "Reads the content of any given URLs using web scraping services "
+        "and returns the processed content, typically in Markdown format. "
+        "This tool response need some time to complete, when you call this "
+        "tool, please wait for some time."
     )
     inputs = {
         "url": {
@@ -48,35 +51,30 @@ class ReadURLTool(Tool):
 
     def __init__(
         self,
-        jina_api_key: Optional[str] = None,
-        reader_model: str = "readerlm-v2",
-        cli_console=None,
-        verbose: bool = False  # for logging (optional)
+        cli_console: Optional["Console"] = None,
+        verbose: bool = False,  # for logging (optional)
+        default_provider: Optional[str] = None,
+        fallback_enabled: bool = True
     ):
         """
         Initialize ReadURLTool.
 
         Args:
-            jina_api_key (str, optional): Jina AI API key. If None, load from
-                environment variable JINA_API_KEY.
-            reader_model (str): The Jina Reader model to use.
             cli_console: Optional rich.console.Console for verbose CLI output.
             verbose (bool): Whether to enable verbose logging.
+            default_provider (str, optional): Default scraper provider to use.
+                Options: 'jina', 'firecrawl', 'xcom', 'auto' (default).
+            fallback_enabled (bool): Whether to fallback to other scrapers
+                on failure. Default is True.
         """
         super().__init__()
-        self.jina_api_key = jina_api_key or os.getenv("JINA_API_KEY")
-        if not self.jina_api_key:
-            raise ValueError(
-                "JINA_API_KEY is required but not provided "
-                "or found in environment."
-            )
-
-        self.reader_model = reader_model
-        # JinaReaderScraper instance will be created when needed
-        # or setup()
-        self.scraper: Optional[JinaReaderScraper] = None
         self.cli_console = cli_console
         self.verbose = verbose
+        self.default_provider = default_provider
+        self.fallback_enabled = fallback_enabled
+
+        # Unified scraper instance will be created when needed
+        self.scraper: Optional[ScrapeUrl] = None
 
         # Thread pool for handling async operations
         self._executor = ThreadPoolExecutor(max_workers=50)
@@ -84,17 +82,26 @@ class ReadURLTool(Tool):
         # Thread local storage for isolation
         self._local = threading.local()
 
-    def _ensure_scraper(self, output_format: str = "markdown"):
-        """Ensure JinaReaderScraper instance is created and
-        configured correctly."""
-        if self.scraper is None or self.scraper.output_format != output_format:
-            self.scraper = JinaReaderScraper(
-                api_key=self.jina_api_key,
-                model=self.reader_model,
-                output_format=output_format,
-                # should read from config
-                max_concurrent_requests=5,
-                timeout=600
+    def _ensure_scraper(self):
+        """Ensure unified scraper instance is created and configured."""
+        if self.scraper is None:
+            from src.core.scraping.scrape_url import ScrapeUrl, ScraperConfig
+            from src.core.scraping.scrape_url import ScraperProvider
+
+            # Create configuration
+            config = ScraperConfig(
+                default_provider=(
+                    ScraperProvider(self.default_provider.lower())
+                    if self.default_provider
+                    else ScraperProvider.AUTO
+                ),
+                fallback_enabled=self.fallback_enabled
+            )
+
+            self.scraper = ScrapeUrl(
+                config=config,
+                timeout=120,
+                max_retries=3
             )
 
     async def _async_scrape(self, url: str, output_format: str) -> str:
@@ -108,18 +115,20 @@ class ReadURLTool(Tool):
         Returns:
             str: The scraped content or error message.
         """
-        self._ensure_scraper(output_format)
+        self._ensure_scraper()
 
         if not self.scraper:
             return f"Error: Scraper not initialized for URL {url}"
 
         try:
             logger.info(f"Starting to scrape URL: {url}")
-            async with self.scraper as scraper_instance:
-                result = await asyncio.wait_for(
-                    scraper_instance.scrape(url),
-                    timeout=600
-                )
+            result = await asyncio.wait_for(
+                self.scraper.scrape_async(
+                    url,
+                    output_format=output_format
+                ),
+                timeout=1200
+            )
 
             # check result
             if result and result.success:
@@ -133,7 +142,7 @@ class ReadURLTool(Tool):
                 logger.warning(error_msg)
                 return error_msg
         except asyncio.TimeoutError:
-            error_msg = f"Timeout error scraping URL {url} after 600 seconds"
+            error_msg = f"Timeout error scraping URL {url} after 1200 seconds"
             logger.error(error_msg)
             return error_msg
         except Exception as e:
@@ -170,7 +179,7 @@ class ReadURLTool(Tool):
         future = self._executor.submit(thread_worker)
         try:
             # set a reasonable timeout
-            return future.result(timeout=600)
+            return future.result(timeout=1200)
         except Exception as e:
             logger.error(f"Thread execution error for URL {url}: {str(e)}")
             return f"Error processing URL {url}: {str(e)}"

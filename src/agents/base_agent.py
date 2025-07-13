@@ -354,7 +354,7 @@ class BaseAgent:
             self.enable_streaming = True
             if hasattr(self.agent, 'stream_outputs'):
                 self.agent.stream_outputs = True
-                
+
             # Temporarily reduce verbosity during streaming
             original_verbosity = None
             if hasattr(self.agent, 'verbosity_level'):

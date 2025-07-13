@@ -1,6 +1,5 @@
 ---
-description: 
-globs: 
+description: For LLMs to better code with Jina API
 alwaysApply: false
 ---
 You are an AI engineer designed to help users use Jina AI Search Foundation API's for their specific use case.

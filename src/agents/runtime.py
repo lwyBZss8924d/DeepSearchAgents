@@ -511,7 +511,7 @@ class AgentRuntime:
 
         # add final_answer_checks
         final_answer_checks = [self.format_final_answer_for_gradio]
-        
+
         agent = ManagerAgent(
             orchestrator_model=self._create_llm_model(
                 model_id=settings.ORCHESTRATOR_MODEL_ID
@@ -745,7 +745,7 @@ class AgentRuntime:
                 else:
                     # Default to research team if no custom agents specified
                     managed_agents = self._create_research_team()
-                
+
             agent = self.create_manager_agent(
                 managed_agents=managed_agents,
                 step_callback=step_callback,
@@ -788,14 +788,14 @@ class AgentRuntime:
 
         else:
             raise ValueError(f"Unsupported agent type: {agent_type}")
-    
+
     def create_agent_team(self, team_type="research", custom_agents=None):
         """Create a team of agents for manager orchestration
-        
+
         Args:
             team_type: Type of team ("research" or "custom")
             custom_agents: List of agent types for custom team
-            
+
         Returns:
             List[BaseAgent]: List of configured agents
         """
@@ -806,15 +806,15 @@ class AgentRuntime:
         else:
             # Default to research team
             return self._create_research_team()
-    
+
     def _create_research_team(self):
         """Create the research team with specialized agents
-        
+
         Returns:
             List[BaseAgent]: Research team agents
         """
         team = []
-        
+
         # Create Web Research Specialist (React agent)
         research_agent = self.create_react_agent(
             step_callback=None,
@@ -828,7 +828,7 @@ class AgentRuntime:
             "information gathering using tool-calling approach"
         )
         team.append(research_agent)
-        
+
         # Create Data Analysis Specialist (CodeAct agent)
         analysis_agent = self.create_codact_agent(
             step_callback=None,
@@ -842,21 +842,21 @@ class AgentRuntime:
             "using code execution approach"
         )
         team.append(analysis_agent)
-        
+
         logger.info("Created research team with 2 specialized agents")
         return team
-    
+
     def _create_custom_team(self, agent_types):
         """Create a custom team based on specified agent types
-        
+
         Args:
             agent_types: List of agent type strings
-            
+
         Returns:
             List[BaseAgent]: Custom team agents
         """
         team = []
-        
+
         for i, agent_type in enumerate(agent_types):
             if agent_type.lower() == "react":
                 agent = self.create_react_agent(
@@ -875,9 +875,9 @@ class AgentRuntime:
             else:
                 logger.warning(f"Unknown agent type: {agent_type}, skipping")
                 continue
-            
+
             team.append(agent)
-        
+
         logger.info(f"Created custom team with {len(team)} agents")
         return team
 

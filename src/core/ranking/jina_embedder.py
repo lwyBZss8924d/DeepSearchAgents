@@ -27,7 +27,7 @@ class JinaAIEmbedder:
         model: str = "jina-clip-v2",  # multimodal model
         api_base_url: str = "https://api.jina.ai/v1/embeddings",
         max_concurrent_requests: int = 3,
-        timeout: int = 600
+        timeout: int = 900
     ):
         """
         Initialize JinaEmbedder.

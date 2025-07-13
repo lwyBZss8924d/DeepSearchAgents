@@ -260,8 +260,9 @@ def create_fastmcp_server(agent_type: str) -> FastMCP:
     server.tool(
         name="deepsearch_tool",
         description=(
-            "Execute a deep search across the web for a given query, "
-            "gathering and analyzing information from multiple sources."
+            "DeepResearchAgent is a CodeAct multi-agent that can use large "
+            "numbers of web search & scraping tools with programming Python "
+            "code to deeply web search and analyze for research tasks."
         ),
         tags={"category": "search", "complexity": "high"}
     )(deepsearch_tool_func)
