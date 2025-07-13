@@ -2,18 +2,22 @@
 # -*- coding: utf-8 -*-
 # src/tools/xcom_readurl.py
 # code style: PEP 8
+# DEPRECATED: This tool is deprecated in favor of XcomDeepQATool.
+# Use xcom_deep_qa tool for more advanced X.com search and analysis capabilities.
 
 """
 Read X.com (Twitter) URL Agent Tool for DeepSearchAgents.
+
+DEPRECATED: This tool is deprecated in favor of XcomDeepQATool.
+Use xcom_deep_qa tool for more advanced X.com search and analysis capabilities.
 """
 
-import os
 import re
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 import logging
 from smolagents import Tool
-from src.core.scraping.xcom_scraper import XcomScraper
+from src.core.scraping.scraper_xcom import XcomScraper
 
 # setup logging
 logger = logging.getLogger(__name__)
@@ -39,10 +43,10 @@ class XcomReadURLTool(Tool):
     """
     name = "xcom_read_url"
     description = (
-        "Reads the content of a given X.com (Twitter) URL using xAI's Live Search API "
-        "and returns the processed content in a structured format. Can extract posts, "
-        "profiles, and search results. This tool provides real-time data from X.com "
-        "that may not be available through regular web scraping."
+        "DEPRECATED: Use xcom_deep_qa tool instead. "
+        "Reads the content of a given X.com (Twitter) URL using xAI's "
+        "Live Search API and returns the processed content in a structured "
+        "format. Can extract posts, profiles, and search results."
     )
     inputs = {
         "url": {
@@ -127,6 +131,9 @@ class XcomReadURLTool(Tool):
         Reads the content of a given X.com URL using xAI's Live Search API
         and returns the processed content.
 
+        DEPRECATED: This tool is deprecated. Use xcom_deep_qa tool instead
+        for more advanced X.com search and analysis capabilities.
+
         Args:
             url (str): The X.com URL to read content from.
             output_format (str, optional): The output format. Default is 'markdown'.
@@ -135,6 +142,11 @@ class XcomReadURLTool(Tool):
             str: The processed content. If reading fails, return an error
                 message string.
         """
+        # Log deprecation warning
+        logger.warning(
+            "XcomReadURLTool is deprecated. Use XcomDeepQATool "
+            "(xcom_deep_qa) instead for more advanced capabilities."
+        )
         # Validate the URL is an X.com URL
         if not is_xcom_url(url):
             return (

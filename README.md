@@ -1,6 +1,6 @@
-# DeepSearchAgent
+# DeepSearchAgents
 
-Build with 💖 for Humanity with AI
+VIBE 🖖 Build with 💖 for Humanity with AI
 
 <h2>
 
@@ -16,7 +16,7 @@ Build with 💖 for Humanity with AI
 
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![version](https://img.shields.io/badge/version-v0.2.9.dev-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.9.dev)
+[![version](https://img.shields.io/badge/version-v0.3.1-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.3.1)
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/lwyBZss8924d/DeepSearchAgents)
 
@@ -26,9 +26,11 @@ Build with 💖 for Humanity with AI
 
 [中文版](README_Zh.md)
 
+README Update Date: `2025-07-13`
+
 ## 1. Introduction
 
-The DeepSearchAgent project is an intelligent agent system based on the ReAct (Reasoning + Acting) reasoning and action framework and the CodeAct (executable code-based intelligence) concept. It aims to achieve deep network search and reasoning. It leverages the reasoning capabilities of large language models (LLMs) as well as the ability to invoke external toolkits, enabling multi-step search, multimodal web text processing, reading, and multi-step reasoning to handle complex network search tasks that are both broad and deep, while providing traceable reference materials. The project is built on Hugging Face's smolagents framework and implements a dual-mode intelligent agent that can both invoke predefined tools and execute code.
+The DeepSearchAgent project is an intelligent agent system based on the ReAct (Reasoning + Acting) reasoning and action framework and the CodeAct ("Code as Action") AI agent concept. It aims to realize broader task reasoning and execution through "DeepResearch" `DR-Multi-Agent`, leveraging DeepSearch’s multi-step network deep search foundational capabilities. It utilizes the reasoning power of AI language models (LLMs), along with a toolbox collection and programming action invocation abilities within a Python packages sandbox, enabling it to handle complex web search tasks that are both broad and deep via multi-step deep search, multimodal webpage text processing, reading, and multi-step reasoning. The system also provides traceable reference materials. Built upon Hugging Face’s smolagents framework, this project implements a dual-mode intelligent agent system capable of invoking predefined toolboxes as well as writing action code—realizing both "generation of dedicated dynamic DSLs based on task plans" and "AI self-created dynamic one-time dedicated tools.
 
 The project supports command-line interface (CLI), standard FastAPI services, and GradioUI web GUI services, making it convenient for developers to develop experiments and integrate or use in various systems. It is an open-source project of Code Agent that is friendly to beginners. It is a great project for learning and developing Code Agent.
 
@@ -36,10 +38,13 @@ The project supports command-line interface (CLI), standard FastAPI services, an
 
 - 👻 **Deep Search Task Capability**: Handles complex questions through multi-step searching, reading, and reasoning processes involving online content.
 - **DeepSearch Specialist**: Supports both CodeAct (Python code execution) mode and ReAct (tool invocation) mode for experimental comparison; configuration of related Agent runtime, language models, and various tools can be managed via `config.toml` (`src/core/config/settings.py`).
-- 🪄 **Extensible Toolbox**: Built-in set of tools for web searching, content retrieval, text processing, semantic ranking, and computation.
+- 🪄 **Extensible Toolbox**: Built-in set of tools for web searching, content retrieval, text processing, semantic ranking, computation, and GitHub repository analysis.
+- 🌐 **Hybrid Search Engine** (v0.3.1): Multi-provider search aggregation supporting Google (Serper), X.com, Jina AI, and Exa Neural search with intelligent deduplication and ranking.
 - 🔍 **Text Embedding and Re-ranking**: Uses Jina AI embedding and re-ranking models to process multimodal web content from URLs.
+- 📚 **GitHub Repository Q&A** (v0.3.1): AI-powered repository analysis tool using DeepWiki MCP for understanding GitHub projects.
+- 🐦 **X.com Deep Query** (v0.3.1): Specialized tools for searching, reading, and analyzing X.com (Twitter) content using xAI's Live Search API.
 - 🧠 **Periodic Planning and Updates**: Implements strategic reevaluation during execution to optimize search paths.
-- 🔄 **Iterative Optimization**: Continuously improves search and analysis strategies based on initial findings.
+- 🔄 **Iterative Optimization**: The AI specialist continuously improves search and analysis strategies based on initial findings through self-optimization, and continuously optimizes task execution paths by updating the task plan to achieve task objectives.
 - 💻 **Multiple Development and Debugging Interaction Modes**: Offers CLI command-line interaction, standard FastAPI service, and Gradio UI web interface.
 - 🔗 **Traceable References**: Provides sources and references for generated answers.
 - 📺 **Streaming Output**: Supports real-time streaming of agent steps and final answers, with rich text formatting.
@@ -53,7 +58,7 @@ The project supports command-line interface (CLI), standard FastAPI services, an
 - 🔄 **Context Manager Support** (v0.2.9): Proper resource cleanup lifecycle for better memory management.
 - 💾 **Enhanced Memory Management** (v0.2.9): Agent memory reset and summary capabilities for long-running sessions.
 
-**Reference Case**
+**Reference Use Cases** (To be updated v0.3.1+)
 
 - **CodeAct Mode Example**: Full CLI run showing multi-step deep search process.
   - Start:
@@ -68,33 +73,37 @@ The project supports command-line interface (CLI), standard FastAPI services, an
 
 **Development Plan Currently Under Intensive Iteration:**
 
-1. Package the DeepSearchAgents backend + frontend into a Docker containerized plug-and-play app;
+1. [TODO] Develop an elegant DeepResearch Web frontend, and package the DeepSearchAgents backend + frontend into a Docker containerized plug-and-play app;
 
 2. [DONE] Added MCP Client/MCP tools HUB to DeepSearchAgents' DeepSearchToolbox, supporting MCP Tools configuration and invocation;
 
 3. [DONE] Provided packaging of DeepSearchAgents as an MCP server, offering DeepSearchAgent MCP tools services;
 
-4. [DONE] Supported multi-vertical search engine source aggregation (adding social network URL index sources like x.com on top of Google) with configurable provider selection;
+4. [DONE] Supported multi-vertical search engine source aggregation (Google, X.com, Jina AI, Exa Neural) with hybrid search aggregation and intelligent result deduplication (v0.3.1);
 
 5. [DONE] Upgraded to smolagents v1.19.0 with hierarchical agent management, parallel tool execution, and enhanced streaming architecture;
 
-6. [DONE] Add a `DeepWiki` Remote MCP tool to enhance the `GitHub URLs` vertical crawler/parser (v0.2.8);
+6. [DONE] Add a `DeepWiki` Remote MCP tool to enhance the `GitHub URLs` vertical crawler/parser with GitHub Repository Q&A capabilities (v0.3.1);
 
-7. Provide more strategy parameters for deep search strategies, adding support for token-budget-based strategy parameters;
+7. [Partially supported in the tool layer] The deep search strategy provides more strategy parameters and adds support for strategy parameters based on Tokens budget;
 
-8. Implement auxiliary methods and tools for Agent Action search width & depth based on Monte Carlo Tree Search strategies in DeepSearchAgents, along with strategy control parameters;
+8. [Experimental version testing] Implement auxiliary methods and tools for Agent Action search width & depth based on Monte Carlo Tree Search strategies in DeepSearchAgents, along with strategy control parameters;
 
-9. Experimentally add an Agent Runs evaluator for DeepSearchAgents (independently evaluating deep search paths & results);
+9. [TODO] LLM as Judge: Experimentally add an Agent Runs evaluator for DeepSearchAgents (independently evaluate the deep search paths & results of DeepSearchAgents);
 
-10. Add agent persistent memory functionality & provide users with persistent search history;
+10. [TODO] Add persistent memory layer functionality for Agents & provide users with persistent search records;
 
-11. Adapt code_sandbox Docker automated configuration; increase support for more remote code_sandbox secure environment SDKs;
+11. Add suitable open-source sandbox (E2B-like) adapted code_sandbox Docker automation configuration, and increase support for more remote code_sandbox secure environment SDKs;
 
-12. Integrate full-process agent runs inspecting adaptation ("OpenTelemetry" & "Langfuse");
+12. Integrate full-process Agent Runs telemetry adaptation ("OpenTelemetry" & Langfuse) (integrated together with the Docker packaged version);
 
-13. Tentative human-in-the-loop & multi-path branch backtracking in Agent Runs;
+13. [TODO] Human-in-the-loop & multi-path branching backtracking functionality for Agent Runs;
 
 14. Concurrent arena mode for Agent Runs;
+
+15. [Experimental] Special implementation version of multi_agent_HiRA (Hierarchical Reasoning Framework for Deep Search) based on special tokens protocol (`arXiv-2507.02652v1`);
+
+16. [Experimental] Add auxiliary method optimization to the agent omni-tools-query pipeline based on [`submodular-optimization`] ("submodular optimization algorithm") to improve reQuery query effectiveness when using various external query tools; this auxiliary pipeline uses "submodular optimization algorithms" to optimize query selection, generate diversified tool search query inputs, perform effect evaluation, and return ReAct Agent action callbacks to help the Agent observe query result optimization effects in order to continuously iterate towards retrieval goals in subsequent Steps Actions. (https://jina.ai/news/submodular-optimization-for-diverse-query-generation-in-deepresearch/)
 
 ## 3. 🚀 Quick Start (CLI & FastAPI)
 
@@ -252,6 +261,7 @@ This starts a FastMCP server with Streamable HTTP transport at `http://localhost
 The MCP Inspector can be used to debug and interact with the DeepSearchAgent MCP server:
 
 1. Install MCP Inspector if you haven't already:
+It is also recommended to consider using the forked enhanced version of the MCP Inspector client development debug console: [MCPJam-Inspector](https://github.com/MCPJam/inspector)
 
 ```bash
 npm install -g @modelcontextprotocol/inspector
@@ -295,7 +305,7 @@ The core system architecture includes:
 6. **GaiaUI Web Interface (`src/app.py`)**: Gradio-based web GUI for interacting with agents.
 7. **MCP Server (`src/agents/servers/run_fastmcp.py`)**: FastMCP server providing MCP tools services with Streamable HTTP transport.
 
-*Architecture diagram updated for version `v0.2.9`*
+*Architecture diagram updated for version `v0.3.1`*
 
 ```mermaid
 ---
@@ -350,13 +360,18 @@ flowchart TB
         direction TB
         subgraph SearchTools["Search Tools"]
             SearchLinks[/search_links/]
-            SearchEngines["🔍 Multi-Search Engines
+            SearchFast[/search_fast/]
+            SearchEngines["🔍 Hybrid Search Engine
 • Serper (Google)
-• X.com (xAI API)"]
+• X.com (xAI API)  
+• Jina AI Search
+• Exa Neural Search"]
+            GitHubQA[/github_repo_qa/]
         end
         subgraph ContentTools["Content Processing Tools"]
             ReadURL[/read_url/]
             XcomReadURL[/xcom_read_url/]
+            XcomQA[/xcom_qa/]
             ChunkText[/chunk_text/]
             EmbedTexts[/embed_texts/]
             RerankTexts[/rerank_texts/]
@@ -365,8 +380,9 @@ flowchart TB
             Wolfram[/"wolfram computational"/]
             FinalAnswer[/final_answer/]
         end
-        ExternalAPIs{{External APIs
-Serper • Jina AI • xAI • Wolfram}}
+        ExternalAPIs{{External APIs  
+Serper • xAI • Jina AI • Exa
+Wolfram • Firecrawl • DeepWiki}}
     end
     subgraph Execution["Execution"]
         PythonEnv[("Python Execution
@@ -392,8 +408,11 @@ Environment (for CodeAct)")]
     SearchLinks -- "Auto-detects Source" --> SearchEngines
     
     ToolAgent == "Calls Tools" ==> SearchLinks
+    ToolAgent == "Calls Tools" ==> SearchFast
+    ToolAgent == "Calls Tools" ==> GitHubQA
     ToolAgent == "Calls Tools" ==> ReadURL
     ToolAgent == "Calls Tools" ==> XcomReadURL
+    ToolAgent == "Calls Tools" ==> XcomQA
     ToolAgent == "Calls Tools" ==> ChunkText
     ToolAgent == "Calls Tools" ==> EmbedTexts
     ToolAgent == "Calls Tools" ==> RerankTexts
@@ -402,8 +421,11 @@ Environment (for CodeAct)")]
 
     CodeAgent == "Generates Code" ==> PythonEnv
     PythonEnv -- "Calls Tools via Code" --> SearchLinks
+    PythonEnv -- "Calls Tools via Code" --> SearchFast
+    PythonEnv -- "Calls Tools via Code" --> GitHubQA
     PythonEnv -- "Calls Tools via Code" --> ReadURL
     PythonEnv -- "Calls Tools via Code" --> XcomReadURL
+    PythonEnv -- "Calls Tools via Code" --> XcomQA
     PythonEnv -- "Calls Tools via Code" --> ChunkText
     PythonEnv -- "Calls Tools via Code" --> EmbedTexts
     PythonEnv -- "Calls Tools via Code" --> RerankTexts
@@ -453,9 +475,12 @@ Environment (for CodeAct)")]
     StreamingSupport:::streaming
     ToolboxManager:::manager
     SearchLinks:::tool
+    SearchFast:::tool
+    GitHubQA:::tool
     SearchEngines:::searchengine
     ReadURL:::tool
     XcomReadURL:::tool
+    XcomQA:::tool
     ChunkText:::tool
     EmbedTexts:::tool
     RerankTexts:::tool
@@ -558,23 +583,36 @@ DeepSearchAgent comes with an extensible toolchain that helps the agent retrieve
 
 ### Search and Discovery Tools
 
-- **`search_links`**: Accepts a query string and uses external search engine APIs to retrieve web results with titles, snippets, and URLs. **NEW in v0.2.8**: Now supports multiple search engines:
+- **`search_links`**: Accepts a query string and uses external search engine APIs to retrieve web results with titles, snippets, and URLs. **Enhanced in v0.3.1**: Now supports hybrid search with multiple providers:
   - **Serper API (Google)**: Traditional web search for comprehensive coverage
   - **X.com (xAI API)**: Real-time social media content from X.com/Twitter with live data access
-  - **Auto-detection**: Automatically selects the appropriate search engine based on query content (e.g., X.com-specific terms, @handles, hashtags)
+  - **Jina AI Search**: LLM-optimized search with advanced content extraction
+  - **Exa Neural Search**: Semantic search with neural understanding
+  - **Hybrid Aggregation**: Intelligent deduplication and ranking across all providers
+  - **Auto-detection**: Automatically selects the appropriate search engine based on query content
+- **`search_fast`** (v0.3.1): Optimized search tool for speed-critical operations
+- **`github_repo_qa`** (v0.3.1): AI-powered GitHub repository analysis using DeepWiki MCP
 
 ### Content Retrieval and Processing Tools
 
-- **`read_url`**: Fetches HTML content from standard web pages and extracts formatted text for analysis using Jina AI Reader API.
-- **`xcom_read_url`**: **NEW in v0.2.8**: Specialized tool for reading X.com (Twitter) content using xAI's Live Search API. Provides real-time access to posts, profiles, and search results with enhanced extraction capabilities for social media content.
+- **`read_url`**: Fetches HTML content from standard web pages and extracts formatted text for analysis. **Enhanced in v0.3.1** with modular scraping architecture:
+  - **Auto-provider selection**: Chooses best scraper based on URL and availability
+  - **JinaReader**: LLM-optimized content extraction
+  - **Firecrawl**: Advanced JavaScript rendering support
+  - **Fallback mechanism**: Automatic failover between providers
+- **`xcom_read_url`**: Specialized tool for reading X.com (Twitter) content using xAI's Live Search API. Provides real-time access to posts, profiles, and search results.
+- **`xcom_qa`** (v0.3.1): Deep Q&A tool for X.com content analysis with search, read, and query operations
 - **`chunk_text`**: Splits long text into manageable segments for detailed analysis using intelligent segmentation.
 - **`embed_texts`**: Encodes text chunks into vector representations for semantic similarity operations.
 - **`rerank_texts`**: Ranks text chunks by relevance to a given query for finding the most relevant information.
 
-### Computational and Answer Tools
+### Calculation & Scientific Query Tools
 
-- **`wolfram`**: Calls the WolframAlpha API for mathematical or computational queries.
-- **`final_answer`**: Signals that the agent has reached a conclusion and terminates the reasoning loop with structured output.
+- **`wolfram` (Computation Engine)**: Calls the WolframAlpha API to handle mathematical calculations or scientific queries.
+
+### Structured Output Tools
+
+- **`final_answer` (Final Answer)**: Indicates that the agent has reached a conclusion, using structured output & terminating the reasoning loop.
 
 ### Toolbox Management System
 
@@ -604,24 +642,25 @@ with toolbox.load_from_mcp(server_params, trust_remote_code=True):
     pass
 ```
 
-### Enhanced Search Workflow
+### Enhanced Search Workflow Task Reasoning Prompting Template
 
-In a typical v0.2.8+ enhanced sequence:
+In the typical v0.3.1 enhanced sequence:
 
-1. **Intelligent Search**: The agent uses `search_links` which automatically detects if the query relates to X.com content (mentions @handles, hashtags, trending topics) and routes to the appropriate search engine
-2. **Content Retrieval**: Based on the source, uses either `read_url` for standard web content or `xcom_read_url` for X.com content
-3. **Processing Pipeline**: For complex content, employs `chunk_text`, `embed_texts`, and `rerank_texts` to identify key passages
-4. **Computation**: When calculations are needed, calls `wolfram` for mathematical analysis
-5. **Conclusion**: This cycle continues until the agent determines it has sufficient information to call `final_answer`
+1. **Hybrid Enhanced Search**: The agent specialist uses `search_links`, which automatically detects whether the query is related to X.com content (mentions @username, hashtags, trending topics) and routes it to the appropriate search engine.
+2. **Content Parsing**: Depending on the source, use `read_url` to handle standard web content or `xcom_read_url` for X.com content.
+3. **Content Processing Pipeline**: For complex content, use `chunk_text`, `embed_texts`, and `rerank_texts` to identify key paragraphs.
+4. **Computational Analysis**: When calculations are needed, call `wolfram` for mathematical analysis.
+5. **Final Answer**: This loop continues until the agent specialist determines there is enough information and calls `final_answer`.
 
-### Multi-Source Intelligence
+### Multi-Source Agent Specialist Collaborative Search
 
-The enhanced toolchain now provides:
+The enhanced toolchain now offers:
 
-- **Dual search capabilities**: Both traditional web search and real-time social media intelligence
-- **Source-aware processing**: Different extraction strategies for different content types
-- **Unified interface**: Consistent tool calling regardless of underlying data source
-- **Real-time data**: Access to live social media content through xAI integration
+- **Hybrid Search Capability**: Traditional web search, real-time social media, semantic search, and codebase analysis.
+- **Adaptive Parsing**: Different extraction strategies and pipeline parsing tools tailored for various content types.
+- **Unified Interface**: Consistent tool invocation regardless of underlying data sources.
+- **Real-Time Data**: Access to real-time social media content via xAI integration.
+- **Code Repository Understanding**: AI-driven code repository analysis through DeepWiki integration.
 
 ## 7. 📺 Streaming and Rendering Features
 
@@ -703,6 +742,7 @@ Special thanks to the following open-source projects (as well as other equally i
 - [FastAPI](https://github.com/tiangolo/fastapi)
 - [Jina AI](https://github.com/jina-ai)
 - [Langchain](https://github.com/langchain-ai/langchain)
+- [DeepWiki MCP](https://docs.devin.ai/work-with-devin/deepwiki-mcp)
 
 ## 13. Theoretical Foundations & References
 
@@ -715,7 +755,7 @@ Special thanks to the following open-source projects (as well as other equally i
 > - [Jina AI DeepResearch repository](https://github.com/jina-ai/node-DeepResearch)
 > - [A Practical Guide to Implementing DeepSearch/DeepResearch](https://jina.ai/news/a-practical-guide-to-implementing-deepsearch-deepresearch/)
 
-## 14. 👨‍💻 AI Coder Pair Programming Assistance Reference
+## 14. 👨‍💻 AI Coder Pair Programming & 🖖 VIBE Programming Best Practices
 
 The DeepSearchAgent project is designed with modern AI engineers and human engineers collaborating in software development and coding workflows in mind. We have integrated special repository workspace rule files (`.cursor/rules/*.mdc`) to facilitate AI-assisted development and ensure consistency within the codebase.
 
@@ -726,9 +766,16 @@ The DeepSearchAgent project is designed with modern AI engineers and human engin
 
 ### Use `.cursor/rules/` Files
 
-This repository contains special Markdown files in the `.cursor/rules/` directory, serving as contextual guideline prompts for human developers and AI coding assistants. These files are similar to the `CLAUDE.md` concept described in [Claude Code Best Practices](dev-docs/claude-code-best-practices.md), providing structured information about project architecture, components, and conventions.
+This repository contains special Markdown files in the `.cursor/rules/` & `CLAUDE.md` directory, serving as contextual guideline prompts for human developers and AI coding assistants. These files are similar to the `CLAUDE.md` concept described in [Claude Code Best Practices](docs/VIBE/claude-code-best-practices.md), providing structured information about project architecture, components, and conventions.
+
+> VIBE Programming & Development References:
+> - [claude-code-best-practices](https://www.anthropic.com/engineering/claude-code-best-practices)
+> - [vibe-coding-higher-quality-code](https://www.all-hands.dev/blog/vibe-coding-higher-quality-code)
+> - [Coding Agents 101: The Art of Actually Getting Things Done](https://devin.ai/agents101#introduction)
 
 #### Available Rules Files
+
+- `CLAUDE.md`: `Claude Code` rules & memory file.
 
 - **agent-architecture.mdc**: Documents the agent design patterns (ReAct, CodeAct, and Manager) and their functionalities
 
@@ -756,7 +803,7 @@ When using AI to assist in developing this project, we recommend the following w
 2. **Reference Specific Rules**: When collaborating with AI engineers, explicitly cite the relevant rule files.
 3. **Iterative Improvement**: Use AI for initial code generation, then refine the solution according to project conventions.
 4. **Planning for Complex Changes**: For complex features, have AI outline the plan before generating implementation code.
-5. **Test-Driven Approach**: For key components, work with AI engineers to write tests before implementing the code.
+5. **Test-Driven Approach!**: For key components, work with AI engineers to write tests before implementing the code!
 6. **Update Rules**: When making significant changes, update the relevant rule files.
 
 ### Example Workflow
@@ -841,27 +888,48 @@ src/
 │   │   ├── chunker.py        # Text chunking utilities
 │   │   ├── jina_embedder.py  # Jina AI embedding implementation
 │   │   └── jina_reranker.py  # Jina AI reranking implementation
-│   ├── scraping/             # Web content scraping
+│   ├── scraping/             # Web content scraping (v0.3.1 refactored)
 │   │   ├── __init__.py
+│   │   ├── base.py           # Base scraper abstraction
 │   │   ├── result.py         # Scraping result data structures
-│   │   ├── scraper.py        # General web scraping implementation
-│   │   ├── utils.py          # Scraping utility functions
-│   │   └── xcom_scraper.py   # X.com (Twitter) specialized scraper
-│   ├── search_engines/       # Search engine integrations
+│   │   ├── scrape_url.py     # Main scraping orchestrator
+│   │   ├── scraper_firecrawl.py  # Firecrawl scraper implementation
+│   │   ├── scraper_jinareader.py # JinaReader scraper implementation
+│   │   ├── scraper_xcom.py   # X.com (Twitter) specialized scraper
+│   │   └── utils.py          # Scraping utility functions
+│   ├── search_engines/       # Search engine integrations (v0.3.1 expanded)
+│   │   ├── utils/            # Search utility modules
+│   │   │   ├── __init__.py
+│   │   │   └── search_token_counter.py  # Token counting utilities
 │   │   ├── __init__.py
+│   │   ├── base.py           # Base search client abstraction
+│   │   ├── search_exa.py     # Exa neural search implementation
+│   │   ├── search_hybrid.py  # Hybrid search aggregator
+│   │   ├── search_jina.py    # Jina AI search implementation
 │   │   ├── search_serper.py  # Serper API (Google) search engine
-│   │   └── search_xcom.py    # X.com (xAI API) search engine
+│   │   ├── search_xcom.py    # X.com search base
+│   │   └── search_xcom_sdk.py # X.com SDK implementation
+│   ├── github_toolkit/       # GitHub integration tools (v0.3.1)
+│   │   ├── __init__.py
+│   │   └── deepwiki.py       # DeepWiki MCP client wrapper
+│   ├── xcom_toolkit/         # X.com toolkit (v0.3.1)  
+│   │   ├── __init__.py
+│   │   └── xai_live_search.py # xAI Live Search client
 │   └── __init__.py
-├── tools/                    # Tool implementations
+├── tools/                    # Tool implementations (v0.3.1 expanded)
 │   ├── __init__.py
 │   ├── chunk.py              # Text chunking tool
 │   ├── embed.py              # Text embedding tool
 │   ├── final_answer.py       # Final answer generation tool
+│   ├── github_qa.py          # GitHub repository Q&A tool (v0.3.1)
 │   ├── readurl.py            # Standard URL content reading tool
 │   ├── rerank.py             # Content reranking tool
 │   ├── search.py             # Multi-engine web search tool
+│   ├── search_fast.py        # Fast search tool (v0.3.1)
+│   ├── search_helpers.py     # Search helper utilities (v0.3.1)
 │   ├── toolbox.py            # Tool management and registry system
 │   ├── wolfram.py            # Wolfram Alpha computational tool
+│   ├── xcom_qa.py            # X.com Deep Q&A tool (v0.3.1)
 │   └── xcom_readurl.py       # X.com (Twitter) URL reading tool
 ├── app.py                    # Gradio UI web application entry point
 ├── cli.py                    # Command-line interface
@@ -874,7 +942,7 @@ src/
 - **`api/`**: FastAPI service infrastructure with versioned endpoints and health checks
 - **`core/`**: Fundamental system components including configuration, search engines, content processing, and scraping capabilities
 - **`tools/`**: Complete toolchain with unified toolbox management, supporting both traditional web search and X.com social media integration
-- **Root files**: Application entry points for different interface modes (CLI, FastAPI, Gradio UI)
+- **`src/` Root directory**: Application entry points for different interface modes (CLI, FastAPI, Gradio UI)
 
 ## Known Issues (v0.2.9.dev)
 

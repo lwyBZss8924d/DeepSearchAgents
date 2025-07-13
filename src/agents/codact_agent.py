@@ -15,8 +15,9 @@ from typing import (
 import importlib
 import yaml
 from smolagents import (
-    CodeAgent, Tool
+    CodeAgent, Tool, PromptTemplates
 )
+from smolagents.local_python_executor import BASE_PYTHON_TOOLS
 from .prompt_templates.codact_prompts import (
     CODACT_SYSTEM_EXTENSION, PLANNING_TEMPLATES,
     FINAL_ANSWER_EXTENSION, MANAGED_AGENT_TEMPLATES,
@@ -24,7 +25,6 @@ from .prompt_templates.codact_prompts import (
 )
 import logging
 from .base_agent import BaseAgent, MultiModelRouter
-
 
 logger = logging.getLogger(__name__)
 
@@ -46,11 +46,15 @@ class CodeActAgent(BaseAgent):
         additional_authorized_imports: Optional[List[str]] = None,
         enable_streaming: bool = False,
         planning_interval: int = 5,
-        use_structured_outputs_internally: bool = False,
-        name: str = None,
-        description: str = None,
+        use_structured_outputs_internally: bool = True,
+        name: str = "DeepResearchAgent",
+        description: str = (
+            "DeepResearchAgent is a CodeAct multi-agent that can use tools "
+            "and programming Python code to deeply web search and analyze "
+            "for research tasks."
+        ),
         managed_agents: List['BaseAgent'] = None,
-        cli_console=None,
+        cli_console=True,
         step_callbacks: Optional[List[Any]] = None,
         **kwargs
     ):
@@ -165,7 +169,6 @@ class CodeActAgent(BaseAgent):
         """
         # Security patterns to check for
         dangerous_patterns = [
-            r"__import__",  # Dynamic imports
             r"eval\s*\(",  # eval() calls
             r"exec\s*\(",  # exec() calls
             r"compile\s*\(",  # compile() calls
@@ -176,10 +179,6 @@ class CodeActAgent(BaseAgent):
             r"getattr\s*\(",  # getattr() for dynamic access
             r"setattr\s*\(",  # setattr() for dynamic modification
             r"delattr\s*\(",  # delattr() for deletion
-            r"open\s*\(",  # file operations
-            r"file\s*\(",  # file operations
-            r"input\s*\(",  # user input
-            r"raw_input\s*\(",  # user input (Python 2)
             r"\bos\.",  # os module access
             r"\bsys\.",  # sys module access
             r"\bsubprocess\.",  # subprocess module
@@ -230,6 +229,10 @@ class CodeActAgent(BaseAgent):
                 ).joinpath("code_agent.yaml").read_text()
             )
 
+        # Get current UTC time for template rendering
+        from datetime import datetime, timezone
+        current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
         # Create extension content
         extension_content = {
             "system_extension": CODACT_SYSTEM_EXTENSION,
@@ -241,7 +244,8 @@ class CodeActAgent(BaseAgent):
         # Merge base templates with extension content
         return merge_prompt_templates(
             base_templates=base_prompts,
-            extensions=extension_content
+            extensions=extension_content,
+            current_time=current_time
         )
 
     def _get_authorized_imports(self):
@@ -251,37 +255,49 @@ class CodeActAgent(BaseAgent):
             List[str]: List of authorized import modules
         """
         # Set default allowed import modules with security restrictions
+
+        base_python_tools = BASE_PYTHON_TOOLS
+
         default_authorized_imports = [
-            "json", "re", "collections", "datetime",
-            "time", "calendar", "math", "csv", "itertools", "copy",
-            "requests", "bs4", "urllib", "html",
-            "io", "aiohttp", "asyncio",
-            "logging", "pandas", "numpy", "tabulate",
-            "rich"
+            "logging", "json", "re", "time", "datetime",
+            "copy", "requests", "aiohttp", "asyncio",
+            "bs4", "urllib", "html",
+            "math", "csv", "pandas", "numpy", "tabulate",
+            "arxiv", "wikipedia",
+            "pymupdf", "markitdown",
+            "file", "input", "raw_input", "open", "dotenv",
         ]
-        # Security: Removed dangerous imports like 'os', 'sys', 'dotenv'
+        # Security: PROD MUST Removed Dev dangerous imports like 'os', 'sys', 'dotenv'
         # These can be used for file system access or environment manipulation
 
         if self.additional_authorized_imports:
-            # Security check: Filter out dangerous modules
+            # Security check: Filter out dangerous modules (PROD MUST config this)
             dangerous_modules = {
-                "os", "sys", "subprocess", "eval", "exec", 
-                "compile", "__builtins__", "open", "file",
-                "input", "raw_input", "execfile", "dotenv"
+
             }
             safe_additions = [
-                mod for mod in self.additional_authorized_imports 
+                mod for mod in self.additional_authorized_imports
                 if mod not in dangerous_modules
             ]
             if len(safe_additions) < len(self.additional_authorized_imports):
+                blocked_imports = (
+                    set(self.additional_authorized_imports) -
+                    set(safe_additions) -
+                    set(base_python_tools.keys())
+                )
                 logger.warning(
-                    "Some requested imports were blocked for security: "
-                    f"{set(self.additional_authorized_imports) - set(safe_additions)}"
+                    f"Some requested imports were blocked for security: "
+                    f"{blocked_imports}"
                 )
             # Merge and deduplicate import module lists
-            return list(set(default_authorized_imports + safe_additions))
+            all_imports = (
+                list(base_python_tools.keys()) +
+                default_authorized_imports +
+                safe_additions
+            )
+            return list(set(all_imports))
         else:
-            return default_authorized_imports
+            return list(base_python_tools.keys()) + default_authorized_imports
 
     def create_agent(self):
         """Create CodeAct agent instance
@@ -290,7 +306,9 @@ class CodeActAgent(BaseAgent):
             CodeAgent: Configured CodeAct agent instance
         """
         # Create extended prompt templates
-        extended_prompt_templates = self._create_prompt_templates()
+        extended_prompt_templates = PromptTemplates(
+            **self._create_prompt_templates()
+        )
 
         # Get authorized import modules
         authorized_imports = self._get_authorized_imports()
