@@ -184,7 +184,7 @@ def display_welcome(args, console):
         "github.com/lwyBZss8924d/DeepSearchAgents[/link]"
     )
 
-    version = settings.VERSION or "0.3.0.dev"
+    version = settings.VERSION or "0.3.1"
     project_info.add_row(
         "[bold]Version:[/bold]",
         f"[dim]{version}[/dim]"
@@ -319,18 +319,18 @@ def display_welcome(args, console):
                             tools_text.append(f"{tool_name}", style=color)
 
                         config_table.add_row("Configured tools", tools_text)
-    
+
     else:  # manager
         config_table.add_row("Maximum steps", f"{getattr(settings, 'MANAGER_MAX_STEPS', 30)}")
         planning_text = (
             f"Every [yellow]{getattr(settings, 'MANAGER_PLANNING_INTERVAL', 10)}[/yellow] steps"
         )
         config_table.add_row("Planning interval", planning_text)
-        
+
         # Display team configuration
         team_type = getattr(args, 'team', 'research')
         config_table.add_row("Team type", f"[cyan]{team_type.capitalize()}[/cyan]")
-        
+
         if team_type == "research":
             # Show research team composition
             team_text = Text()
@@ -352,7 +352,7 @@ def display_welcome(args, console):
                 team_text.append(f"{icon} ", style=color)
                 team_text.append(f"{agent_type.capitalize()} Agent", style=color)
             config_table.add_row("Team members", team_text)
-        
+
         # Show delegation settings
         config_table.add_row("Max delegation depth", "3")
         config_table.add_row("Coordination mode", "Hierarchical task delegation")

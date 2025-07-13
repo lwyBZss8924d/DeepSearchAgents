@@ -47,8 +47,8 @@ class XAISearchClient(BaseSearchClient):
         self,
         api_key: Optional[str] = None,
         model: str = "grok-3-latest",
-        timeout: int = 30,
-        max_retries: int = 3,
+        timeout: int = 600,
+        max_retries: int = 1,
     ):
         """
         Initialize the XAISearchClient.

@@ -21,7 +21,7 @@ from .chunk import ChunkTextTool
 from .embed import EmbedTextsTool
 from .rerank import RerankTextsTool
 from .wolfram import EnhancedWolframAlphaTool
-from .xcom_readurl import XcomReadURLTool
+from .xcom_qa import XcomDeepQATool
 from .github_qa import GitHubRepoQATool
 from .final_answer import EnhancedFinalAnswerTool as FinalAnswerTool
 from .toolbox import (
@@ -46,7 +46,7 @@ __all__ = [
     "ChunkTextTool",
     "EmbedTextsTool",
     "RerankTextsTool",
-    "XcomReadURLTool",
+    "XcomDeepQATool",
     "GitHubRepoQATool",
     "EnhancedWolframAlphaTool",
     "FinalAnswerTool",

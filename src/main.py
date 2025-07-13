@@ -97,14 +97,23 @@ def parse_args():
     return parser.parse_args()
 
 
-# Create the application
-args = parse_args()
-app = create_app(
-    lifespan=lifespan,
-    enable_fastmcp=args.enable_fastmcp,
-    fastmcp_path=args.fastmcp_path,
-    agent_type=args.agent_type
-)
+# Create the application with default settings when imported as module
+if __name__ == "__main__":
+    args = parse_args()
+    app = create_app(
+        lifespan=lifespan,
+        enable_fastmcp=args.enable_fastmcp,
+        fastmcp_path=args.fastmcp_path,
+        agent_type=args.agent_type
+    )
+else:
+    # When imported by uvicorn, use default settings
+    app = create_app(
+        lifespan=lifespan,
+        enable_fastmcp=False,
+        fastmcp_path="/mcp-server",
+        agent_type=settings.DEEPSEARCH_AGENT_MODE
+    )
 
 
 if __name__ == "__main__":

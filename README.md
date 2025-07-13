@@ -16,7 +16,7 @@ Build with 💖 for Humanity with AI
 
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![version](https://img.shields.io/badge/version-v0.2.9.dev-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.2.9.dev)
+[![version](https://img.shields.io/badge/version-v0.3.1-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.3.1)
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/lwyBZss8924d/DeepSearchAgents)
 
@@ -36,8 +36,11 @@ The project supports command-line interface (CLI), standard FastAPI services, an
 
 - 👻 **Deep Search Task Capability**: Handles complex questions through multi-step searching, reading, and reasoning processes involving online content.
 - **DeepSearch Specialist**: Supports both CodeAct (Python code execution) mode and ReAct (tool invocation) mode for experimental comparison; configuration of related Agent runtime, language models, and various tools can be managed via `config.toml` (`src/core/config/settings.py`).
-- 🪄 **Extensible Toolbox**: Built-in set of tools for web searching, content retrieval, text processing, semantic ranking, and computation.
+- 🪄 **Extensible Toolbox**: Built-in set of tools for web searching, content retrieval, text processing, semantic ranking, computation, and GitHub repository analysis.
+- 🌐 **Hybrid Search Engine** (v0.3.1): Multi-provider search aggregation supporting Google (Serper), X.com, Jina AI, and Exa Neural search with intelligent deduplication and ranking.
 - 🔍 **Text Embedding and Re-ranking**: Uses Jina AI embedding and re-ranking models to process multimodal web content from URLs.
+- 📚 **GitHub Repository Q&A** (v0.3.1): AI-powered repository analysis tool using DeepWiki MCP for understanding GitHub projects.
+- 🐦 **X.com Deep Integration** (v0.3.1): Specialized tools for searching, reading, and analyzing X.com (Twitter) content using xAI's Live Search API.
 - 🧠 **Periodic Planning and Updates**: Implements strategic reevaluation during execution to optimize search paths.
 - 🔄 **Iterative Optimization**: Continuously improves search and analysis strategies based on initial findings.
 - 💻 **Multiple Development and Debugging Interaction Modes**: Offers CLI command-line interaction, standard FastAPI service, and Gradio UI web interface.
@@ -74,11 +77,11 @@ The project supports command-line interface (CLI), standard FastAPI services, an
 
 3. [DONE] Provided packaging of DeepSearchAgents as an MCP server, offering DeepSearchAgent MCP tools services;
 
-4. [DONE] Supported multi-vertical search engine source aggregation (adding social network URL index sources like x.com on top of Google) with configurable provider selection;
+4. [DONE] Supported multi-vertical search engine source aggregation (Google, X.com, Jina AI, Exa Neural) with hybrid search aggregation and intelligent result deduplication (v0.3.1);
 
 5. [DONE] Upgraded to smolagents v1.19.0 with hierarchical agent management, parallel tool execution, and enhanced streaming architecture;
 
-6. [DONE] Add a `DeepWiki` Remote MCP tool to enhance the `GitHub URLs` vertical crawler/parser (v0.2.8);
+6. [DONE] Add a `DeepWiki` Remote MCP tool to enhance the `GitHub URLs` vertical crawler/parser with GitHub Repository Q&A capabilities (v0.3.1);
 
 7. Provide more strategy parameters for deep search strategies, adding support for token-budget-based strategy parameters;
 

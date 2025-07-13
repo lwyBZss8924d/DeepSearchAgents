@@ -5,8 +5,8 @@ debug = true
 
 # Model configuration
 [models]
-orchestrator_id = "openai/claude-sonnet-4"  # for main LLM orchestration
-search_id = "openai/claude-sonnet-4"        # for search (if different)
+orchestrator_id = "openai/gemini-2.5-pro"  # for main LLM orchestration
+search_id = "openai/gemini-2.5-pro"        # for search (if different)
 reranker_type = "jina-reranker-m0"
 
 # Tools configuration
@@ -25,9 +25,9 @@ trust_remote_code = false
 # [[tools.mcp_servers]]
 # type = "sse" 
 # url = "http://127.0.0.1:8000/sse"
-# [[tools.mcp_servers]]
-# type = "streamable-http"
-# url = "https://mcp.deepwiki.com/mcp"
+[[tools.mcp_servers]]
+type = "streamable-http"
+url = "https://mcp.deepwiki.com/mcp"
 # # Alternative: type = "sse", url = "https://mcp.deepwiki.com/sse"
 
 # Tool-specific configurations
@@ -37,9 +37,33 @@ rerank_texts = { default_model = "jina-reranker-m0" }
 # Search tool configuration
 search_links = { num_results = 10, location = "us" }
 # ReadURL tool configuration
-read_url = { reader_model = "readerlm-v2" }
+read_url = { reader_model = "readerlm-v2", default_provider = "auto", fallback_enabled = true }
 # Chunk text tool configuration
 chunk_text = { chunk_size = 150, chunk_overlap = 50 }
+
+# Scraper configuration
+[scrapers]
+# Default provider: "auto", "jina", "firecrawl", "xcom"
+default_provider = "auto"
+# Enable fallback to other scrapers on failure
+fallback_enabled = true
+# Priority order for auto selection
+provider_priority = ["jina", "firecrawl", "xcom"]
+
+# Provider-specific settings
+[scrapers.jina]
+timeout = 6000
+max_retries = 1
+output_format = "markdown"
+
+[scrapers.firecrawl]
+timeout = 6000
+max_retries = 1
+output_format = "markdown"
+
+[scrapers.xcom]
+timeout = 6000
+model = "grok-4"
 
 # Agent common settings
 [agents.common]
@@ -70,46 +94,11 @@ max_delegation_depth = 3      # maximum depth of agent delegation
 enable_streaming = false      # streaming output for manager agent
 default_team = "research"     # default team configuration
 
-# HiRA (Hierarchical Reasoning Agent) specific settings
-[agents.hira]
-# Core configuration
-max_steps = 30                # Maximum total agent steps (inherited from MultiStepAgent)
-max_execution_calls = 10      # Maximum number of subtask calls
-max_bad_calls = 3             # Maximum repeated/failed calls
-enable_memory_filter = true   # Enable intelligent memory filtering
-enable_streaming = false      # Streaming output for HiRA agent
-verbosity_level = 1           # 0=minimal, 1=normal, 2=detailed
-
-# Meta planner settings (orchestrator model)
-meta_temperature = 0.7        # Temperature for meta planner
-meta_top_p = 0.8             # Top-p sampling for meta planner
-meta_min_p = 0.05            # Min-p sampling for meta planner
-meta_top_k_sampling = 20     # Top-k sampling for meta planner
-meta_repetition_penalty = 1.05 # Repetition penalty for meta planner
-meta_max_tokens = 80000      # Max tokens for meta planner
-
-# Coordinator/Executor settings (search model)
-coordinator_temperature = 0.6 # Temperature for coordinator and executors
-coordinator_top_p = 0.95      # Top-p sampling for coordinator
-coordinator_min_p = 0.05      # Min-p sampling for coordinator
-coordinator_top_k_sampling = 20 # Top-k sampling for coordinator
-coordinator_repetition_penalty = 1.05 # Repetition penalty
-aux_max_tokens = 60000       # Max tokens for coordinator/executors
-
-# Other settings
-max_search_limit = 10        # Maximum searches per executor
-concurrent_limit = 32        # Semaphore for concurrent API calls
-enable_thinking = false      # Enable thinking mode (for Qwen models)
-
-# Token-based communication settings
-use_token_architecture = true # Use new token-based architecture
-token_stop_sequences = true   # Enable token-specific stop sequences
-
 # Service configuration
 [service]
 host = "0.0.0.0"
 port = 8000
-version = "0.3.0.dev"
+version = "0.3.1"
 deepsearch_agent_mode = "codact"  # "react" or "codact"
 
 # Logging configuration
@@ -122,7 +111,22 @@ enable_token_counting = true   # enable token counting feature
 log_tokens = true             # enable token logging
 format = "minimal"            # use simplified format
 
-# Tested and working model list
+# Tested and working model list Examples:
+
+[[model_list]]
+model_name = "claude-opus-4"
+[model_list.litellm_params]
+model = "anthropic/claude-opus-4" 
+api_base = "LITELLM_BASE_URL"
+api_key = "LITELLM_MASTER_KEY"
+
+[[model_list]]
+model_name = "claude-sonnet-4"
+[model_list.litellm_params]
+model = "anthropic/claude-sonnet-4" 
+api_base = "LITELLM_BASE_URL"
+api_key = "LITELLM_MASTER_KEY"
+
 [[model_list]]
 model_name = "openai-codex-mini"
 [model_list.litellm_params]

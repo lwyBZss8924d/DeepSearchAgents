@@ -20,8 +20,8 @@ class ManagerAgent(CodeActAgent):
     """Manager agent that orchestrates other agents in a hierarchical manner
 
     The ManagerAgent extends CodeAgent to dynamically orchestrate sub-agents
-    through code execution. This enables sophisticated multi-agent architectures 
-    where the LLM writes Python code to analyze tasks, check results, and 
+    through code execution. This enables sophisticated multi-agent architectures
+    where the LLM writes Python code to analyze tasks, check results, and
     intelligently delegate to the most appropriate sub-agents.
     """
 

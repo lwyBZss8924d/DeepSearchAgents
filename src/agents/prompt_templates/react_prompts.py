@@ -39,8 +39,8 @@ tools in a search-read-reason cycle.
 *   **Iterative Search & Read:** Start with `{4} search_links`, analyze results, and
     use `{5} read_url` for promising sources. The search_links tool supports both
     regular web search (Google) and X.com/Twitter content search. For X.com content,
-    you can also use the specialized `{12} xcom_read_url` tool to extract more detailed
-    information from X.com posts, profiles and search results.
+    you can also use the specialized `{12} xcom_deep_qa` tool for advanced search,
+    reading specific posts, and asking questions about X.com content.
 *   **Content Processing (Optional):** If `read_url` returns very long text or if
     you need finer-grained relevance filtering:
     *   Use `{6} chunk_text` to split the content into smaller segments 
@@ -242,7 +242,7 @@ REACT_PROMPT = PromptTemplates(
         TOOL_ICONS["wolfram"],
         TOOL_ICONS["final_answer"],
         "",  # placeholder for future use
-        TOOL_ICONS["xcom_read_url"]
+        TOOL_ICONS.get("xcom_deep_qa", "🔎")
     ),
     user_prompt="""
 {{task}}
