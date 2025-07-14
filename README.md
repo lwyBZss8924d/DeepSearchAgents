@@ -16,7 +16,7 @@ VIBE 🖖 Build with 💖 for Humanity with AI
 
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![version](https://img.shields.io/badge/version-v0.3.1-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.3.1)
+[![version](https://img.shields.io/badge/version-v0.3.2.dev-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.3.2.dev)
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/lwyBZss8924d/DeepSearchAgents)
 
@@ -27,6 +27,8 @@ VIBE 🖖 Build with 💖 for Humanity with AI
 [中文版](README_Zh.md)
 
 README Update Date: `2025-07-13`
+
+[`v0.3.2.dev`] Development Status: `"DOING"`
 
 ## 1. Introduction
 
