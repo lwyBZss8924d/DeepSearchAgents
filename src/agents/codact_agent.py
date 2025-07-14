@@ -17,7 +17,6 @@ import yaml
 from smolagents import (
     CodeAgent, Tool, PromptTemplates
 )
-from smolagents.local_python_executor import BASE_PYTHON_TOOLS
 from .prompt_templates.codact_prompts import (
     CODACT_SYSTEM_EXTENSION, PLANNING_TEMPLATES,
     FINAL_ANSWER_EXTENSION, MANAGED_AGENT_TEMPLATES,
@@ -255,17 +254,17 @@ class CodeActAgent(BaseAgent):
             List[str]: List of authorized import modules
         """
         # Set default allowed import modules with security restrictions
-
-        base_python_tools = BASE_PYTHON_TOOLS
+        # Note: BASE_PYTHON_TOOLS contains built-in functions (bool, str, int, etc.)
+        # which are automatically available and should not be in authorized imports
 
         default_authorized_imports = [
             "logging", "json", "re", "time", "datetime",
             "copy", "requests", "aiohttp", "asyncio",
             "bs4", "urllib", "html",
-            "math", "csv", "pandas", "numpy", "tabulate",
-            "arxiv", "wikipedia",
+            "math", "csv", "pandas", "numpy", "tabulate2",
+            "arxiv", "wikipediaapi",
             "pymupdf", "markitdown",
-            "file", "input", "raw_input", "open", "dotenv",
+            "dotenv",
         ]
         # Security: PROD MUST Removed Dev dangerous imports like 'os', 'sys', 'dotenv'
         # These can be used for file system access or environment manipulation
@@ -282,22 +281,22 @@ class CodeActAgent(BaseAgent):
             if len(safe_additions) < len(self.additional_authorized_imports):
                 blocked_imports = (
                     set(self.additional_authorized_imports) -
-                    set(safe_additions) -
-                    set(base_python_tools.keys())
+                    set(safe_additions)
                 )
                 logger.warning(
                     f"Some requested imports were blocked for security: "
                     f"{blocked_imports}"
                 )
             # Merge and deduplicate import module lists
+            # Do NOT include BASE_PYTHON_TOOLS as they are built-in functions
             all_imports = (
-                list(base_python_tools.keys()) +
                 default_authorized_imports +
                 safe_additions
             )
             return list(set(all_imports))
         else:
-            return list(base_python_tools.keys()) + default_authorized_imports
+            # Do NOT include BASE_PYTHON_TOOLS as they are built-in functions
+            return default_authorized_imports
 
     def create_agent(self):
         """Create CodeAct agent instance
@@ -432,8 +431,7 @@ class CodeActAgent(BaseAgent):
         # add extra logs to confirm step callbacks
         # this will check if the wrapped agent retains callbacks
         if hasattr(agent, 'step_callbacks') and agent.step_callbacks:
-            logger.info(f"Agent created, has {len(agent.step_callbacks)} "
-                        f"step callbacks")
+            logger.info("Agent created with step callbacks configured")
         else:
             logger.warning("Warning: Agent created without step callbacks!")
 

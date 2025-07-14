@@ -1,6 +1,6 @@
 [project]
 name = "DeepSearchAgents"
-version = "0.3.1"
+version = "0.3.2.dev"
 description = "🤗 Awesome CodeAct Deep Web Search Agents framework"
 authors = [
     {name = "ArthurWang", email = "deepsearchagent4dev@gpt4coursera.com"},
@@ -32,9 +32,11 @@ dependencies = [
     "litellm>=1.73.6",
     "openai>=1.93.1",
     "langchain<=0.3.26",
+    "langchain-text-splitters>=0.3.8",
     "torch",
-    "wikipedia-api>=0.8.1",
+    "wikipedia-api>=0.8.1",    
     "wolframalpha",
+    "arxiv",
     "rich>=13.0.0",
     "loguru",
     "nest_asyncio",
@@ -50,10 +52,12 @@ dependencies = [
     "websockets>=15.0.1",
     "exa-py>=1.14.15",
     "xai-sdk>=1.0.0",
-    "PyMuPDF",
-    "markitdown",
     "mistralai",
     "firecrawl-py",
+    "tabulate2",  # CodeAgent-sandbox package
+    "PyMuPDF",  # CodeAgent-sandbox package
+    "markitdown",  # CodeAgent-sandbox package
+    "futurehouse-client",  # Temporarily disabled due to dm-tree 0.1.8 build issue with CMake 4.0.2
 ]
 requires-python = ">=3.13"
 readme = "README.md"
@@ -67,6 +71,10 @@ build-backend = "hatchling.build"
 allow-direct-references = true
 
 [tool.uv]
+override-dependencies = [
+    "dm-tree==0.1.9",  # Override to fix CMake 4.0.2 compatibility issue
+    "packaging>=25.0",  # Override to resolve conflict between langchain-text-splitters and xai-sdk
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
@@ -79,6 +87,7 @@ dev = [
     "mypy>=1.15.0",
     "build",
     "pyproject-hooks",
+    "ruff>=0.12.0",
 ]
 test = [
     "pytest>=8.3.5",

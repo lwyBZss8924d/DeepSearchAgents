@@ -220,6 +220,8 @@ mcp.json # If mcp.json can appear elsewhere
 /dev-docs/*
 !/dev-docs/commits/
 !/dev-docs/Issues/
+/src/core/academic_tookit/api-docs/
+/src/core/academic_tookit/prd-docs/
 
 # dev branch
 /src/api_streaming
