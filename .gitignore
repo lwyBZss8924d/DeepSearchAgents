@@ -227,7 +227,6 @@ mcp.json # If mcp.json can appear elsewhere
 /src/api_streaming
 
 # dev test logs & cache
-/tests
 /callback_logs
 /redis_cache
 /.gradio

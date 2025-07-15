@@ -19,7 +19,7 @@ dependencies = [
     "requests",
     "python-dotenv",
     "jsonschema>=4.0.0,<5.0.0",
-    "smolagents>=1.19.0,<1.20.0",  # Adapted for v1.20.0
+    "smolagents>=1.19.0,<1.20.0",                           # Adapted for v1.20.0
     "smolagents[e2b]",
     "smolagents[docker]",
     "smolagents[telemetry]",
@@ -50,10 +50,10 @@ dependencies = [
     "prompt-toolkit>=3.0.0",
     "tomli>=2.2.1; python_version < '3.11'",
     "websockets>=15.0.1",
-    "exa-py>=1.14.15",  # [optional]
     "xai-sdk>=1.0.0",
-    "mistralai",  # [optional]
-    "firecrawl-py",  # [optional]
+    "exa-py>=1.14.15",                                      # [optional]
+    "mistralai",                                            # [optional]
+    "firecrawl-py",                                         # [optional] 
     "tabulate2",                                            # CodeAgent-sandbox package
     "PyMuPDF",                                              # CodeAgent-sandbox package
     "markitdown",                                           # CodeAgent-sandbox package
