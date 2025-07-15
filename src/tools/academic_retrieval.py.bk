@@ -1,0 +1,312 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# src/tools/academic_retrieval.py
+# code style: PEP 8
+
+"""
+Academic Retrieval Tool for DeepSearchAgents.
+
+This tool provides academic paper search and deep research capabilities
+using FutureHouse Platform API.
+"""
+
+import logging
+import os
+from typing import Optional, Dict, Any, TYPE_CHECKING
+
+from smolagents import Tool
+from src.core.academic_tookit import (
+    ScholarSearchClient,
+    AcademicResearchClient
+)
+
+if TYPE_CHECKING:
+    from rich.console import Console
+
+logger = logging.getLogger(__name__)
+
+
+class AcademicRetrieval(Tool):
+    """
+    Search academic papers and conduct deep research using FutureHouse Platform API.
+
+    This tool provides two modes of operation:
+    - 'search': Fast academic paper search using CROW API
+    - 'research': Deep research with comprehensive reports using FALCON API
+
+    Example usage:
+        # Search for papers
+        results = academic_retrieval(
+            query="machine learning in drug discovery",
+            operation="search",
+            num_results=20
+        )
+
+        # Conduct deep research
+        report = academic_retrieval(
+            query="What are the latest advances in quantum computing?",
+            operation="research"
+        )
+    """
+
+    name = "academic_retrieval"
+    description = (
+        "Search academic papers and conduct deep research. "
+        "Operations: 'search' (fast paper search) or 'research' "
+        "(comprehensive analysis). Returns structured results with "
+        "titles, URLs, descriptions, and snippets."
+    )
+    inputs = {
+        "query": {
+            "type": "string",
+            "description": "The research question or search query",
+        },
+        "operation": {
+            "type": "string",
+            "description": (
+                "Operation type: 'search' for fast paper search, "
+                "'research' for deep comprehensive analysis"
+            ),
+            "default": "search",
+            "nullable": True,
+        },
+        "num_results": {
+            "type": "integer",
+            "description": "Number of results to return (for search mode)",
+            "default": 20,
+            "nullable": True,
+        },
+        "verbose": {
+            "type": "boolean",
+            "description": "Include detailed metadata in results",
+            "default": False,
+            "nullable": True,
+        },
+        "timeout": {
+            "type": "integer",
+            "description": (
+                "Timeout in seconds. Default: 600 for search, "
+                "1200 for research"
+            ),
+            "nullable": True,
+        },
+        "initial_context": {
+            "type": "string",
+            "description": (
+                "Optional context from previous research "
+                "(for research mode)"
+            ),
+            "nullable": True,
+        }
+    }
+    output_type = "any"  # Returns dict or list based on operation
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        cli_console: Optional["Console"] = None,
+        verbose: bool = False
+    ):
+        """
+        Initialize AcademicRetrieval Tool.
+
+        Args:
+            api_key: FutureHouse API key. If None, uses env var
+            cli_console: Optional rich console for output
+            verbose: Enable verbose logging
+        """
+        super().__init__()
+
+        # Get API key
+        self.api_key = api_key or os.getenv("FUTUREHOUSE_API_KEY")
+        if not self.api_key:
+            raise ValueError(
+                "FutureHouse API key required. "
+                "Set FUTUREHOUSE_API_KEY env var or pass api_key parameter"
+            )
+
+        # Initialize clients
+        self.search_client = ScholarSearchClient(
+            api_key=self.api_key,
+            verbose=verbose
+        )
+        self.research_client = AcademicResearchClient(
+            api_key=self.api_key
+        )
+
+        self.cli_console = cli_console
+        self.verbose = verbose
+
+    def forward(
+        self,
+        query: str,
+        operation: str = "search",
+        num_results: Optional[int] = 20,
+        verbose: Optional[bool] = None,
+        timeout: Optional[int] = None,
+        initial_context: Optional[str] = None
+    ) -> Any:
+        """
+        Execute academic retrieval operation.
+
+        Args:
+            query: Research question or search query
+            operation: 'search' or 'research'
+            num_results: Number of results (search mode)
+            verbose: Override instance verbose setting
+            timeout: Operation timeout in seconds
+            initial_context: Context for research mode
+
+        Returns:
+            Search results list or research report dict
+        """
+        # Validate operation
+        if operation not in ["search", "research"]:
+            return {
+                "error": f"Invalid operation '{operation}'. "
+                         "Use 'search' or 'research'",
+                "valid_operations": ["search", "research"]
+            }
+
+        # Set defaults based on operation
+        if timeout is None:
+            timeout = 600 if operation == "search" else 1200
+
+        use_verbose = verbose if verbose is not None else self.verbose
+
+        try:
+            if operation == "search":
+                return self._perform_search(
+                    query, num_results, use_verbose, timeout
+                )
+            else:  # research
+                return self._perform_research(
+                    query, initial_context, use_verbose, timeout
+                )
+
+        except Exception as e:
+            logger.error(f"Error in academic retrieval: {e}")
+            return {
+                "error": str(e),
+                "query": query,
+                "operation": operation
+            }
+
+    def _perform_search(
+        self,
+        query: str,
+        num_results: int,
+        verbose: bool,
+        timeout: int
+    ) -> Dict[str, Any]:
+        """
+        Perform academic paper search.
+
+        Args:
+            query: Search query
+            num_results: Number of results
+            verbose: Include detailed metadata
+            timeout: Timeout in seconds
+
+        Returns:
+            Dictionary with search results
+        """
+        # Update client settings
+        self.search_client.timeout = timeout
+        self.search_client.verbose = verbose
+
+        # Perform search
+        results = self.search_client.search(
+            query=query,
+            num_results=num_results,
+            verbose=verbose
+        )
+
+        # Format response
+        response = {
+            "operation": "search",
+            "query": query,
+            "results": results,
+            "total_results": len(results),
+            "meta": {
+                "source": "futurehouse_crow",
+                "timeout": timeout,
+                "verbose": verbose
+            }
+        }
+
+        # Log if console available
+        if self.cli_console and self.verbose:
+            self.cli_console.print(
+                f"[green]Academic search completed:[/green] "
+                f"Found {len(results)} results for '{query}'"
+            )
+
+        return response
+
+    def _perform_research(
+        self,
+        query: str,
+        initial_context: Optional[str],
+        verbose: bool,
+        timeout: int
+    ) -> Dict[str, Any]:
+        """
+        Perform deep academic research.
+
+        Args:
+            query: Research question
+            initial_context: Optional context
+            verbose: Include detailed metadata
+            timeout: Timeout in seconds
+
+        Returns:
+            Dictionary with research report
+        """
+        # Update client settings
+        self.research_client.timeout = timeout
+
+        # Perform research
+        report = self.research_client.research(
+            query=query,
+            initial_context=initial_context,
+            verbose=verbose
+        )
+
+        # Add operation metadata
+        report["operation"] = "research"
+        if "meta" not in report:
+            report["meta"] = {}
+        report["meta"].update({
+            "source": "futurehouse_falcon",
+            "timeout": timeout,
+            "verbose": verbose
+        })
+
+        # Log if console available
+        if self.cli_console and self.verbose:
+            status = "completed" if report.get("content") else "failed"
+            self.cli_console.print(
+                f"[green]Academic research {status}:[/green] '{query}'"
+            )
+
+        return report
+
+    def get_usage_stats(self) -> Dict[str, int]:
+        """
+        Get usage statistics from both clients.
+
+        Returns:
+            Combined usage statistics
+        """
+        search_stats = self.search_client.get_usage_stats()
+        research_stats = self.research_client.get_usage_stats()
+
+        return {
+            "total_searches": search_stats.get("search_count", 0),
+            "total_research": research_stats.get("research_count", 0),
+            "total_operations": (
+                search_stats.get("search_count", 0) +
+                research_stats.get("research_count", 0)
+            )
+        }
