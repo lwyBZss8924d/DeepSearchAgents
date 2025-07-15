@@ -1,0 +1,81 @@
+Welcome to fish, the friendly interactive shell
+Type help for instructions on how to use fish
+(.venv) arthur@Fqqs-MacBook ~/d/MathJourney-AItutor-Agents> python tests/test_jina/jina_grounding/test_grounding_with_llm.py                  (base) 
+/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/pydantic/_internal/_config.py:373: UserWarning: Valid config keys have changed in V2:
+* 'underscore_attrs_are_private' has been removed
+  warnings.warn(message, UserWarning)
+🚀 Starting Comprehensive Jina Grounding + LLM Tests
+================================================================================
+
+
+================================================================================
+🧪 Test 6: Error Handling and Edge Cases
+================================================================================
+
+📝 Testing: Empty statement
+   Statement: 
+   ✅ Handled successfully: 1 results
+
+📝 Testing: Very long statement
+   Statement: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...
+   ❌ Unexpected error: RuntimeError: Client error calling Jina Grounding API: 400 Client Error: Bad Request for url: https://g.jina.ai/
+
+📝 Testing: Vague questions
+   Statement: What if? Maybe? Could be?
+   ✅ Handled successfully: 13 results
+
+📝 Testing: Nonsense statement
+   Statement: The fnorble grobbles the wibbledy-foo
+   ❌ Unexpected error: RuntimeError: Client error calling Jina Grounding API: 422 Client Error: Unprocessable Entity for url: https://g.jina.ai/
+
+📝 Testing: Mathematical expression
+   Statement: 1=1
+   ✅ Handled successfully: 12 results
+
+📝 Testing: Only emojis
+   Statement: 🚀🌟✨
+   ❌ Unexpected error: RuntimeError: Client error calling Jina Grounding API: 422 Client Error: Unprocessable Entity for url: https://g.jina.ai/
+
+📝 Testing: Contradictory statement
+   Statement: The year is 2024 AND 2025 AND 2026
+   ✅ Handled successfully: 17 results
+
+📝 Testing: SQL injection attempt
+   Statement: SELECT * FROM users WHERE 1=1
+   ✅ Handled successfully: 22 results
+
+📝 Testing: Invalid configuration
+   ✅ Configuration validation worked: 2 validation errors for EnhancedJinaGroundingRetriever
+timeout
+  Value error, Timeout must be at least 1 second [type=value_error, input_value=0, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.11/v/value_error
+max_retries
+  Value error, max_retries must be at least 1 [type=value_error, input_value=0, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.11/v/value_error
+
+✅ Error handling test completed!
+================================================================================
+🧪 Test 1: Basic Fact-Checking with Structured Output
+================================================================================
+
+📝 Checking: SpaceX-Starship space program Flight Test Missions As of FT-9 on 2025-07-05, the ninth test has successfully achieved manned flight testing of STARSHIP.
+------------------------------------------------------------
+
+📊 Analysis Results:
+   Is Factual: ❌ FALSE
+   Confidence: 95.00%
+   Sources: 20
+
+   Reasoning: The statement claims that the ninth flight test (FT-9) of SpaceX's Starship, as of July 5, 2025, successfully achieved manned flight testing. However, multiple reliable sources indicate that the ninth flight test occurred on May 27, 2025, not July 5, 2025. Furthermore, the FT-9 was an integrated orbital flight test that ended in failure, with the Starship and Super Heavy booster being destroyed due to loss of control caused by a fuel leak. There was no manned flight involved in this test; it was an unmanned test flight. Therefore, the claim that FT-9 successfully achieved manned flight testing is incorrect.
+
+   Recommendation: The statement should be corrected to reflect that the ninth Starship flight test was unmanned, occurred on May 27, 2025, and ended in failure with the destruction of the vehicle. It did not achieve successful manned flight testing as claimed.
+
+✅ Basic fact-checking test completed!
+Traceback (most recent call last):
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/tests/test_jina/jina_grounding/test_grounding_with_llm.py", line 622, in <module>
+    main()
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/tests/test_jina/jina_grounding/test_grounding_with_llm.py", line 602, in main
+    test_batch_fact_checking()
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'test_batch_fact_checking' is not defined. Did you mean: 'test_comparative_fact_checking'?
+(.venv) arthur@Fqqs-MacBook ~/d/MathJourney-AItutor-Agents [1]>                                                                               (base) 

@@ -39,7 +39,21 @@
       "WebFetch(domain:docs.firecrawl.dev)",
       "Bash(make:*)",
       "Bash(uv run:*)",
-      "Bash(git tag:*)"
+      "Bash(git tag:*)",
+      "Bash(gh release create:*)",
+      "Bash(uv pip:*)",
+      "WebFetch(domain:pypi.org)",
+      "Bash(cmake:*)",
+      "Bash(uv lock:*)",
+      "Bash(uv sync:*)",
+      "Bash(CMAKE_POLICY_VERSION_MINIMUM=3.31 uv sync)",
+      "Bash(uv tree:*)",
+      "Bash(uv cache clean:*)",
+      "Bash(curl:*)",
+      "Bash(.venv/bin/python -m pytest tests/integration/test_academic_retrieval_integration.py::TestAcademicRetrievalIntegration::test_search_operation_react_papers -xvs)",
+      "Bash(pip show:*)",
+      "Bash(.venv/bin/pip show:*)",
+      "Bash(git reset:*)"
     ],
     "deny": []
   }

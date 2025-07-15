@@ -29,6 +29,7 @@ TOOL_ICONS = {
     "embed_texts": "🧩",   # embed texts
     "rerank_texts": "🏆",  # rerank texts
     "wolfram": "🧮",       # wolfram
+    "academic_retrieval": "🎓",  # academic retrieval
     "final_answer": "✅",  # final answer
     "python_interpreter": "🐍"  # Python interpreter
 }
@@ -57,6 +58,7 @@ TOOL_COLORS = {
     "embed_texts": "bold yellow",
     "rerank_texts": "bold cyan",
     "wolfram": "bold red",
+    "academic_retrieval": "bold blue",
     "final_answer": "bold pink",
     "python_interpreter": "bold green"
 }

@@ -149,6 +149,7 @@ class AgentRuntime:
             "wolfram_app_id": settings.get_api_key("WOLFRAM_ALPHA_APP_ID"),
             "litellm_base_url": settings.get_api_key("LITELLM_BASE_URL"),
             "xai_api_key": settings.get_api_key("XAI_API_KEY"),
+            # "futurehouse_api_key": settings.get_api_key("FUTUREHOUSE_API_KEY"),
         }
 
     def _validate_api_keys(self) -> bool:
@@ -177,6 +178,10 @@ class AgentRuntime:
         if not self.api_keys.get("xai_api_key"):
             print("Warning: XAI_API_KEY is missing, "
                   "SearchLinksTool with X.com search will not work")
+
+        # if not self.api_keys.get("futurehouse_api_key"):
+        #     print("Warning: FUTUREHOUSE_API_KEY is missing, "
+        #           "AcademicRetrieval tool will not work")
 
         return valid_keys
 

@@ -49,16 +49,17 @@ and finally provide the answer using the `final_answer` tool.
     calls `final_answer("Your synthesized answer here.")`.
 
 **Available Advanced Tools (Callable as Python functions you can programing use):**
-- `search_links`: Deeply search multi-source and parameter-conditioned web pages to query and return a list of URLs and summary content
-- `search_fast`: Search the web for URLs list matching a query (faster)
-- `read_url`: Read the content of a URL
-- `xcom_deep_qa`: Deep query and analyze X.com content with search, read, and Q&A capabilities
-- `chunk_text`: Chunk text into smaller pieces help you to process and analyze the text
-- `embed_texts`: Embed text into a vector space to help you to compare and analyze the text
-- `rerank_texts`: Rerank text chunks to help you to prioritize the text
-- `wolfram`: Query WolframAlpha for mathematical calculations
-- `final_answer`: When completed your task, return the final answer
-- `github_repo_qa`: Deeply query and analyze an GitHub repository for research tasks
+- 🔍 `search_links`: Deeply search multi-source and parameter-conditioned web pages to query and return a list of URLs and summary content
+- ⚡🔍 `search_fast`: Search the web for URLs list matching a query (faster)
+- 📄 `read_url`: Read the content of a URL
+- 🐦 `xcom_deep_qa`: Deep query and analyze X.com content with search, read, and Q&A capabilities
+- 🐙 `github_repo_qa`: Deeply query and analyze an GitHub repository for research tasks
+- ✂️ `chunk_text`: Chunk text into smaller pieces help you to process and analyze the text
+- 🧩 `embed_texts`: Embed text into a vector space to help you to compare and analyze the text
+- 🏆 `rerank_texts`: Rerank text chunks to help you to prioritize the text
+- 🧮 `wolfram`: Query WolframAlpha for mathematical calculations
+- 🎓 `academic_retrieval`: [TODO]
+- ✅ `final_answer`: When completed your task, return the final answer
 
 **State Management:**
 Your code executes in an environment where variables persist between steps.
@@ -203,6 +204,10 @@ IMPORTANT FORMATTING REQUIREMENTS:
 - **Repository format**: Always format repositories as "owner/repo" (e.g., "vuejs/vue", "huggingface/transformers", "google-gemini/gemini-cli")
 - **Progressive analysis**: Begin with structure overview, then dive into specific documentation sections based on your needs
 - **AI-powered insights**: The query operation provides context-grounded AI responses about the repository
+
+### 9. [TODO] **Academic Research with AcademicRetrieval Tool**
+
+
 
 Now, begin! Write the Python code to solve the following task.
 """
