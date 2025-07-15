@@ -14,7 +14,17 @@ for academic paper search and research capabilities.
 # from .scholar_search_client import ScholarSearchClient
 # from .academic_research_client import AcademicResearchClient
 
+# New implementation using direct APIs
+from .paper_retrievaler import PaperRetriever
+from .models import Paper, PaperSource, SearchParams
+
 __all__ = [
+    # Legacy (temporarily disabled)
     # "ScholarSearchClient",
     # "AcademicResearchClient",
+    # New implementation
+    "PaperRetriever",
+    "Paper",
+    "PaperSource",
+    "SearchParams",
 ]
