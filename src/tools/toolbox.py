@@ -26,6 +26,11 @@ from .chunk import ChunkTextTool  # Chunk Text
 from .embed import EmbedTextsTool  # Embed Texts
 from .rerank import RerankTextsTool  # Rerank Texts
 from .wolfram import EnhancedWolframAlphaTool  # Wolfram|Alpha API symbolic mathematics and Science Query
+# TODO: Academic retrieval temporarily disabled - awaiting new implementation
+try:
+    from .academic_retrieval import AcademicRetrieval  # Academic paper search and research
+except ImportError:
+    AcademicRetrieval = None  # Tool temporarily unavailable
 from .final_answer import EnhancedFinalAnswerTool  # Final Answer
 
 TOOL_ICONS = {
@@ -38,6 +43,7 @@ TOOL_ICONS = {
     "embed_texts": "🧩",
     "rerank_texts": "🏆",
     "wolfram": "🧮",
+    "academic_retrieval": "🎓",
     "final_answer": "✅",
     "python_interpreter": "🐍"
 }
@@ -58,6 +64,10 @@ BUILTIN_TOOLS = {
     "wolfram": EnhancedWolframAlphaTool,
     "final_answer": EnhancedFinalAnswerTool,
 }
+
+# Add AcademicRetrieval only if it was successfully imported
+if AcademicRetrieval is not None:
+    BUILTIN_TOOLS["academic_retrieval"] = AcademicRetrieval
 
 
 def _create_tool_instance(
@@ -83,6 +93,10 @@ def _create_tool_instance(
     Returns:
         Tool: The initialized tool instance, or None if initialization failed
     """
+    # Handle case where tool class is None (temporarily unavailable)
+    if tool_cls is None:
+        return None
+        
     tool_name = getattr(tool_cls, "name", None)
 
     # Prepare arguments with keys relevant to this tool
@@ -116,6 +130,9 @@ def _create_tool_instance(
         tool_args["jina_api_key"] = api_keys.get("jina_api_key")
     elif "WolframAlphaTool" in tool_cls.__name__:
         tool_args["wolfram_app_id"] = api_keys.get("wolfram_app_id")
+    elif "AcademicRetrieval" in tool_cls.__name__:
+        # tool_args["api_key"] = api_keys.get("futurehouse_api_key")
+        pass
 
     # Add common arguments (except for tools that don't accept them)
     if "SearchLinksFastTool" not in tool_cls.__name__:
@@ -302,6 +319,7 @@ class DeepSearchToolbox:
                 "serper_api_key": settings.serper_api_key,
                 "wolfram_app_id": settings.wolfram_alpha_app_id,
                 "xai_api_key": settings.xai_api_key,
+                # "futurehouse_api_key": settings.futurehouse_api_key,
             }
 
             # Load Hub collections if configured

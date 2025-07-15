@@ -23,6 +23,12 @@ from .rerank import RerankTextsTool
 from .wolfram import EnhancedWolframAlphaTool
 from .xcom_qa import XcomDeepQATool
 from .github_qa import GitHubRepoQATool
+# TODO: Academic retrieval temporarily disabled - awaiting new implementation
+# from .academic_retrieval import AcademicRetrieval
+try:
+    from .academic_retrieval import AcademicRetrieval
+except ImportError:
+    AcademicRetrieval = None  # Tool temporarily unavailable
 from .final_answer import EnhancedFinalAnswerTool as FinalAnswerTool
 from .toolbox import (
     ToolCollection,
@@ -56,3 +62,7 @@ __all__ = [
     "toolbox",
     "from_toolbox",
 ]
+
+# Add AcademicRetrieval only if it was successfully imported
+if AcademicRetrieval is not None:
+    __all__.insert(__all__.index("EnhancedWolframAlphaTool"), "AcademicRetrieval")
