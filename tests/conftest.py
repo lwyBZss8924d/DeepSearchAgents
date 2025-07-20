@@ -23,6 +23,12 @@ from src.agents.react_agent import ReactAgent
 from src.agents.codact_agent import CodeActAgent
 from src.agents.manager_agent import ManagerAgent
 
+# Academic toolkit imports
+from src.core.academic_tookit.models import Paper, SearchParams, PaperSource
+from src.core.academic_tookit.paper_search.arxiv import ArxivClient
+from src.core.academic_tookit.paper_reader import PaperReader, PaperReaderConfig
+from src.core.academic_tookit.paper_retrievaler import PaperRetriever
+
 
 # Configure pytest for async tests
 pytest_plugins = ('pytest_asyncio',)
@@ -46,8 +52,8 @@ def test_settings():
     settings.DEEPSEARCH_DEBUG = True
     
     # Use minimal models for testing
-    settings.ORCHESTRATOR_MODEL_ID = "openai/claude-sonnet-4"
-    settings.SEARCH_MODEL_NAME = "openai/claude-sonnet-4"
+    settings.ORCHESTRATOR_MODEL_ID = "openai/gemini-2.5-pro"
+    settings.SEARCH_MODEL_NAME = "openai/gemini-2.5-pro"
     
     # Reduce limits for faster tests
     settings.REACT_MAX_STEPS = 5
@@ -173,3 +179,98 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "unit: unit test"
     )
+    config.addinivalue_line(
+        "markers", "requires_mistral: test requires Mistral API access"
+    )
+    config.addinivalue_line(
+        "markers", "requires_jina: test requires Jina API access"
+    )
+
+
+# Academic toolkit specific fixtures
+@pytest.fixture
+def skip_if_no_api_key():
+    """Skip test if API keys not configured."""
+    def _skip(api_name: str) -> None:
+        key_name = f"{api_name.upper()}_API_KEY"
+        if not os.getenv(key_name):
+            pytest.skip(f"{key_name} not configured")
+    return _skip
+
+
+@pytest.fixture
+def arxiv_test_paper_ids():
+    """Common arXiv paper IDs for testing."""
+    return {
+        "react": "2210.03629",  # ReAct paper
+        "gpt4": "2303.08774",   # GPT-4 technical report
+        "attention": "1706.03762",  # Attention is all you need
+        "bert": "1810.04805",   # BERT paper
+        "invalid": "0000.00000"  # Invalid ID for error testing
+    }
+
+
+@pytest.fixture
+def academic_search_queries():
+    """Common search queries for academic paper testing."""
+    return {
+        "react": "ReAct agent methodology",
+        "llm_agents": ("AI LLM Agent papers ReAct agent "
+                       "methodology derived methods"),
+        "transformers": "transformer models attention mechanism",
+        "recent_ai": "artificial intelligence language models 2024",
+        "specific_authors": "author:Yao author:Zhao ReAct"
+    }
+
+
+@pytest.fixture
+def rate_limit_delay():
+    """ArXiv API rate limit delay in seconds."""
+    return 3.0  # ArXiv requires 3 seconds between requests
+
+
+@pytest.fixture
+def sample_paper():
+    """Create a sample Paper object for testing."""
+    from datetime import datetime
+
+    return Paper(
+        paper_id="2210.03629",
+        title="ReAct: Synergizing Reasoning and Acting in Language Models",
+        authors=["Shunyu Yao", "Jeffrey Zhao", "Dian Yu", "Nan Du",
+                 "Izhak Shafran", "Karthik Narasimhan", "Yuan Cao"],
+        abstract=("While large language models (LLMs) have demonstrated "
+                  "impressive capabilities..."),
+        source=PaperSource.ARXIV,
+        url="https://arxiv.org/abs/2210.03629",
+        pdf_url="https://arxiv.org/pdf/2210.03629.pdf",
+        html_url="",  # this paper is not available in html format
+        published_date=datetime(2022, 10, 6),
+        updated_date=datetime(2023, 3, 10),
+        categories=["cs.CL", "cs.AI"],
+        doi="10.48550/arXiv.2210.03629",
+        citations_count=100,
+        venue=None,
+        volume=None,
+        issue=None,
+        pages=None
+    )
+
+
+@pytest.fixture
+async def paper_reader():
+    """Create a PaperReader instance for testing."""
+    config = PaperReaderConfig()
+    return PaperReader(config)
+
+
+@pytest.fixture
+async def arxiv_client():
+    """Create an ArxivClient instance for testing."""
+    return ArxivClient()
+
+
+@pytest.fixture
+async def paper_retriever():
+    """Create a PaperRetriever instance for testing."""
+    return PaperRetriever()

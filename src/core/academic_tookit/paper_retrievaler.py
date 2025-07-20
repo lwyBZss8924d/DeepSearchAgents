@@ -12,11 +12,12 @@ multiple academic sources with deduplication and ranking.
 
 import asyncio
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 from .models import Paper, SearchParams, PaperSource
 from .paper_search.arxiv import ArxivClient
 from .ranking import PaperDeduplicator
+from .paper_reader import PaperReader, PaperReaderConfig
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ class PaperRetriever:
     - Supports reranking (future enhancement)
     """
 
-    def __init__(self):
+    def __init__(self, reader_config: Optional[PaperReaderConfig] = None):
         """Initialize the paper retriever with available sources."""
         # Initialize available sources
         self.sources: Dict[str, Any] = {}
@@ -53,6 +54,10 @@ class PaperRetriever:
 
         # Initialize utilities
         self.deduplicator = PaperDeduplicator()
+
+        # Initialize paper reader
+        self.paper_reader = PaperReader(reader_config)
+        logger.info("Initialized paper reader with PDF and HTML support")
 
         # Cache placeholder (future enhancement)
         self._cache = None
@@ -372,6 +377,225 @@ class PaperRetriever:
                 f"Search timeout for {source_name} after {timeout}s"
             )
             raise
+
+    async def read_paper(
+        self,
+        paper: Paper,
+        force_format: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Read full paper content with automatic format selection.
+
+        Args:
+            paper: Paper object to read
+            force_format: Force specific format ('html' or 'pdf')
+
+        Returns:
+            Dictionary containing:
+                - paper_id: Paper identifier
+                - content_format: Format used ('html' or 'pdf')
+                - full_text: Full paper text in markdown
+                - sections: List of paper sections
+                - figures: List of figures
+                - tables: List of tables
+                - references: List of references
+                - equations: List of equations (if extracted)
+                - metadata: Additional metadata
+                - processing_info: Processing details
+
+        Raises:
+            ValueError: If paper has no readable URLs
+            Exception: If reading fails
+        """
+        logger.info(
+            f"Reading paper: {paper.paper_id} - {paper.title[:50]}..."
+        )
+
+        try:
+            result = await self.paper_reader.read_paper(
+                paper=paper,
+                force_format=force_format
+            )
+
+            # Enhance result with paper's original metadata if available
+            if result and 'metadata' in result:
+                # Merge paper object data with extracted metadata
+                result['metadata']['paper_id'] = paper.paper_id
+                result['metadata']['source'] = paper.source
+                result['metadata']['url'] = paper.url
+
+                # Use paper's metadata if extraction failed
+                if not result['metadata'].get('title') and paper.title:
+                    result['metadata']['title'] = paper.title
+                if not result['metadata'].get('authors') and paper.authors:
+                    result['metadata']['authors'] = paper.authors
+                if not result['metadata'].get('abstract') and paper.abstract:
+                    result['metadata']['abstract'] = paper.abstract
+                if not result['metadata'].get('doi') and paper.doi:
+                    result['metadata']['doi'] = paper.doi
+
+            logger.info(
+                f"Successfully read paper {paper.paper_id} using "
+                f"{result['content_format']} format"
+            )
+
+            return result
+
+        except Exception as e:
+            logger.error(f"Failed to read paper {paper.paper_id}: {e}")
+            raise
+
+    async def read_papers_batch(
+        self,
+        papers: List[Paper],
+        max_concurrent: int = 3
+    ) -> Dict[str, Dict[str, Any]]:
+        """
+        Read multiple papers concurrently.
+
+        Args:
+            papers: List of papers to read
+            max_concurrent: Maximum concurrent reads
+
+        Returns:
+            Dictionary mapping paper_id to content dictionary
+        """
+        logger.info(f"Reading {len(papers)} papers in batch")
+
+        # Create semaphore for concurrency control
+        semaphore = asyncio.Semaphore(max_concurrent)
+
+        async def read_with_semaphore(paper: Paper) -> Tuple[str, Dict[str, Any]]:
+            async with semaphore:
+                try:
+                    content = await self.read_paper(paper)
+                    return paper.paper_id, content
+                except Exception as e:
+                    logger.error(
+                        f"Failed to read paper {paper.paper_id}: {e}"
+                    )
+                    return paper.paper_id, {
+                        "error": str(e),
+                        "paper_id": paper.paper_id,
+                        "title": paper.title
+                    }
+
+        # Read all papers concurrently
+        results = await asyncio.gather(
+            *[read_with_semaphore(paper) for paper in papers]
+        )
+
+        # Convert to dictionary
+        content_dict = dict(results)
+
+        # Log summary
+        successful = sum(
+            1 for content in content_dict.values()
+            if "error" not in content
+        )
+        logger.info(
+            f"Batch reading complete: {successful}/{len(papers)} "
+            f"papers read successfully"
+        )
+
+        return content_dict
+
+    async def search_and_read(
+        self,
+        query: str,
+        max_papers: int = 5,
+        sources: Optional[List[str]] = None,
+        deduplicate: bool = True,
+        **kwargs
+    ) -> List[Dict[str, Any]]:
+        """
+        Search for papers and read their full content.
+
+        Args:
+            query: Search query
+            max_papers: Maximum papers to read
+            sources: List of sources to search
+            deduplicate: Whether to deduplicate results
+            **kwargs: Additional search parameters
+
+        Returns:
+            List of paper content dictionaries with harmonized metadata
+        """
+        logger.info(
+            f"Searching and reading papers for query: '{query}' "
+            f"(max_papers={max_papers})"
+        )
+
+        # First search for papers
+        papers = await self.search(
+            query=query,
+            sources=sources,
+            max_results=max_papers * 2,  # Get extra for filtering
+            deduplicate=deduplicate,
+            **kwargs
+        )
+
+        if not papers:
+            logger.warning(f"No papers found for query: '{query}'")
+            return []
+
+        # Limit to requested number
+        papers_to_read = papers[:max_papers]
+
+        # Read papers in batch
+        content_dict = await self.read_papers_batch(papers_to_read)
+
+        # Combine paper metadata with content
+        results = []
+        for paper in papers_to_read:
+            content = content_dict.get(paper.paper_id, {})
+
+            # Add search metadata to content
+            if "error" not in content:
+                # Create harmonized metadata structure
+                content['harmonized_metadata'] = {
+                    'paper_id': paper.paper_id,
+                    'title': content['metadata'].get('title') or paper.title,
+                    'authors': content['metadata'].get('authors') or paper.authors,
+                    'abstract': content['metadata'].get('abstract') or paper.abstract,
+                    'source': paper.source,
+                    'published_date': paper.published_date.isoformat() if paper.published_date else None,
+                    'doi': content['metadata'].get('doi') or paper.doi,
+                    'venue': content['metadata'].get('venue') or paper.venue,
+                    'keywords': content['metadata'].get('keywords') or paper.keywords,
+                    'categories': paper.categories,
+                    'urls': {
+                        'main': paper.url,
+                        'pdf': paper.pdf_url,
+                        'html': paper.html_url
+                    },
+                    'extraction_info': {
+                        'format': content.get('content_format'),
+                        'parser': content.get('processing_info', {}).get('parser'),
+                        'sections_count': len(content.get('sections', [])),
+                        'references_count': len(content.get('references', [])),
+                        'figures_count': len(content.get('figures', [])),
+                        'tables_count': len(content.get('tables', []))
+                    },
+                    'search_info': {
+                        'query': query,
+                        'relevance_rank': papers_to_read.index(paper) + 1,
+                        'citations_count': paper.citations_count
+                    }
+                }
+
+                results.append(content)
+            else:
+                logger.warning(
+                    f"Skipping paper {paper.paper_id} due to read error"
+                )
+
+        logger.info(
+            f"Search and read complete: {len(results)} papers "
+            f"successfully processed"
+        )
+
+        return results
 
     def __repr__(self) -> str:
         """String representation."""

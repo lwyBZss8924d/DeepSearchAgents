@@ -58,7 +58,6 @@ and finally provide the answer using the `final_answer` tool.
 - 🧩 `embed_texts`: Embed text into a vector space to help you to compare and analyze the text
 - 🏆 `rerank_texts`: Rerank text chunks to help you to prioritize the text
 - 🧮 `wolfram`: Query WolframAlpha for mathematical calculations
-- 🎓 `academic_retrieval`: [TODO]
 - ✅ `final_answer`: When completed your task, return the final answer
 
 **State Management:**
@@ -204,10 +203,6 @@ IMPORTANT FORMATTING REQUIREMENTS:
 - **Repository format**: Always format repositories as "owner/repo" (e.g., "vuejs/vue", "huggingface/transformers", "google-gemini/gemini-cli")
 - **Progressive analysis**: Begin with structure overview, then dive into specific documentation sections based on your needs
 - **AI-powered insights**: The query operation provides context-grounded AI responses about the repository
-
-### 9. [TODO] **Academic Research with AcademicRetrieval Tool**
-
-
 
 Now, begin! Write the Python code to solve the following task.
 """
