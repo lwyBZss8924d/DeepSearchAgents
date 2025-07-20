@@ -674,9 +674,7 @@ async def process_query_async(query, agent_instance, verbose_mode, console):
         model=llm_model
     )
 
-    # Note: In smolagents 1.20.0, step_callbacks cannot be directly assigned after agent creation
-    # The callback system needs to be updated to use the new CallbackRegistry API
-    # For now, we'll recreate the agent with the callback
+    # Recreate agent with step callback for smolagents 1.20.0 compatibility
     agent_type = getattr(agent_instance, 'agent_type', 'codact')
     agent_instance = agent_runtime.get_or_create_agent(
         agent_type=agent_type,

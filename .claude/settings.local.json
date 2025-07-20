@@ -53,7 +53,10 @@
       "Bash(.venv/bin/python -m pytest tests/integration/test_academic_retrieval_integration.py::TestAcademicRetrievalIntegration::test_search_operation_react_papers -xvs)",
       "Bash(pip show:*)",
       "Bash(.venv/bin/pip show:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(cat:*)",
+      "Bash(jq:*)",
+      "Bash(git rm:*)"
     ],
     "deny": []
   }

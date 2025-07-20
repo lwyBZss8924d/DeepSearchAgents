@@ -49,6 +49,7 @@ class WolframAlphaTool(Tool):
             return ("Error: Wolfram Alpha client not initialized "
                     "(missing APP ID or initialization failed).")
 
+        res = None  # Initialize res to avoid UnboundLocalError
         try:
             # Send the query to Wolfram Alpha
             res = self.wolfram_client.query(query)
@@ -100,10 +101,10 @@ class WolframAlphaTool(Tool):
         except Exception as e:
             error_message = f"Error querying Wolfram Alpha: {str(e)}"
             print(error_message)
-            if hasattr(res, 'success') and res.success == 'false':
+            if res is not None and hasattr(res, 'success') and res.success == 'false':
                 return (f"Wolfram Alpha did not understand the query or "
                         f"found no results: {query}")
-            elif hasattr(res, 'didyoumeans'):
+            elif res is not None and hasattr(res, 'didyoumeans'):
                 suggestions = ", ".join([d['val'] for d in res.didyoumeans])
                 return ("Wolfram Alpha did not understand the query. "
                         f"Did you mean: {suggestions}?")

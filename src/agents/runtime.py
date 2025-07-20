@@ -577,9 +577,12 @@ class AgentRuntime:
         """
         if agent_type.lower() == "react":
             if self.react_agent:
-                # Reset step callbacks if provided
-                if step_callback and hasattr(self.react_agent, 'agent'):
-                    self.react_agent.agent.step_callbacks = [step_callback]
+                # Recreate agent with step callback if provided
+                if step_callback:
+                    return self.create_react_agent(
+                        step_callback=step_callback,
+                        debug_mode=debug_mode
+                    )
 
                 # Ensure agent object has Gradio UI needed properties
                 if not hasattr(self.react_agent, 'name'):
@@ -658,9 +661,12 @@ class AgentRuntime:
 
         elif agent_type.lower() == "codact":
             if self.code_agent:
-                # Reset step callbacks if provided
-                if step_callback and hasattr(self.code_agent, 'agent'):
-                    self.code_agent.agent.step_callbacks = [step_callback]
+                # Recreate agent with step callback if provided
+                if step_callback:
+                    return self.create_codact_agent(
+                        step_callback=step_callback,
+                        debug_mode=debug_mode
+                    )
 
                 # Ensure agent object has Gradio UI needed properties
                 if not hasattr(self.code_agent, 'name'):
