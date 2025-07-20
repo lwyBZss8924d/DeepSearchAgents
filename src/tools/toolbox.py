@@ -26,11 +26,13 @@ from .chunk import ChunkTextTool  # Chunk Text
 from .embed import EmbedTextsTool  # Embed Texts
 from .rerank import RerankTextsTool  # Rerank Texts
 from .wolfram import EnhancedWolframAlphaTool  # Wolfram|Alpha API symbolic mathematics and Science Query
-# TODO: Academic retrieval temporarily disabled - awaiting new implementation
+# Academic tools
 try:
     from .academic_retrieval import AcademicRetrieval  # Academic paper search and research
 except ImportError:
     AcademicRetrieval = None  # Tool temporarily unavailable
+# Note: academic_qa and academic_research have been archived
+# Functionality will be integrated into academic_retrieval in future iterations
 from .final_answer import EnhancedFinalAnswerTool  # Final Answer
 
 TOOL_ICONS = {
@@ -65,7 +67,7 @@ BUILTIN_TOOLS = {
     "final_answer": EnhancedFinalAnswerTool,
 }
 
-# Add AcademicRetrieval only if it was successfully imported
+# Add Academic tools only if they were successfully imported
 if AcademicRetrieval is not None:
     BUILTIN_TOOLS["academic_retrieval"] = AcademicRetrieval
 
@@ -96,7 +98,7 @@ def _create_tool_instance(
     # Handle case where tool class is None (temporarily unavailable)
     if tool_cls is None:
         return None
-        
+
     tool_name = getattr(tool_cls, "name", None)
 
     # Prepare arguments with keys relevant to this tool
@@ -132,6 +134,12 @@ def _create_tool_instance(
         tool_args["wolfram_app_id"] = api_keys.get("wolfram_app_id")
     elif "AcademicRetrieval" in tool_cls.__name__:
         # tool_args["api_key"] = api_keys.get("futurehouse_api_key")
+        pass
+    elif "AcademicQA" in tool_cls.__name__:
+        # AcademicQA uses OPENAI_API_KEY and MISTRAL_API_KEY from environment
+        pass
+    elif "AcademicResearch" in tool_cls.__name__:
+        # AcademicResearch uses environment variables like AcademicQA
         pass
 
     # Add common arguments (except for tools that don't accept them)

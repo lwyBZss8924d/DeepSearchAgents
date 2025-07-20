@@ -7,6 +7,7 @@
 Base abstract class for all paper search client implementations.
 """
 
+import datetime
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional
 import logging
@@ -27,10 +28,12 @@ class BasePaperSearchClient(ABC):
     def __init__(self):
         """Initialize the base client."""
         # Extract source name from class name
-        self.source_name = self.__class__.__name__.replace('Client', '').lower()
+        self.source_name = (
+            self.__class__.__name__.replace('Client', '').lower()
+        )
 
         # Rate limiting information
-        self._rate_limit_info = {
+        self._rate_limit_info: Dict[str, Any] = {
             'requests_remaining': None,
             'reset_time': None,
             'last_request_time': None
@@ -155,9 +158,9 @@ class BasePaperSearchClient(ABC):
                 try:
                     if field == 'reset_time':
                         # Convert to datetime if it's a timestamp
-                        import datetime
-                        self._rate_limit_info[field] = datetime.datetime.fromtimestamp(
-                            int(headers[header])
+                        timestamp = int(headers[header])
+                        self._rate_limit_info[field] = (
+                            datetime.datetime.fromtimestamp(timestamp)
                         )
                     else:
                         self._rate_limit_info[field] = int(headers[header])
@@ -167,7 +170,11 @@ class BasePaperSearchClient(ABC):
                         f"{headers[header]}"
                     )
 
-    def _increment_stats(self, papers_count: int = 0, error: bool = False) -> None:
+    def _increment_stats(
+        self,
+        papers_count: int = 0,
+        error: bool = False
+    ) -> None:
         """
         Update usage statistics.
 
@@ -231,7 +238,7 @@ class BasePaperSearchClient(ABC):
                         f"{max_retries + 1} attempts: {e}"
                     )
 
-        raise last_exception
+        raise last_exception or Exception("Search failed after retries")
 
     def __repr__(self) -> str:
         """String representation of the client."""

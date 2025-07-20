@@ -23,7 +23,7 @@ from .rerank import RerankTextsTool
 from .wolfram import EnhancedWolframAlphaTool
 from .xcom_qa import XcomDeepQATool
 from .github_qa import GitHubRepoQATool
-from .academic_retrieval import AcademicRetrieval
+# from .academic_retrieval import AcademicRetrieval  # Temporarily disabled pending full implementation
 from .final_answer import EnhancedFinalAnswerTool as FinalAnswerTool
 from .toolbox import (
     ToolCollection,
@@ -50,7 +50,7 @@ __all__ = [
     "XcomDeepQATool",
     "GitHubRepoQATool",
     "EnhancedWolframAlphaTool",
-    "AcademicRetrieval",
+    # "AcademicRetrieval",  # Temporarily disabled pending full implementation
     "FinalAnswerTool",
     "TOOL_ICONS",
     "ToolCollection",

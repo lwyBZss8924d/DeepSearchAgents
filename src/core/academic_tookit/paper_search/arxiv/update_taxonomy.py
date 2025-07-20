@@ -41,4 +41,5 @@ if __name__ == "__main__":
     taxonomy = update_taxonomy_file()
     print(f"\nCreated taxonomy with {len(taxonomy)} primary categories:")
     for primary, data in taxonomy.items():
-        print(f"- {primary}: {data['name']} ({len(data['subcategories'])} subcategories)")
+        subcats = data.get('subcategories', {})
+        print(f"- {primary}: {data['name']} ({len(subcats)} subcategories)")

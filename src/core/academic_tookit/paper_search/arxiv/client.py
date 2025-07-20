@@ -217,7 +217,7 @@ class ArxivClient(BasePaperSearchClient):
         try:
             # Simple test query
             search = Search(query="test", max_results=1)
-            results = await self._run_async(
+            await self._run_async(
                 lambda: list(self._sdk_client.results(search))
             )
 
@@ -269,6 +269,11 @@ class ArxivClient(BasePaperSearchClient):
             pdf_url=result.pdf_url,
             html_url=html_url,
             doi=result.doi,
+            venue=extra.get("journal_ref"),
+            volume=None,
+            issue=None,
+            pages=None,
+            citations_count=0,
             categories=result.categories,
             extra=extra
         )
@@ -351,7 +356,7 @@ class ArxivClient(BasePaperSearchClient):
         mapping = {
             "relevance": SortCriterion.Relevance,
             "date": SortCriterion.SubmittedDate,
-            "citations": SortCriterion.Relevance  # ArXiv doesn't sort by citations
+            "citations": SortCriterion.Relevance  # No citations sort
         }
         return mapping.get(sort_by, SortCriterion.Relevance)
 
@@ -426,7 +431,17 @@ class ArxivClient(BasePaperSearchClient):
             query=" OR ".join(keywords[:5]),  # Top 5 keywords
             max_results=max_results * 3,  # Get extra for filtering
             categories=reference_paper.categories,
-            use_natural_language=False
+            use_natural_language=False,
+            start_date=None,
+            end_date=None,
+            sort_by="relevance",
+            sort_order="desc",
+            include_preprints=True,
+            require_doi=False,
+            require_pdf=False,
+            author_filter=None,
+            venue_filter=None,
+            min_citations=None
         )
 
         candidates = await self.search(params)

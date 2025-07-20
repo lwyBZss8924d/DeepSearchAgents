@@ -144,10 +144,13 @@ class Paper(BaseModel):
             'volume': self.volume or '',
             'issue': self.issue or '',
             'pages': self.pages or '',
-            'categories': '; '.join(self.categories) if self.categories else '',
-            'keywords': '; '.join(self.keywords) if self.keywords else '',
+            'categories': '; '.join(self.categories)
+            if self.categories else '',
+            'keywords': '; '.join(self.keywords)
+            if self.keywords else '',
             'citations_count': self.citations_count,
-            'references': '; '.join(self.references) if self.references else '',
+            'references': '; '.join(self.references)
+            if self.references else '',
             'extra': self.extra,
             'updated_date': (
                 self.updated_date.isoformat()

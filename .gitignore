@@ -234,6 +234,8 @@ mcp.json # If mcp.json can appear elsewhere
 /tmp_gradio
 /smolagents-Temporary
 /HiRA-Temporary
+/src/core/academic_tookit/bk_futurehouse_retrieval/
+/src/core/academic_tookit/prd_demo_examps/
 
 # docker
 /docker

@@ -28,10 +28,7 @@ class AcademicRetrieval(Tool):
     Search academic papers from multiple sources.
 
     This tool provides academic paper search using direct APIs for:
-    - ArXiv (currently implemented)
-    - PubMed (future)
-    - Semantic Scholar (future)
-    - bioRxiv/medRxiv (future)
+    - ArXiv (Default Source)
 
     Example usage:
         # Search for papers
