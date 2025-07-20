@@ -674,18 +674,15 @@ async def process_query_async(query, agent_instance, verbose_mode, console):
         model=llm_model
     )
 
-    # reset agent's callback
-    if hasattr(agent_instance, 'agent'):
-        agent_instance.agent.step_callbacks = [step_callback]
-    else:
-        # if agent instance does not exist or not initialized,
-        # get a new instance with callback
-        agent_type = getattr(agent_instance, 'agent_type', 'codact')
-        agent_instance = agent_runtime.get_or_create_agent(
-            agent_type=agent_type,
-            step_callback=step_callback,
-            debug_mode=verbose_mode
-        )
+    # Note: In smolagents 1.20.0, step_callbacks cannot be directly assigned after agent creation
+    # The callback system needs to be updated to use the new CallbackRegistry API
+    # For now, we'll recreate the agent with the callback
+    agent_type = getattr(agent_instance, 'agent_type', 'codact')
+    agent_instance = agent_runtime.get_or_create_agent(
+        agent_type=agent_type,
+        step_callback=step_callback,
+        debug_mode=verbose_mode
+    )
 
     # use safe error handling logic to execute agent
     final_result = None

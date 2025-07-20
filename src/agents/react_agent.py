@@ -96,7 +96,7 @@ class ReactAgent(BaseAgent):
             stream_outputs=self.enable_streaming,
             planning_interval=self.planning_interval,
             # Pass step callbacks
-            step_callbacks=self.kwargs.get("step_callbacks", []),
+            # step_callbacks=self.kwargs.get("step_callbacks"),  # Removed for smolagents 1.20.0 compatibility
             # Enable parallel tool execution
             max_tool_threads=self.max_tool_threads,
         )
