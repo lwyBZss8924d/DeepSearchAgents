@@ -52,7 +52,8 @@ class GradioUIAdapter:
         self.tools = getattr(agent, 'tools', [])
 
         # Set other necessary properties for compatibility
-        self.step_callbacks = getattr(agent, 'step_callbacks', [])
+        # Note: step_callbacks are handled internally by smolagents 1.20.0 through CallbackRegistry
+        # self.step_callbacks = getattr(agent, 'step_callbacks', [])
         self.memory = getattr(agent, 'memory', None)
 
         # Create reference to model for token counting

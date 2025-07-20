@@ -135,7 +135,6 @@ class CodeActAgent(BaseAgent):
 
         self.verbosity_level = verbosity_level
         self.use_structured_outputs_internally = use_structured_outputs_internally
-        self.step_callbacks = step_callbacks  # Pass None if not provided
 
         # call parent class constructor
         super().__init__(
@@ -151,6 +150,7 @@ class CodeActAgent(BaseAgent):
             description=description,
             managed_agents=managed_agents,
             cli_console=cli_console,
+            step_callbacks=step_callbacks,
             **kwargs
         )
 
@@ -244,7 +244,8 @@ class CodeActAgent(BaseAgent):
         return merge_prompt_templates(
             base_templates=base_prompts,
             extensions=extension_content,
-            current_time=current_time
+            current_time=current_time,
+            use_structured_outputs=self.use_structured_outputs_internally
         )
 
     def _get_authorized_imports(self):
@@ -364,7 +365,7 @@ class CodeActAgent(BaseAgent):
                 verbosity_level=self.verbosity_level,
                 grammar=json_grammar if not self.use_structured_outputs_internally else None,
                 planning_interval=self.planning_interval,
-                # step_callbacks=self.step_callbacks,  # Removed for smolagents 1.20.0 compatibility
+                step_callbacks=self.step_callbacks,
                 use_structured_outputs_internally=self.use_structured_outputs_internally,
                 managed_agents=self.managed_agents
             )
@@ -380,7 +381,7 @@ class CodeActAgent(BaseAgent):
                 verbosity_level=self.verbosity_level,
                 grammar=json_grammar if not self.use_structured_outputs_internally else None,
                 planning_interval=self.planning_interval,
-                # step_callbacks=self.step_callbacks,  # Removed for smolagents 1.20.0 compatibility
+                step_callbacks=self.step_callbacks,
                 use_structured_outputs_internally=self.use_structured_outputs_internally,
                 managed_agents=self.managed_agents
             )
@@ -418,21 +419,12 @@ class CodeActAgent(BaseAgent):
                     "internal agent communication"
                 )
 
-        # ensure callbacks can be accessed and debugged
-        if self.step_callbacks and len(self.step_callbacks) > 0:
-            logger.info(f"There are {len(self.step_callbacks)} step callbacks "
-                        f"when initializing the agent")
-            for i, callback in enumerate(self.step_callbacks):
-                logger.info(f"Step callback #{i+1}: "
-                            f"{callback.__class__.__name__}")
-        else:
-            logger.warning("Warning: No step callbacks provided!")
+        # Log callback registration status
+        if self.step_callbacks:
+            logger.info(f"Registered {len(self.step_callbacks)} step callbacks")
 
-        # add extra logs to confirm step callbacks
-        # this will check if the wrapped agent retains callbacks
-        if hasattr(agent, 'step_callbacks') and agent.step_callbacks:
-            logger.info("Agent created with step callbacks configured")
-        else:
-            logger.warning("Warning: Agent created without step callbacks!")
+        # Check if callbacks were properly registered in the agent
+        if hasattr(agent, 'step_callbacks') and hasattr(agent.step_callbacks, '_callbacks'):
+            logger.debug("Step callbacks successfully registered with CallbackRegistry")
 
         return agent
