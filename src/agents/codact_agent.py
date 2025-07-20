@@ -135,7 +135,7 @@ class CodeActAgent(BaseAgent):
 
         self.verbosity_level = verbosity_level
         self.use_structured_outputs_internally = use_structured_outputs_internally
-        self.step_callbacks = step_callbacks or []
+        self.step_callbacks = step_callbacks  # Pass None if not provided
 
         # call parent class constructor
         super().__init__(
@@ -364,7 +364,7 @@ class CodeActAgent(BaseAgent):
                 verbosity_level=self.verbosity_level,
                 grammar=json_grammar if not self.use_structured_outputs_internally else None,
                 planning_interval=self.planning_interval,
-                step_callbacks=self.step_callbacks,
+                # step_callbacks=self.step_callbacks,  # Removed for smolagents 1.20.0 compatibility
                 use_structured_outputs_internally=self.use_structured_outputs_internally,
                 managed_agents=self.managed_agents
             )
@@ -380,7 +380,7 @@ class CodeActAgent(BaseAgent):
                 verbosity_level=self.verbosity_level,
                 grammar=json_grammar if not self.use_structured_outputs_internally else None,
                 planning_interval=self.planning_interval,
-                step_callbacks=self.step_callbacks,
+                # step_callbacks=self.step_callbacks,  # Removed for smolagents 1.20.0 compatibility
                 use_structured_outputs_internally=self.use_structured_outputs_internally,
                 managed_agents=self.managed_agents
             )
