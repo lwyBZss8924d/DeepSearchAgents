@@ -16,6 +16,15 @@ Key components:
 - FastMCP Server: Creates and configures the MCP server
 - DeepSearch Tool: Exposes agent capabilities through a single MCP tool
 - Streaming Callbacks: Provides real-time progress updates to clients
+- MCP Prompts: Pre-defined prompt templates for common research tasks
+
+Available prompts:
+- research_topic: Comprehensive research on a specific topic
+- analyze_website: Analyze a website with optional focus areas
+- compare_topics: Compare and contrast two topics
+- fact_check: Fact-check claims with evidence-based analysis
+- expert_analysis: Expert-level analysis from domain perspective
+- summarize_search_results: Summarize search results in various formats
 
 Example usage:
     python -m src.agents.servers.run_fastmcp --agent-type codact --port 8100
@@ -33,10 +42,7 @@ import asyncio
 
 from fastmcp import FastMCP
 
-try:
-    from smolagents.gradio_ui import stream_to_gradio
-except ImportError:
-    stream_to_gradio = None
+# Removed unused import stream_to_gradio
 
 # Local imports
 from src.agents.runtime import agent_runtime
@@ -244,16 +250,194 @@ def create_fastmcp_server(agent_type: str) -> FastMCP:
         A configured FastMCP server instance
     """
     # Create the server
-    agent_type_upper = agent_type.upper()
     server = FastMCP(
         name="DeepSearchAgents",
-        description=(
-            "DeepSearchAgents is an intelligent research agent system that "
-            f"uses {agent_type_upper} architecture to perform comprehensive "
-            "web searches and deep analysis."
-        ),
         version=settings.VERSION,
     )
+
+
+    # Register prompts for common DeepSearch patterns
+    @server.prompt()
+    def research_topic(topic: str, depth: str = "comprehensive") -> str:
+        """Generate a research prompt for a specific topic.
+
+        Args:
+            topic: The topic to research
+            depth: Research depth - "quick", "standard", or "comprehensive"
+
+        Returns:
+            A formatted research prompt
+        """
+        depth_instructions = {
+            "quick": "Provide a brief overview with key points",
+            "standard": "Include main concepts, recent developments, and key sources",
+            "comprehensive": "Conduct thorough research including history, current state, future trends, controversies, and expert opinions"
+        }
+        instruction = depth_instructions.get(depth, depth_instructions["comprehensive"])
+
+        return f"""Please research the topic: "{topic}"
+
+{instruction}
+
+Requirements:
+- Use multiple reliable sources
+- Include recent information (2023-2025 if available)
+- Cite sources with URLs when possible
+- Highlight any conflicting viewpoints
+- Provide a balanced analysis"""
+
+    @server.prompt()
+    def analyze_website(url: str, focus_areas: list[str] = None) -> str:
+        """Create a prompt for analyzing a website.
+
+        Args:
+            url: The website URL to analyze
+            focus_areas: Optional list of specific areas to focus on
+
+        Returns:
+            A formatted website analysis prompt
+        """
+        prompt = f"""Analyze the website: {url}
+
+Please provide:
+1. Overview of the site's purpose and content
+2. Key information and main offerings
+3. Credibility assessment
+4. Notable features or unique aspects"""
+
+        if focus_areas:
+            prompt += f"\n5. Specific analysis of: {', '.join(focus_areas)}"
+
+        prompt += "\n\nInclude relevant quotes and specific examples from the site."
+
+        return prompt
+
+    @server.prompt()
+    def compare_topics(topic1: str, topic2: str, context: str = "") -> str:
+        """Generate a comparison prompt for two topics.
+
+        Args:
+            topic1: First topic to compare
+            topic2: Second topic to compare
+            context: Optional context for the comparison
+
+        Returns:
+            A formatted comparison prompt
+        """
+        prompt = f"""Compare and contrast: "{topic1}" vs "{topic2}"""
+
+        if context:
+            prompt += f"\n\nContext: {context}"
+
+        prompt += """
+
+Please analyze:
+1. Key similarities between the topics
+2. Important differences
+3. Unique advantages of each
+4. Use cases where one might be preferred
+5. Current trends and future outlook
+
+Provide specific examples and cite sources where applicable."""
+
+        return prompt
+
+    @server.prompt()
+    def fact_check(claim: str, sources: list[str] = None) -> str:
+        """Generate a fact-checking prompt.
+
+        Args:
+            claim: The claim to fact-check
+            sources: Optional list of sources to verify against
+
+        Returns:
+            A formatted fact-checking prompt
+        """
+        prompt = f"""Fact-check this claim: "{claim}"
+
+Please:
+1. Verify the accuracy of this statement
+2. Find supporting or contradicting evidence
+3. Check multiple reliable sources
+4. Identify any nuances or context needed
+5. Rate the claim (True/False/Partially True/Misleading)"""
+
+        if sources:
+            prompt += f"\n\nSpecifically check these sources: {', '.join(sources)}"
+        else:
+            prompt += "\n\nUse authoritative and recent sources."
+
+        return prompt
+
+    @server.prompt(
+        name="expert_analysis",
+        description="Request expert-level analysis on a topic with specific domain expertise"
+    )
+    def expert_analysis(
+        topic: str,
+        domain: str = "general",
+        aspects: list[str] = None
+    ) -> str:
+        """Generate an expert analysis prompt.
+
+        Args:
+            topic: The topic for expert analysis
+            domain: Domain of expertise (e.g., "technical", "business", "scientific")
+            aspects: Specific aspects to analyze
+
+        Returns:
+            A formatted expert analysis prompt
+        """
+        prompt = f"""Provide an expert-level analysis of: "{topic}"
+
+Domain perspective: {domain}
+
+Analysis should include:
+1. Technical/theoretical foundations
+2. Current state of the art
+3. Key challenges and limitations
+4. Future developments and implications
+5. Expert opinions and consensus"""
+
+        if aspects:
+            prompt += f"\n6. Specific focus on: {', '.join(aspects)}"
+
+        prompt += "\n\nUse academic sources, industry reports, and expert commentary where available."
+
+        return prompt
+
+    @server.prompt()
+    def summarize_search_results(
+        query: str,
+        num_sources: int = 5,
+        output_format: str = "detailed"
+    ) -> str:
+        """Create a prompt for summarizing search results.
+
+        Args:
+            query: The original search query
+            num_sources: Number of sources to include
+            output_format: "brief", "detailed", or "academic"
+
+        Returns:
+            A formatted summarization prompt
+        """
+        format_instructions = {
+            "brief": "Provide a concise summary with key points only",
+            "detailed": "Include comprehensive information with examples and context",
+            "academic": "Format as an academic summary with citations and critical analysis"
+        }
+
+        return f"""Search and summarize information about: "{query}"
+
+Requirements:
+- Analyze at least {num_sources} different sources
+- {format_instructions.get(output_format, format_instructions["detailed"])}
+- Synthesize information to avoid redundancy
+- Highlight consensus and conflicting views
+- Include source URLs for verification
+
+Format the summary with clear sections and bullet points for readability."""
 
     # Register the DeepSearch tool
     deepsearch_tool_func = create_deepsearch_tool(agent_type)
