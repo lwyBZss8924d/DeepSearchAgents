@@ -127,15 +127,17 @@ class AcademicRetrieval(Tool):
     }
     output_type = "array"
 
-    def __init__(self, console: Optional["Console"] = None):
+    def __init__(self, cli_console: Optional["Console"] = None, verbose: bool = False):
         """
         Initialize the academic retrieval tool.
 
         Args:
-            console: Optional Rich console for formatted output
+            cli_console: Optional Rich console for formatted output
+            verbose: Enable verbose logging
         """
         super().__init__()
-        self.console = console
+        self.cli_console = cli_console
+        self.verbose = verbose
         self._retriever = None
         self._loop = None
 
