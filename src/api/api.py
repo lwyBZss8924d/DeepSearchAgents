@@ -14,6 +14,14 @@ from .v1.router import api_router
 
 logger = logging.getLogger(__name__)
 
+# Import v2 router if available
+try:
+    from .v2.endpoints import router as v2_router
+    V2_API_AVAILABLE = True
+except ImportError:
+    V2_API_AVAILABLE = False
+    logger.info("Web API v2 not available")
+
 try:
     from src.agents.servers.run_fastmcp import create_fastmcp_server
     FASTMCP_AVAILABLE = True
@@ -117,6 +125,11 @@ def create_app(
 
     # Register routes
     app.include_router(api_router)
+
+    # Register v2 routes if available
+    if V2_API_AVAILABLE:
+        app.include_router(v2_router)
+        logger.info("Web API v2 endpoints registered")
 
     # Mount the MCP server if it was successfully created
     if enable_fastmcp and FASTMCP_AVAILABLE and mcp_lifespan is not None:
