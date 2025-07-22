@@ -16,7 +16,7 @@
 
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![version](https://img.shields.io/badge/version-v0.3.2.rc-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.3.2.rc)
+[![version](https://img.shields.io/badge/version-v0.3.2.rc2-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.3.2.rc2)
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/lwyBZss8924d/DeepSearchAgents)
 
@@ -26,15 +26,15 @@
 
 [EN](README.md)
 
-文档更新日期: `2025-07-20`
+文档更新日期: `2025-07-22`
 
-[`v0.3.2.rc`] 开发状态: `"进行中"`
+[`v0.3.2.rc2`] 开发状态: `"进行中"`
 
 ## 1. 项目介绍 | Introduction
 
 DeepSearchAgent 项目是一个基于 ReAct（Reasoning + Acting）推理行动框架和 CodeAct（"代码即行动" 的 AI专员）理念的智能体专员系统，旨在以 DeepSearch 多步骤网络深度搜索的基础能力, 实现更广泛任务推理 & 执行的 "DeepResearch" `DR-Multi-Agent` 。它利用 AI 语言模型（LLM）的推理能力以及工具箱集合与 Python packges 沙盒的编程动作调用能力，能够通过多步深度搜索、多模态网页文本处理、阅读和多步骤推理处理既宽又深的复杂网络搜索任务，并提供可溯源的参考资料。该项目基于 Hugging Face 的 smolagents 框架，实现了既可以调用预定义工具箱又可以编写动作代码(实现了 "生成基于任务 Plan 的专用动态 DSL" & "AI 自我创造的动态一次性专用工具") 的双模式智能体专员系统。
 
-项目支持命令行界面 (CLI) 和标准的 FastAPI 服务，以及 GradioUI Web GUI 服务，方便广大开发者开发实验和在各种系统中集成和使用。是一个面相新手友好的 Code Agent 开源项目。
+项目支持终端命令行运行的 CLI TUI界面, 标准的 FastAPI 服务，和 FastMCP MCP服务器，以及正在开发中适合 CodeAct Agent Run 过程展示的 Web GUI 服务(v0.3.2.rc2 已提供配套的 web api, 正在设计开发 web前端)，方便广大开发者开发实验和在各种系统中集成和使用。是一个面向 VIBER 新手友好的 Code Agent 体验/学习和扩展的开源项目。
 
 ## 2. ✨ 特性 | Features
 
@@ -42,6 +42,7 @@ DeepSearchAgent 项目是一个基于 ReAct（Reasoning + Acting）推理行动�
 - **DeepSearch 专员**：同时支持 CodeAct（Python 代码执行）模式与 ReAct（工具调用）模式，可在 `config.toml`（`src/core/config/settings.py`）中配置 Agent 运行时、语言模型和工具参数。
 - 🪄 **可扩展工具箱**：内置网络搜索、内容获取、文本处理、语义排序、计算功能和 GitHub 仓库分析的工具集
 - 🌐 **混合搜索引擎** (v0.3.1)：多提供商搜索聚合，支持 Google (Serper)、X.com、Jina AI 和 Exa Neural 搜索，具备智能去重和排序功能
+- 🌐 **Web API v2 实时 WebSocket 流式传输** (v0.3.2)：简化的 Gradio 消息直通架构，用于 Web 前端集成，提供实时智能体执行可见性
 - 🔍 **文本嵌入与重排序**：使用 Jina AI 嵌入和重排序模型处理 URL Web 多模态内容
 - 📚 **GitHub 仓库问答** (v0.3.1)：使用 DeepWiki MCP 的 AI 驱动仓库分析工具，用于理解 GitHub 项目
 - 🐦 **X.com 深度检索** (v0.3.1)：使用 xAI Live Search API 的专用工具，用于搜索、读取和分析 X.com (Twitter) 内容
@@ -75,7 +76,7 @@ DeepSearchAgent 项目是一个基于 ReAct（Reasoning + Acting）推理行动�
 
 ## 📝 To-Do List
 
-1. [TODO] 开发优雅的 DeepResearch Web 前端, 并封装 DeepSearchAgents 后端➕前端为 Docker 容器化开箱即用App;
+1. [DONE] 开发 Web API v2 实时 WebSocket 流式传输 (v0.3.2) - 简化的 Gradio 消息直通架构，替代复杂的事件驱动系统（从约 5000 行减少到约 500 行）。前端开发和 Docker 封装待定；
 
 2. [DONE] DeepSearchAgents 的 DeepSearchToolbox 增加 MCP Client/MCP tools HUB, 支持 MCP Tools 配置和调用;
 
@@ -229,13 +230,32 @@ curl -X POST http://localhost:8000/run_deepsearch_agent \
 
 *（如果 `config.toml` 中的主机和端口已更改，请将 `localhost:8000` 替换为实际值）*
 
-### (3) 运行简易的 GradioUI Web GUI Web 服务 | Running the GradioUI Web GUI Service
+### (3) 使用 Web API v2 | Using the Web API v2
 
-```bash
-make app
-# 或直接使用:
-python src/app.py
+Web API v2 提供实时 WebSocket 流式传输，用于 Web 前端集成，采用简化的 Gradio 消息直通架构。这次重大重构（v0.3.2）用清晰、可维护的设计取代了复杂的事件驱动系统，充分利用了 smolagents 经过验证的流式基础设施。
+
+**核心特性：**
+- **直接消息传递**：将 Gradio ChatMessages 最小化转换为 DSAgentRunMessage 格式
+- **实时流式传输**：实时观察智能体推理、工具执行和结果
+- **会话管理**：支持多轮对话的会话隔离
+- **REST + WebSocket**：为前端开发提供完整的 API 接口
+- **OpenAPI 规范**：完整的 API 文档便于集成
+
+```javascript
+// 连接到 WebSocket
+const ws = new WebSocket('ws://localhost:8000/api/v2/ws/my-session?agent_type=codact');
+
+// 处理传入消息
+ws.onmessage = (event) => {
+  const message = JSON.parse(event.data);
+  console.log(`${message.role}: ${message.content}`);
+};
+
+// 发送查询
+ws.send(JSON.stringify({type: 'query', query: '您的问题'}));
 ```
+
+请参阅 `src/api/v2/README.md` 获取完整文档，以及 `src/api/v2/examples/` 中的示例实现。
 
 ### (4) 运行 MCP 服务 (MCP Tools `deepsearch_tool`) | Running the MCP Server (MCP Tools `deepsearch_tool`)
 
@@ -302,197 +322,17 @@ python -m src.main --enable-fastmcp --agent-type codact
 
 1.  **核心专员模块（`src/agents/react_agent.py`、`src/agents/codact_agent.py`、`src/agents/manager_agent.py`）**：基于 `smolagents` 实现 ReAct、CodeAct 和管理者智能体逻辑。管理者智能体 (v0.2.9) 协调专业智能体团队进行协作式问题解决。
 2.  **专员核心运行时模块（`src/agents/runtime.py`）**：负责管理智能体专员运行时环境，包括分层智能体协调。
-3.  **专员工具箱集合（`src/agents/tools/`）**：智能体专员可以调用的函数（网络搜索、读取 URL 等）。
+3.  **专员工具箱集合（`src/tools/`）**：智能体专员可以调用的函数（网络搜索、读取 URL 等）。
 4.  **FastAPI 服务（`src/api`）**：FastAPI 服务，提供 REST API 相关服务。
 5.  **CLI 接口 (`src/cli.py`)**：提供具有丰富格式的交互式命令行界面。
-6.  **GaiaUI Web 界面 (`src/app.py`)**：基于 Gradio 的 Web GUI，与智能体专员交互。
+6.  **Web API v2 (`src/api/v2/`)**：用于 Web 前端集成的实时 WebSocket API。
 7.  **MCP 工具服务器 (`src/agents/servers/run_fastmcp.py`)**：提供 MCP 协议的流式 Streamable HTTP 服务。
 
-*架构图已更新至版本 `v0.3.1`*
+*架构图已更新至版本 `v0.3.2`*
 
-```mermaid
----
-config:
-  theme: dark
-  themeVariables:
-    primaryColor: '#1a1a2e'
-    primaryTextColor: '#00fff9'
-    primaryBorderColor: '#7700ff'
-    lineColor: '#ff00f7'
-    secondaryColor: '#16213e'
-    tertiaryColor: '#0f0f1a'
-    mainBkg: '#1a1a2e'
-    nodeBorder: '#7700ff'
-    clusterBkg: '#16213e'
-    clusterBorder: '#7700ff'
-    titleColor: '#00fff9'
-    edgeLabelBackground: '#1a1a2e'
-    textColor: '#00fff9'
-  layout: elk
-  flowchart:
-    curve: linear
----
-flowchart TB
-    subgraph 接口["接口"]
-        direction LR
-        CLI{{"命令行"}}
-        FastAPI{{"FastAPI 服务"}}
-        GaiaUI{{"GaiaUI"}}
-        MCPServer{{"MCP 服务 (FastMCP)"}}
-    end
-    subgraph 深度搜索智能体专员系统["DeepSearch Agents 系统"]
-        direction TB
-        核心专员{{"核心专员
-(处理模式选择)"}}
-        配置加载["配置加载器 (toml, .env)"]
-        流式支持["流式响应支持
-(v0.2.6+ 集成)"]
-        工具箱管理["工具箱管理
-(注册表与工厂)"]
-        subgraph 智能体专员逻辑["智能体专员逻辑"]
-            direction LR
-            工具专员[["ToolCallingAgent
-(ReAct 带流式输出)"]]
-            代码专员[["CodeAgent
-(CodeAct 带流式输出)"]]
-            管理专员[["ManagerAgent
-(分层协调)"]]
-        end
-    end
-    subgraph 工具箱集合["工具箱集合"]
-        direction TB
-        subgraph 搜索工具["搜索工具"]
-            搜索链接[/search_links/]
-            快速搜索[/search_fast/]
-            搜索引擎["🔍 混合搜索引擎
-• Serper (谷歌)
-• X.com (xAI API)
-• Jina AI 搜索
-• Exa Neural 搜索"]
-            GitHub问答[/github_repo_qa/]
-        end
-        subgraph 内容处理工具["内容处理工具"]
-            读取URL[/read_url/]
-            X读取URL[/xcom_read_url/]
-            X问答[/xcom_qa/]
-            文本分块[/chunk_text/]
-            文本嵌入[/embed_texts/]
-            文本重排[/rerank_texts/]
-        end
-        subgraph 实用工具["实用工具"]
-            Wolfram[/"wolfram computational"/]
-            最终答案[/final_answer/]
-        end
-        外部API{{外部 API
-Serper • xAI • Jina AI • Exa
-Wolfram • Firecrawl • DeepWiki}}
-    end
-    subgraph 执行环境["执行环境"]
-        Python环境[("Python 执行环境
-(用于 CodeAct)")]
-    end
+详见 [docs/architecture-diagram/architecture-diagram-v0.3.2.rc2.md](docs/architecture-diagram/architecture-diagram-v0.3.2.rc2.md) 获取最新架构图细节。
 
-    CLI -- "用户查询" --> 核心专员
-    FastAPI -- "API 请求" --> 核心专员
-    GaiaUI -- "用户输入" --> 核心专员
-    MCPServer -- "工具调用" --> 核心专员
-    核心专员 -- "选择模式: ReAct" --> 工具专员
-    核心专员 -- "选择模式: CodeAct" --> 代码专员
-    核心专员 -- "选择模式: Manager" --> 管理专员
-    核心专员 -- "使用配置" --> 配置加载
-    核心专员 -- "管理工具" --> 工具箱管理
-    工具专员 -- "使用集成" --> 流式支持
-    代码专员 -- "使用集成" --> 流式支持
-    管理专员 -- "使用集成" --> 流式支持
-    管理专员 -- "协调" --> 工具专员
-    管理专员 -- "协调" --> 代码专员
-
-    工具箱管理 -- "创建集合" --> 工具箱集合
-    搜索链接 -- "自动检测来源" --> 搜索引擎
-    
-    工具专员 == "调用工具" ==> 搜索链接
-    工具专员 == "调用工具" ==> 快速搜索
-    工具专员 == "调用工具" ==> GitHub问答
-    工具专员 == "调用工具" ==> 读取URL
-    工具专员 == "调用工具" ==> X读取URL
-    工具专员 == "调用工具" ==> X问答
-    工具专员 == "调用工具" ==> 文本分块
-    工具专员 == "调用工具" ==> 文本嵌入
-    工具专员 == "调用工具" ==> 文本重排
-    工具专员 == "调用工具" ==> Wolfram
-    工具专员 == "调用工具" ==> 最终答案
-
-    代码专员 == "生成代码" ==> Python环境
-    Python环境 -- "代码调用工具" --> 搜索链接
-    Python环境 -- "代码调用工具" --> 快速搜索
-    Python环境 -- "代码调用工具" --> GitHub问答
-    Python环境 -- "代码调用工具" --> 读取URL
-    Python环境 -- "代码调用工具" --> X读取URL
-    Python环境 -- "代码调用工具" --> X问答
-    Python环境 -- "代码调用工具" --> 文本分块
-    Python环境 -- "代码调用工具" --> 文本嵌入
-    Python环境 -- "代码调用工具" --> 文本重排
-    Python环境 -- "代码调用工具" --> Wolfram
-    Python环境 -- "代码调用工具" --> 最终答案
-
-    搜索链接 -- "使用外部 API" --> 外部API
-    读取URL -- "使用外部 API" --> 外部API
-    X读取URL -- "使用外部 API" --> 外部API
-    文本嵌入 -- "使用外部 API" --> 外部API
-    文本重排 -- "使用外部 API" --> 外部API
-    Wolfram -- "使用外部 API" --> 外部API
-    外部API --> 工具箱集合
-
-    工具专员 -- "最终答案" --> 核心专员
-    代码专员 -- "最终答案" --> 核心专员
-    管理专员 -- "最终答案" --> 核心专员
-    工具专员 -- "流式输出" --> CLI
-    代码专员 -- "流式输出" --> CLI
-    管理专员 -- "流式输出" --> CLI
-    工具专员 -- "流式输出" --> GaiaUI
-    代码专员 -- "流式输出" --> GaiaUI
-    管理专员 -- "流式输出" --> GaiaUI
-    核心专员 -- "响应" --> 接口
-    核心专员 -- "工具结果" --> MCPServer
-
-    classDef default fill:#1a1a2e,stroke:#7700ff,stroke-width:2px,color:#00fff9
-    classDef interface fill:#16213e,stroke:#ff00f7,stroke-width:3px,color:#00fff9
-    classDef agent fill:#0f0f1a,stroke:#7700ff,stroke-width:2px,color:#00fff9
-    classDef manager fill:#1a1a2e,stroke:#ff00f7,stroke-width:3px,color:#00fff9
-    classDef tool fill:#16213e,stroke:#00fff9,stroke-width:2px,color:#ff00f7
-    classDef environment fill:#0f0f1a,stroke:#00fff9,stroke-width:2px,color:#ff00f7
-    classDef external fill:#1a1a2e,stroke:#00fff9,stroke-width:2px,color:#ff00f7
-    classDef config fill:#0f0f1a,stroke:#7700ff,stroke-width:1px,color:#00fff9
-    classDef streaming fill:#16213e,stroke:#00fff9,stroke-width:3px,color:#ff00f7
-    classDef mcpserver fill:#16213e,stroke:#ff00f7,stroke-width:3px,color:#00fff9
-    classDef searchengine fill:#0f0f1a,stroke:#ff00f7,stroke-width:2px,color:#00fff9
-
-    CLI:::interface
-    FastAPI:::interface
-    GaiaUI:::interface
-    MCPServer:::mcpserver
-    核心专员:::manager
-    工具专员:::agent
-    代码专员:::agent
-    管理专员:::agent
-    流式支持:::streaming
-    工具箱管理:::manager
-    搜索链接:::tool
-    快速搜索:::tool
-    GitHub问答:::tool
-    搜索引擎:::searchengine
-    读取URL:::tool
-    X读取URL:::tool
-    X问答:::tool
-    文本分块:::tool
-    文本嵌入:::tool
-    文本重排:::tool
-    Wolfram:::tool
-    最终答案:::tool
-    Python环境:::environment
-    外部API:::external
-    配置加载:::config
-```
+![DeepSearchAgent System Architecture Diagram v0.3.2.rc2](docs/architecture-diagram/architecture-diagram-v0.3.2.rc2.svg)
 
 ## 5. ⚙️ AI 专员模式 (ToolCalling ReAct vs CodeAct) | Agent Modes
 
@@ -882,6 +722,20 @@ src/
 │   │   │   └── health.py     # 健康检查端点
 │   │   ├── __init__.py
 │   │   └── router.py         # API 路由配置
+│   ├── v2/                   # API 版本 2 (v0.3.2) - WebSocket 流式传输
+│   │   ├── examples/         # 客户端示例实现
+│   │   │   ├── test_agent_steps_full.js  # WebSocket 流式测试
+│   │   │   ├── test_debug.py             # 直接处理器测试
+│   │   │   └── test_simple_agent.py      # 智能体集成示例
+│   │   ├── __init__.py
+│   │   ├── endpoints.py      # WebSocket 和 REST 端点
+│   │   ├── gradio_passthrough_processor.py  # 核心直通逻辑
+│   │   ├── main.py           # 独立 API 服务器
+│   │   ├── models.py         # Pydantic 数据模型
+│   │   ├── openapi.yaml      # OpenAPI 规范
+│   │   ├── README.md         # 完整的 v2 文档
+│   │   ├── session.py        # 会话管理
+│   │   └── WebAPIv2-GUI-Interface-API-Docs.md  # 前端集成指南
 │   ├── __init__.py
 │   └── api.py                # 主 API 配置
 ├── core/                     # 核心系统组件

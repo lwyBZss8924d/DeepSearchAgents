@@ -16,7 +16,7 @@ VIBE 🖖 Build with 💖 for Humanity with AI
 
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![version](https://img.shields.io/badge/version-v0.3.2.rc-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.3.2.rc)
+[![version](https://img.shields.io/badge/version-v0.3.2.rc2-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.3.2.rc2)
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/lwyBZss8924d/DeepSearchAgents)
 
@@ -26,15 +26,15 @@ VIBE 🖖 Build with 💖 for Humanity with AI
 
 [中文版](README_Zh.md)
 
-README Update Date: `2025-07-20`
+README Update Date: `2025-07-22`
 
-[`v0.3.2.rc`] Development Status: `"DOING"`
+[`v0.3.2.rc2`] Development Status: `"DOING"`
 
 ## 1. Introduction
 
 The DeepSearchAgent project is an intelligent agent system based on the ReAct (Reasoning + Acting) reasoning and action framework and the CodeAct ("Code as Action") AI agent concept. It aims to realize broader task reasoning and execution through "DeepResearch" `DR-Multi-Agent`, leveraging DeepSearch’s multi-step network deep search foundational capabilities. It utilizes the reasoning power of AI language models (LLMs), along with a toolbox collection and programming action invocation abilities within a Python packages sandbox, enabling it to handle complex web search tasks that are both broad and deep via multi-step deep search, multimodal webpage text processing, reading, and multi-step reasoning. The system also provides traceable reference materials. Built upon Hugging Face’s smolagents framework, this project implements a dual-mode intelligent agent system capable of invoking predefined toolboxes as well as writing action code—realizing both "generation of dedicated dynamic DSLs based on task plans" and "AI self-created dynamic one-time dedicated tools.
 
-The project supports command-line interface (CLI), standard FastAPI services, and Web API v2 for real-time streaming, making it convenient for developers to develop experiments and integrate or use in various systems. It is an open-source project of Code Agent that is friendly to beginners. It is a great project for learning and developing Code Agent.
+The project supports a CLI TUI interface for terminal Run operation, a standard FastAPI service, the FastMCP MCP server, and a Web GUI service (v0.3.2.rc2 has provided supporting web APIs and the web frontend is under design and development) suitable for displaying the CodeAct Agent Run process. It facilitates developers in experimentation, integration, and usage across various systems. This is an open-source project aimed at providing VIBER beginners with a friendly Code Agent experience, learning opportunities, and extensibility.
 
 ## 2. ✨ Features
 
@@ -42,6 +42,7 @@ The project supports command-line interface (CLI), standard FastAPI services, an
 - **DeepSearch Specialist**: Supports both CodeAct (Python code execution) mode and ReAct (tool invocation) mode for experimental comparison; configuration of related Agent runtime, language models, and various tools can be managed via `config.toml` (`src/core/config/settings.py`).
 - 🪄 **Extensible Toolbox**: Built-in set of tools for web searching, content retrieval, text processing, semantic ranking, computation, and GitHub repository analysis.
 - 🌐 **Hybrid Search Engine** (v0.3.1): Multi-provider search aggregation supporting Google (Serper), X.com, Jina AI, and Exa Neural search with intelligent deduplication and ranking.
+- 🌐 **Web API v2 with Real-time WebSocket Streaming** (v0.3.2): Simplified Gradio message pass-through architecture for web frontend integration with real-time agent execution visibility.
 - 🔍 **Text Embedding and Re-ranking**: Uses Jina AI embedding and re-ranking models to process multimodal web content from URLs.
 - 📚 **GitHub Repository Q&A** (v0.3.1): AI-powered repository analysis tool using DeepWiki MCP for understanding GitHub projects.
 - 🐦 **X.com Deep Query** (v0.3.1): Specialized tools for searching, reading, and analyzing X.com (Twitter) content using xAI's Live Search API.
@@ -75,7 +76,7 @@ The project supports command-line interface (CLI), standard FastAPI services, an
 
 **Development Plan Currently Under Intensive Iteration:**
 
-1. [TODO] Develop an elegant DeepResearch Web frontend, and package the DeepSearchAgents backend + frontend into a Docker containerized plug-and-play app;
+1. [DONE] Developed Web API v2 with real-time WebSocket streaming (v0.3.2) - Simplified Gradio message pass-through architecture replacing complex event-driven system (~5000 lines reduced to ~500 lines). Frontend development and Docker packaging pending;
 
 2. [DONE] Added MCP Client/MCP tools HUB to DeepSearchAgents' DeepSearchToolbox, supporting MCP Tools configuration and invocation;
 
@@ -231,15 +232,30 @@ curl -X POST http://localhost:8000/run_deepsearch_agent \
 
 ### (3) Using the Web API v2
 
-The Web API v2 provides real-time WebSocket streaming for web frontend integration. See `src/api/v2/README.md` for detailed documentation.
+The Web API v2 provides real-time WebSocket streaming for web frontend integration with a simplified Gradio message pass-through architecture. This major refactoring (v0.3.2) replaced the complex event-driven system with a clean, maintainable design that leverages smolagents' proven streaming infrastructure.
+
+**Key Features:**
+- **Direct Message Pass-through**: Minimal transformation of Gradio ChatMessages to DSAgentRunMessage format
+- **Real-time Streaming**: Watch agent reasoning, tool execution, and results as they happen
+- **Session Management**: Multi-turn conversations with session isolation
+- **REST + WebSocket**: Complete API surface for frontend development
+- **OpenAPI Specification**: Full API documentation for easy integration
 
 ```javascript
 // Connect to WebSocket
 const ws = new WebSocket('ws://localhost:8000/api/v2/ws/my-session?agent_type=codact');
 
+// Handle incoming messages
+ws.onmessage = (event) => {
+  const message = JSON.parse(event.data);
+  console.log(`${message.role}: ${message.content}`);
+};
+
 // Send query
 ws.send(JSON.stringify({type: 'query', query: 'Your question here'}));
 ```
+
+See `src/api/v2/README.md` for comprehensive documentation and `src/api/v2/examples/` for example implementations.
 
 ### (4) Running the MCP Server (MCP Tools `deepsearch_tool`)
 
@@ -311,191 +327,11 @@ The core system architecture includes:
 6. **Web API v2 (`src/api/v2/`)**: Real-time WebSocket API for web frontend integration.
 7. **MCP Server (`src/agents/servers/run_fastmcp.py`)**: FastMCP server providing MCP tools services with Streamable HTTP transport.
 
-*Architecture diagram updated for version `v0.3.1`*
+*Architecture diagram updated for version `v0.3.2.rc2`*
 
-```mermaid
----
-config:
-  theme: dark
-  themeVariables:
-    primaryColor: '#1a1a2e'
-    primaryTextColor: '#00fff9'
-    primaryBorderColor: '#7700ff'
-    lineColor: '#ff00f7'
-    secondaryColor: '#16213e'
-    tertiaryColor: '#0f0f1a'
-    mainBkg: '#1a1a2e'
-    nodeBorder: '#7700ff'
-    clusterBkg: '#16213e'
-    clusterBorder: '#7700ff'
-    titleColor: '#00fff9'
-    edgeLabelBackground: '#1a1a2e'
-    textColor: '#00fff9'
-  layout: elk
-  flowchart:
-    curve: linear
----
-flowchart TB
-    subgraph Interfaces["Interfaces"]
-        direction LR
-        CLI{{"CLI"}}
-        FastAPI{{"FastAPI Service"}}
-        WebAPIv2{{"Web API v2"}}
-        MCPServer{{"MCP Server (FastMCP)"}}
-    end
-    subgraph DeepSearchAgentSystem["DeepSearch Agents System"]
-        direction TB
-        CoreAgents{{"Core Agents
-(Handles Mode Selection)"}}
-        ConfigLoader["Config Loader (toml, .env)"]
-        StreamingSupport["Streaming Support
-(Integrated in v0.2.6+)"]
-        ToolboxManager["Toolbox Manager
-(Registry & Factory)"]
-        subgraph Agents["Agent Logic"]
-            direction LR
-            ToolAgent[["ToolCallingAgent
-(ReAct with Streaming)"]]
-            CodeAgent[["CodeAgent
-(CodeAct with Streaming)"]]
-            ManagerAgent[["ManagerAgent
-(Hierarchical Orchestration)"]]
-        end
-    end
-    subgraph Toolbox["Toolbox Collection"]
-        direction TB
-        subgraph SearchTools["Search Tools"]
-            SearchLinks[/search_links/]
-            SearchFast[/search_fast/]
-            SearchEngines["🔍 Hybrid Search Engine
-• Serper (Google)
-• X.com (xAI API)  
-• Jina AI Search
-• Exa Neural Search"]
-            GitHubQA[/github_repo_qa/]
-        end
-        subgraph ContentTools["Content Processing Tools"]
-            ReadURL[/read_url/]
-            XcomReadURL[/xcom_read_url/]
-            XcomQA[/xcom_qa/]
-            ChunkText[/chunk_text/]
-            EmbedTexts[/embed_texts/]
-            RerankTexts[/rerank_texts/]
-        end
-        subgraph UtilityTools["Utility Tools"]
-            Wolfram[/"wolfram computational"/]
-            FinalAnswer[/final_answer/]
-        end
-        ExternalAPIs{{External APIs  
-Serper • xAI • Jina AI • Exa
-Wolfram • Firecrawl • DeepWiki}}
-    end
-    subgraph Execution["Execution"]
-        PythonEnv[("Python Execution
-Environment (for CodeAct)")]
-    end
+See [docs/architecture-diagram/architecture-diagram-v0.3.2.rc2.md](docs/architecture-diagram/architecture-diagram-v0.3.2.rc2.md) for the latest architecture diagram details.
 
-    CLI -- "User Query" --> CoreAgents
-    FastAPI -- "API Request" --> CoreAgents
-    WebAPIv2 -- "User Input" --> CoreAgents
-    MCPServer -- "Tool Call" --> CoreAgents
-    CoreAgents -- "Select Mode: ReAct" --> ToolAgent
-    CoreAgents -- "Select Mode: CodeAct" --> CodeAgent
-    CoreAgents -- "Select Mode: Manager" --> ManagerAgent
-    CoreAgents -- "Uses Config" --> ConfigLoader
-    CoreAgents -- "Manages Tools" --> ToolboxManager
-    ToolAgent -- "Uses Integrated" --> StreamingSupport
-    CodeAgent -- "Uses Integrated" --> StreamingSupport
-    ManagerAgent -- "Uses Integrated" --> StreamingSupport
-    ManagerAgent -- "Orchestrates" --> ToolAgent
-    ManagerAgent -- "Orchestrates" --> CodeAgent
-
-    ToolboxManager -- "Creates Collection" --> Toolbox
-    SearchLinks -- "Auto-detects Source" --> SearchEngines
-    
-    ToolAgent == "Calls Tools" ==> SearchLinks
-    ToolAgent == "Calls Tools" ==> SearchFast
-    ToolAgent == "Calls Tools" ==> GitHubQA
-    ToolAgent == "Calls Tools" ==> ReadURL
-    ToolAgent == "Calls Tools" ==> XcomReadURL
-    ToolAgent == "Calls Tools" ==> XcomQA
-    ToolAgent == "Calls Tools" ==> ChunkText
-    ToolAgent == "Calls Tools" ==> EmbedTexts
-    ToolAgent == "Calls Tools" ==> RerankTexts
-    ToolAgent == "Calls Tools" ==> Wolfram
-    ToolAgent == "Calls Tools" ==> FinalAnswer
-
-    CodeAgent == "Generates Code" ==> PythonEnv
-    PythonEnv -- "Calls Tools via Code" --> SearchLinks
-    PythonEnv -- "Calls Tools via Code" --> SearchFast
-    PythonEnv -- "Calls Tools via Code" --> GitHubQA
-    PythonEnv -- "Calls Tools via Code" --> ReadURL
-    PythonEnv -- "Calls Tools via Code" --> XcomReadURL
-    PythonEnv -- "Calls Tools via Code" --> XcomQA
-    PythonEnv -- "Calls Tools via Code" --> ChunkText
-    PythonEnv -- "Calls Tools via Code" --> EmbedTexts
-    PythonEnv -- "Calls Tools via Code" --> RerankTexts
-    PythonEnv -- "Calls Tools via Code" --> Wolfram
-    PythonEnv -- "Calls Tools via Code" --> FinalAnswer
-
-    SearchLinks -- "Uses External API" --> ExternalAPIs
-    ReadURL -- "Uses External API" --> ExternalAPIs
-    XcomReadURL -- "Uses External API" --> ExternalAPIs
-    EmbedTexts -- "Uses External API" --> ExternalAPIs
-    RerankTexts -- "Uses External API" --> ExternalAPIs
-    Wolfram -- "Uses External API" --> ExternalAPIs
-    ExternalAPIs --> Toolbox
-
-    ToolAgent -- "Final Answer" --> CoreAgents
-    CodeAgent -- "Final Answer" --> CoreAgents
-    ManagerAgent -- "Final Answer" --> CoreAgents
-    ToolAgent -- "Streaming Output" --> CLI
-    CodeAgent -- "Streaming Output" --> CLI
-    ManagerAgent -- "Streaming Output" --> CLI
-    ToolAgent -- "Streaming Output" --> WebAPIv2
-    CodeAgent -- "Streaming Output" --> WebAPIv2
-    ManagerAgent -- "Streaming Output" --> WebAPIv2
-    CoreAgents -- "Response" --> Interfaces
-    CoreAgents -- "Tool Result" --> MCPServer
-
-    classDef default fill:#1a1a2e,stroke:#7700ff,stroke-width:2px,color:#00fff9
-    classDef interface fill:#16213e,stroke:#ff00f7,stroke-width:3px,color:#00fff9
-    classDef agent fill:#0f0f1a,stroke:#7700ff,stroke-width:2px,color:#00fff9
-    classDef manager fill:#1a1a2e,stroke:#ff00f7,stroke-width:3px,color:#00fff9
-    classDef tool fill:#16213e,stroke:#00fff9,stroke-width:2px,color:#ff00f7
-    classDef environment fill:#0f0f1a,stroke:#00fff9,stroke-width:2px,color:#ff00f7
-    classDef external fill:#1a1a2e,stroke:#00fff9,stroke-width:2px,color:#ff00f7
-    classDef config fill:#0f0f1a,stroke:#7700ff,stroke-width:1px,color:#00fff9
-    classDef streaming fill:#16213e,stroke:#00fff9,stroke-width:3px,color:#ff00f7
-    classDef mcpserver fill:#16213e,stroke:#ff00f7,stroke-width:3px,color:#00fff9
-    classDef searchengine fill:#0f0f1a,stroke:#ff00f7,stroke-width:2px,color:#00fff9
-
-    CLI:::interface
-    FastAPI:::interface
-    WebAPIv2:::interface
-    MCPServer:::mcpserver
-    CoreAgents:::manager
-    ToolAgent:::agent
-    CodeAgent:::agent
-    ManagerAgent:::agent
-    StreamingSupport:::streaming
-    ToolboxManager:::manager
-    SearchLinks:::tool
-    SearchFast:::tool
-    GitHubQA:::tool
-    SearchEngines:::searchengine
-    ReadURL:::tool
-    XcomReadURL:::tool
-    XcomQA:::tool
-    ChunkText:::tool
-    EmbedTexts:::tool
-    RerankTexts:::tool
-    Wolfram:::tool
-    FinalAnswer:::tool
-    PythonEnv:::environment
-    ExternalAPIs:::external
-    ConfigLoader:::config
-```
+![DeepSearchAgent System Architecture Diagram v0.3.2.rc2](docs/architecture-diagram/architecture-diagram-v0.3.2.rc2.svg)
 
 ## 5. ⚙️ Agent Modes (ToolCalling ReAct vs CodeAct)
 
@@ -877,6 +713,20 @@ src/
 │   │   │   └── health.py     # Health check endpoints
 │   │   ├── __init__.py
 │   │   └── router.py         # API router configuration
+│   ├── v2/                   # API version 2 (v0.3.2) - WebSocket streaming
+│   │   ├── examples/         # Example client implementations
+│   │   │   ├── test_agent_steps_full.js  # WebSocket streaming test
+│   │   │   ├── test_debug.py             # Direct processor testing
+│   │   │   └── test_simple_agent.py      # Agent integration example
+│   │   ├── __init__.py
+│   │   ├── endpoints.py      # WebSocket and REST endpoints
+│   │   ├── gradio_passthrough_processor.py  # Core pass-through logic
+│   │   ├── main.py           # Standalone API server
+│   │   ├── models.py         # Pydantic data models
+│   │   ├── openapi.yaml      # OpenAPI specification
+│   │   ├── README.md         # Comprehensive v2 documentation
+│   │   ├── session.py        # Session management
+│   │   └── WebAPIv2-GUI-Interface-API-Docs.md  # Frontend integration guide
 │   ├── __init__.py
 │   └── api.py                # Main API configuration
 ├── core/                     # Core system components
