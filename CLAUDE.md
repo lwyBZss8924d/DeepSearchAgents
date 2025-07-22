@@ -49,12 +49,15 @@ The project implements a dual-agent architecture:
 - **ReAct Agent**: Uses structured tool calling with JSON responses, better for web search tasks
 - **Runtime Manager**: Handles execution environment and tool availability for both agent types
 - **Model Routing**: Supports multiple LLM providers through LiteLLM with configurable model selection
+- **Web API v2**: Simplified WebSocket API with direct Gradio message pass-through (~500 lines, down from ~5000)
 
 ### Core Components Interaction
 ```
 User Input → Agent Selection → Planning/Reasoning → Tool Execution → Response Streaming
                     ↓                    ↓                ↓
               config.toml          Prompt Templates    Toolbox Manager
+                    
+Web API v2 → WebSocket → Session Manager → Gradio Passthrough → stream_to_gradio → Agent
 ```
 
 ### Tool Ecosystem
@@ -105,7 +108,15 @@ export CLI_STREAMING_ENABLED=true
 ```
 
 Note: Streaming support depends on the agent and model capabilities. Not all models support streaming output.
->>>>>>> v0.2.9.dev
+
+### Web API v2 Design Principles
+
+The v2 API follows a simplified architecture:
+1. **Direct Pass-through**: Messages from smolagents' stream_to_gradio are passed with minimal transformation
+2. **Field Renaming Only**: Gradio ChatMessage fields renamed to DSAgentRunMessage format
+3. **No Complex Parsing**: Avoids fragile regex-based message content parsing
+4. **Leverage Proven Code**: Uses smolagents' battle-tested streaming infrastructure
+5. **Session-based**: WebSocket connections maintain conversation state via session IDs
 
 ## Project Structure
 
@@ -113,7 +124,6 @@ Note: Streaming support depends on the agent and model capabilities. Not all mod
 src/
 ├── main.py                # Main application entry point
 ├── cli.py                 # Command-line interface
-├── app.py                 # Gradio UI web application
 ├── agents/               # Agent implementations
 │   ├── __init__.py        # Package initialization
 │   ├── base_agent.py      # Base agent interface with model routing
@@ -127,11 +137,17 @@ src/
 │   ├── servers/           # Server implementations 
 │   │   ├── __init__.py
 │   │   ├── run_fastmcp.py # FastMCP MCP server implementation
-│   │   ├── run_gaia.py    # Gradio UI web server
-│   │   └── gradio_patch.py # Gradio patch functions
-│   └── ui_common/         # Shared UI components
+│   │   └── run_fastmcp.py # FastMCP MCP server implementation
 ├── api/                   # FastAPI service components
-│   └── v1/                # API version 1 endpoints
+│   ├── v1/                # API version 1 endpoints
+│   └── v2/                # API version 2 endpoints
+│       ├── __init__.py
+│       ├── models.py      # Simple Pydantic models
+│       ├── gradio_passthrough_processor.py  # Core pass-through logic
+│       ├── endpoints.py   # WebSocket and REST endpoints
+│       ├── session.py     # Session management
+│       ├── main.py        # Standalone API server
+│       └── examples/      # Example scripts
 ├── core/                  # Core system components
 │   ├── chunk/             # Text chunking components
 │   ├── config/            # Configuration handling with Pydantic
@@ -148,6 +164,15 @@ src/
     ├── search.py          # Web search tool
     ├── toolbox.py         # Tool management utilities
     └── wolfram.py         # Wolfram Alpha computational tool
+
+tests/
+└── api_v2/                # Web API v2 test suite
+    ├── __init__.py
+    ├── conftest.py        # Test configuration and fixtures
+    ├── test_websocket_streaming.py  # WebSocket streaming tests
+    ├── test_agent_steps.py          # Agent step progression tests
+    ├── test_final_answer.py         # Final answer delivery tests
+    └── utils.py           # Test utilities
 ```
 
 ## Development Guidelines
@@ -171,4 +196,4 @@ src/
 - **Error handling**: Comprehensive try-except with specific error types
 - **Logging**: Use configured loggers, not print statements
 - **Configuration**: All settings through config system, no hardcoded values
-- **Token Counting**: Uses smolagents v1.19.0 TokenUsage API for accurate token tracking
+- **Token Counting**: Uses smolagents v1.20.0 TokenUsage API for accurate token tracking
