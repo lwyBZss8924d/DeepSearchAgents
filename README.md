@@ -34,7 +34,7 @@ README Update Date: `2025-07-20`
 
 The DeepSearchAgent project is an intelligent agent system based on the ReAct (Reasoning + Acting) reasoning and action framework and the CodeAct ("Code as Action") AI agent concept. It aims to realize broader task reasoning and execution through "DeepResearch" `DR-Multi-Agent`, leveraging DeepSearch’s multi-step network deep search foundational capabilities. It utilizes the reasoning power of AI language models (LLMs), along with a toolbox collection and programming action invocation abilities within a Python packages sandbox, enabling it to handle complex web search tasks that are both broad and deep via multi-step deep search, multimodal webpage text processing, reading, and multi-step reasoning. The system also provides traceable reference materials. Built upon Hugging Face’s smolagents framework, this project implements a dual-mode intelligent agent system capable of invoking predefined toolboxes as well as writing action code—realizing both "generation of dedicated dynamic DSLs based on task plans" and "AI self-created dynamic one-time dedicated tools.
 
-The project supports command-line interface (CLI), standard FastAPI services, and GradioUI web GUI services, making it convenient for developers to develop experiments and integrate or use in various systems. It is an open-source project of Code Agent that is friendly to beginners. It is a great project for learning and developing Code Agent.
+The project supports command-line interface (CLI), standard FastAPI services, and Web API v2 for real-time streaming, making it convenient for developers to develop experiments and integrate or use in various systems. It is an open-source project of Code Agent that is friendly to beginners. It is a great project for learning and developing Code Agent.
 
 ## 2. ✨ Features
 
@@ -47,7 +47,7 @@ The project supports command-line interface (CLI), standard FastAPI services, an
 - 🐦 **X.com Deep Query** (v0.3.1): Specialized tools for searching, reading, and analyzing X.com (Twitter) content using xAI's Live Search API.
 - 🧠 **Periodic Planning and Updates**: Implements strategic reevaluation during execution to optimize search paths.
 - 🔄 **Iterative Optimization**: The AI specialist continuously improves search and analysis strategies based on initial findings through self-optimization, and continuously optimizes task execution paths by updating the task plan to achieve task objectives.
-- 💻 **Multiple Development and Debugging Interaction Modes**: Offers CLI command-line interaction, standard FastAPI service, and Gradio UI web interface.
+- 💻 **Multiple Development and Debugging Interaction Modes**: Offers CLI command-line interaction, standard FastAPI service, and Web API v2 with real-time WebSocket streaming.
 - 🔗 **Traceable References**: Provides sources and references for generated answers.
 - 📺 **Streaming Output**: Supports real-time streaming of agent steps and final answers, with rich text formatting.
 - 🧮 **Computational Engine**: Integrates WolframAlpha for mathematical and computational queries.
@@ -229,12 +229,16 @@ curl -X POST http://localhost:8000/run_deepsearch_agent \
 
 *(Replace `localhost:8000` with the actual host and port if changed in `config.toml`)*
 
-### (3) Running the GradioUI Web GUI Web Service
+### (3) Using the Web API v2
 
-```bash
-make app
-# or directly:
-python src/app.py
+The Web API v2 provides real-time WebSocket streaming for web frontend integration. See `src/api/v2/README.md` for detailed documentation.
+
+```javascript
+// Connect to WebSocket
+const ws = new WebSocket('ws://localhost:8000/api/v2/ws/my-session?agent_type=codact');
+
+// Send query
+ws.send(JSON.stringify({type: 'query', query: 'Your question here'}));
 ```
 
 ### (4) Running the MCP Server (MCP Tools `deepsearch_tool`)
@@ -304,7 +308,7 @@ The core system architecture includes:
 3. **Agent Toolkit Collection (`src/tools/`)**: Functions that the agent can invoke (such as web search, reading URLs, etc.).
 4. **FastAPI Service (`src/api`)**: FastAPI service providing REST API related services.
 5. **CLI Interface (`src/cli.py`)**: Provides an interactive command-line interface with rich formatting.
-6. **GaiaUI Web Interface (`src/app.py`)**: Gradio-based web GUI for interacting with agents.
+6. **Web API v2 (`src/api/v2/`)**: Real-time WebSocket API for web frontend integration.
 7. **MCP Server (`src/agents/servers/run_fastmcp.py`)**: FastMCP server providing MCP tools services with Streamable HTTP transport.
 
 *Architecture diagram updated for version `v0.3.1`*
@@ -336,7 +340,7 @@ flowchart TB
         direction LR
         CLI{{"CLI"}}
         FastAPI{{"FastAPI Service"}}
-        GaiaUI{{"GaiaUI"}}
+        WebAPIv2{{"Web API v2"}}
         MCPServer{{"MCP Server (FastMCP)"}}
     end
     subgraph DeepSearchAgentSystem["DeepSearch Agents System"]
@@ -393,7 +397,7 @@ Environment (for CodeAct)")]
 
     CLI -- "User Query" --> CoreAgents
     FastAPI -- "API Request" --> CoreAgents
-    GaiaUI -- "User Input" --> CoreAgents
+    WebAPIv2 -- "User Input" --> CoreAgents
     MCPServer -- "Tool Call" --> CoreAgents
     CoreAgents -- "Select Mode: ReAct" --> ToolAgent
     CoreAgents -- "Select Mode: CodeAct" --> CodeAgent
@@ -448,9 +452,9 @@ Environment (for CodeAct)")]
     ToolAgent -- "Streaming Output" --> CLI
     CodeAgent -- "Streaming Output" --> CLI
     ManagerAgent -- "Streaming Output" --> CLI
-    ToolAgent -- "Streaming Output" --> GaiaUI
-    CodeAgent -- "Streaming Output" --> GaiaUI
-    ManagerAgent -- "Streaming Output" --> GaiaUI
+    ToolAgent -- "Streaming Output" --> WebAPIv2
+    CodeAgent -- "Streaming Output" --> WebAPIv2
+    ManagerAgent -- "Streaming Output" --> WebAPIv2
     CoreAgents -- "Response" --> Interfaces
     CoreAgents -- "Tool Result" --> MCPServer
 
@@ -468,7 +472,7 @@ Environment (for CodeAct)")]
 
     CLI:::interface
     FastAPI:::interface
-    GaiaUI:::interface
+    WebAPIv2:::interface
     MCPServer:::mcpserver
     CoreAgents:::manager
     ToolAgent:::agent
@@ -849,16 +853,13 @@ src/
 │   │   └── react_prompts.py  # ReAct agent prompts and templates
 │   ├── servers/              # Server implementations
 │   │   ├── __init__.py
-│   │   ├── gradio_patch.py   # Gradio UI enhancements and patches
 │   │   ├── run_fastmcp.py    # FastMCP MCP server implementation
-│   │   └── run_gaia.py       # Gradio UI web server
+│   │   └── run_fastmcp.py    # FastMCP MCP server
 │   ├── ui_common/            # Shared UI components and utilities
 │   │   ├── __init__.py
 │   │   ├── agent_step_callback.py     # Agent execution step callbacks
 │   │   ├── console_formatter.py       # Console output formatting
 │   │   ├── constants.py               # UI-related constants
-│   │   ├── gradio_adapter.py          # Gradio interface adapters
-│   │   ├── gradio_helpers.py          # Gradio utility functions
 │   │   └── streaming_formatter.py     # Streaming output formatter (v0.2.9)
 │   ├── __init__.py
 │   ├── base_agent.py         # Base agent interface and common functionality
@@ -933,7 +934,6 @@ src/
 │   ├── wolfram.py            # Wolfram Alpha computational tool
 │   ├── xcom_qa.py            # X.com Deep Q&A tool (v0.3.1)
 │   └── xcom_readurl.py       # X.com (Twitter) URL reading tool
-├── app.py                    # Gradio UI web application entry point
 ├── cli.py                    # Command-line interface
 └── main.py                   # FastAPI application entry point
 ```
@@ -944,7 +944,7 @@ src/
 - **`api/`**: FastAPI service infrastructure with versioned endpoints and health checks
 - **`core/`**: Fundamental system components including configuration, search engines, content processing, and scraping capabilities
 - **`tools/`**: Complete toolchain with unified toolbox management, supporting both traditional web search and X.com social media integration
-- **`src/` Root directory**: Application entry points for different interface modes (CLI, FastAPI, Gradio UI)
+- **`src/` Root directory**: Application entry points for different interface modes (CLI, FastAPI, Web API v2)
 
 ## Known Issues (v0.2.9.dev)
 

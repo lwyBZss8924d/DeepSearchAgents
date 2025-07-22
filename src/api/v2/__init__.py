@@ -6,72 +6,24 @@
 """
 DeepSearchAgents Web API v2
 
-Event-driven API architecture for web GUI, providing real-time streaming
-of agent execution steps, code generation, and tool interactions.
+Simplified API using direct Gradio message pass-through for real-time
+streaming of agent execution.
 
 This API is designed to work alongside existing CLI and MCP interfaces
 without impacting their functionality.
 """
 
-from .events import (
-    EventType,
-    BaseEvent,
-    AgentThoughtEvent,
-    CodeGeneratedEvent,
-    CodeExecutionStartEvent,
-    CodeExecutionOutputEvent,
-    CodeExecutionCompleteEvent,
-    CodeExecutionErrorEvent,
-    ToolCallStartEvent,
-    ToolCallOutputEvent,
-    ToolCallCompleteEvent,
-    ToolCallErrorEvent,
-    TaskStartEvent,
-    TaskCompleteEvent,
-    FinalAnswerEvent,
-    StreamDeltaEvent,
-    TokenUpdateEvent,
-    StepSummaryEvent,
-    PlanningEvent
-)
-
-from .session import (
-    SessionState,
-    AgentSession,
-    AgentSessionManager
-)
-
-from .pipeline import (
-    EventProcessor,
-    StreamEventAggregator
-)
+from .models import DSAgentRunMessage
+from .session import SessionState, AgentSession, AgentSessionManager
+from .gradio_passthrough_processor import GradioPassthroughProcessor
 
 __all__ = [
-    # Event types
-    "EventType",
-    "BaseEvent",
-    "AgentThoughtEvent",
-    "CodeGeneratedEvent",
-    "CodeExecutionStartEvent",
-    "CodeExecutionOutputEvent",
-    "CodeExecutionCompleteEvent",
-    "CodeExecutionErrorEvent",
-    "ToolCallStartEvent",
-    "ToolCallOutputEvent",
-    "ToolCallCompleteEvent",
-    "ToolCallErrorEvent",
-    "TaskStartEvent",
-    "TaskCompleteEvent",
-    "FinalAnswerEvent",
-    "StreamDeltaEvent",
-    "TokenUpdateEvent",
-    "StepSummaryEvent",
-    "PlanningEvent",
+    # Message model
+    "DSAgentRunMessage",
     # Session management
     "SessionState",
     "AgentSession",
     "AgentSessionManager",
-    # Event processing
-    "EventProcessor",
-    "StreamEventAggregator"
+    # Message processor
+    "GradioPassthroughProcessor"
 ]

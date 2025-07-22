@@ -8,6 +8,10 @@ DeepSearchAgents - FastAPI API Entry
 
 This module provides the main FastAPI entry point with both standard REST API
 endpoints and optional FastMCP integration for Streamable HTTP MCP API.
+New v2 API is available at /api/v2/
+```
+python -m src.main --port 8000 --log-level debug
+```
 """
 
 import logging

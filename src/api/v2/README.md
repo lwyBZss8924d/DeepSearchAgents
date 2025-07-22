@@ -1,287 +1,222 @@
 # DeepSearchAgents Web API v2
 
-A modern, event-driven API for real-time interaction with DeepSearchAgents through WebSocket and REST endpoints. This API provides granular visibility into agent reasoning, code generation, execution, and tool usage.
+A simplified, real-time API for interaction with DeepSearchAgents through WebSocket streaming. This API provides direct pass-through of agent execution messages using the proven `smolagents.gradio_ui` interface.
 
 ## Overview
 
-The Web API v2 is designed to power rich, interactive web UIs that show users the complete agent execution process. It features:
+The Web API v2 is designed with simplicity and reliability in mind:
 
-- **Real-time streaming** via WebSocket and Server-Sent Events
-- **Granular event types** for every step of agent execution
+- **Real-time streaming** via WebSocket with direct message pass-through
+- **Simple message format** based on Gradio ChatMessage structure
 - **Session management** for multi-turn conversations
-- **Type-safe client libraries** with TypeScript definitions
-- **Clean separation** between reasoning, code, and execution
+- **Minimal transformation** - leverages smolagents' battle-tested streaming
+- **Clean architecture** with straightforward data flow
 
 ## Architecture
 
 ```
-┌─────────────┐     WebSocket/SSE      ┌──────────────┐
-│   Web UI    │ ◄───────────────────► │  API v2      │
-│  (React)    │                        │  Endpoints   │
-└─────────────┘                        └──────┬───────┘
-                                              │
-                                              ▼
-                                        ┌──────────────┐
-                                        │   Session    │
-                                        │  Manager     │
-                                        └──────┬───────┘
-                                              │
-                                              ▼
-                                        ┌──────────────┐
-                                        │    Event     │
-                                        │  Processor   │
-                                        └──────┬───────┘
-                                              │
-                                              ▼
-                                        ┌──────────────┐
-                                        │  WebUI       │
-                                        │  Adapter     │
-                                        └──────┬───────┘
-                                              │
-                                              ▼
-                                        ┌──────────────┐
-                                        │    Agent     │
-                                        │(React/CodeAct)│
-                                        └──────────────┘
+┌─────────────┐        WebSocket         ┌──────────────┐
+│   Web UI    │ ◄───────────────────────► │ WebSocket    │
+│  (Frontend) │                           │ Endpoint     │
+└─────────────┘                           └──────┬───────┘
+                                                 │
+                                                 ▼
+                                          ┌──────────────┐
+                                          │   Session    │
+                                          │  Manager     │
+                                          └──────┬───────┘
+                                                 │
+                                                 ▼
+                                          ┌──────────────┐
+                                          │   Gradio     │
+                                          │ Passthrough  │
+                                          │  Processor   │
+                                          └──────┬───────┘
+                                                 │
+                                                 ▼
+                                          ┌──────────────┐
+                                          │stream_to_gradio│
+                                          │ (smolagents) │
+                                          └──────┬───────┘
+                                                 │
+                                                 ▼
+                                          ┌──────────────┐
+                                          │    Agent     │
+                                          │(React/CodeAct)│
+                                          └──────────────┘
 ```
+
+## Design Principles
+
+The v2 API follows these core principles:
+
+1. **Direct Pass-through**: Messages from `smolagents.gradio_ui.stream_to_gradio` are passed through with minimal transformation
+2. **Field Renaming Only**: Gradio ChatMessage fields are renamed to DS-specific names (DSAgentRunMessage)
+3. **No Complex Event Parsing**: Avoids fragile regex-based parsing of message content
+4. **Leverage Proven Code**: Uses smolagents' well-tested streaming infrastructure
+5. **Simple Maintenance**: Minimal custom code means fewer bugs and easier updates
 
 ## Quick Start
 
 ### 1. Start the API Server
 
+The v2 API is integrated into the main FastAPI application:
+
 ```bash
-# With Web API v2 enabled (default)
+# Start the main server (includes v2 endpoints)
 python -m src.main --port 8000
 
 # The v2 endpoints will be available at:
-# - WebSocket: ws://localhost:8000/api/v2/ws/agent/{session_id}
+# - WebSocket: ws://localhost:8000/api/v2/ws/{session_id}
 # - REST: http://localhost:8000/api/v2/*
 ```
 
-### 2. Connect via WebSocket (JavaScript/TypeScript)
+### 2. Connect via WebSocket
 
-```typescript
-import { createAgentClient, EventType } from './api/v2/types/agent-client';
+```javascript
+// Connect to WebSocket
+const ws = new WebSocket('ws://localhost:8000/api/v2/ws/my-session?agent_type=codact');
 
-// Create and connect client
-const client = await createAgentClient('my-session-123');
-
-// Register event handlers
-client.on(EventType.AGENT_THOUGHT, (event) => {
-  console.log('Agent thinking:', event.content);
-});
-
-client.on(EventType.CODE_GENERATED, (event) => {
-  console.log('Code generated:', event.code);
-});
-
-client.on(EventType.FINAL_ANSWER, (event) => {
-  console.log('Final answer:', event.content);
-});
+// Handle incoming messages
+ws.onmessage = (event) => {
+  const message = JSON.parse(event.data);
+  console.log(`${message.role}: ${message.content}`);
+};
 
 // Send a query
-client.sendQuery('Search for the latest developments in quantum computing');
+ws.send(JSON.stringify({
+  type: 'query',
+  query: 'What is 2 + 2?'
+}));
 ```
 
-### 3. Use REST API (Non-streaming)
+## Message Format
 
-```bash
-# Submit a query
-curl -X POST http://localhost:8000/api/v2/agent/query \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "What is the capital of France?",
-    "agent_type": "codact",
-    "stream": false
-  }'
+### DSAgentRunMessage
 
-# Get session info
-curl http://localhost:8000/api/v2/session/{session_id}
+All messages follow this simple structure:
 
-# Get session events
-curl http://localhost:8000/api/v2/session/{session_id}/events
+```typescript
+interface DSAgentRunMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  metadata: Record<string, any>;
+  message_id: string;
+  timestamp: string;
+  session_id?: string;
+  step_number?: number;
+}
 ```
 
-## Event Types
-
-The API emits various event types during agent execution:
-
-### Agent Reasoning Events
-- `agent_thought` - Agent's reasoning and analysis
-- `agent_planning` - Planning steps (ReAct agents)
-
-### Code Events
-- `code_generated` - Python code generated by agent
-- `code_execution_start` - Code execution begins
-- `code_execution_output` - Output from code execution
-- `code_execution_complete` - Code execution finished
-- `code_execution_error` - Code execution error
-
-### Tool Events
-- `tool_call_start` - Tool invocation begins
-- `tool_call_output` - Tool output/results
-- `tool_call_complete` - Tool call finished
-- `tool_call_error` - Tool call error
-
-### Task Events
-- `task_start` - Task processing begins
-- `task_complete` - Task processing finished
-- `final_answer` - Final answer to the query
-
-### Metadata Events
-- `stream_delta` - Streaming content updates
-- `token_update` - Token usage updates
-- `step_summary` - Summary of each step
+This is a direct mapping from Gradio's ChatMessage with DS-specific field names.
 
 ## WebSocket Protocol
 
-### Client → Server Messages
+### Client → Server
 
-```typescript
+```json
 // Submit a query
 {
   "type": "query",
   "query": "Your question here"
 }
 
-// Request historical events
-{
-  "type": "get_events",
-  "event_type": "code_generated",  // optional filter
-  "limit": 50
-}
-
-// Get session state
-{
-  "type": "get_state"
-}
-
-// Keepalive ping
+// Ping (keepalive)
 {
   "type": "ping"
 }
 ```
 
-### Server → Client Messages
+### Server → Client
 
-The server sends event objects as they occur:
+The server streams DSAgentRunMessage objects as the agent executes:
 
-```typescript
+```json
 {
-  "event_id": "evt_123",
-  "event_type": "agent_thought",
+  "role": "assistant",
+  "content": "Let me search for that information...",
+  "metadata": {"streaming": true},
+  "message_id": "msg_abc123",
   "timestamp": "2024-01-20T10:30:00Z",
-  "step_number": 1,
-  "content": "Let me search for information about...",
-  "complete": true
+  "session_id": "my-session",
+  "step_number": 1
 }
 ```
 
 ## REST Endpoints
 
-### `POST /api/v2/agent/query`
-Submit a query for processing.
+### Core Endpoints
 
-**Request:**
-```json
-{
-  "query": "Your question",
-  "agent_type": "codact",
-  "max_steps": 25,
-  "stream": true
-}
-```
-
-### `GET /api/v2/session/{session_id}`
-Get session information.
-
-### `GET /api/v2/session/{session_id}/events`
-Get historical events with optional filtering.
-
-**Query parameters:**
-- `event_type` - Filter by event type
-- `step_number` - Filter by step number
-- `limit` - Maximum events to return
-
-### `DELETE /api/v2/session/{session_id}`
-Delete a session and clean up resources.
-
-### `GET /api/v2/sessions`
-List all active sessions.
-
-### `GET /api/v2/health`
-Health check endpoint.
-
-## Frontend Integration
-
-### React Example
-
-See the complete example in `src/api/v2/examples/react-integration.tsx`.
-
-Key concepts:
-1. Connect to WebSocket on component mount
-2. Register event handlers for different event types
-3. Update UI state based on events
-4. Clean up connection on unmount
-
-### State Management
-
-The example demonstrates managing:
-- Chat messages (user queries and agent responses)
-- Current execution step details
-- Code execution and outputs
-- Tool call status
-- Token usage
+- `POST /api/v2/session/create` - Create a new session
+- `GET /api/v2/session/{session_id}` - Get session info
+- `DELETE /api/v2/session/{session_id}` - Delete session
+- `GET /api/v2/sessions` - List active sessions
+- `GET /api/v2/health` - Health check
 
 ## Session Management
 
-Sessions provide isolation between different conversations:
+Sessions provide conversation isolation:
 
-- Each session has a unique ID
-- Sessions maintain their own agent instance
-- Events are scoped to sessions
+- Unique session ID per conversation
+- Each session maintains its own agent instance
 - Sessions expire after 1 hour of inactivity
-- Maximum 10,000 events per session (FIFO)
+- Automatic cleanup of expired sessions
+
+## Implementation Details
+
+### GradioPassthroughProcessor
+
+The core of the v2 API is the `GradioPassthroughProcessor` which:
+
+1. Receives agent and query
+2. Calls `smolagents.gradio_ui.stream_to_gradio`
+3. Converts Gradio ChatMessages to DSAgentRunMessages
+4. Yields messages through async generator
+
+### Why a Separate main.py?
+
+The v2 API has its own `main.py` for:
+
+1. **Development Isolation**: Can be developed/tested independently
+2. **Future Flexibility**: Easy to deploy as a separate microservice
+3. **Clear Boundaries**: Explicit separation from v1 API
+4. **Simplified Testing**: Can be tested without the full application
+
+However, in production, v2 endpoints are mounted into the main FastAPI application.
 
 ## Error Handling
 
-The API provides detailed error information:
+Errors are returned as standard messages:
 
-```typescript
-// WebSocket error
+```json
 {
   "type": "error",
   "message": "Detailed error message"
 }
-
-// Event-level errors
-{
-  "event_type": "code_execution_error",
-  "error_type": "SyntaxError",
-  "error_message": "invalid syntax",
-  "traceback": "..."
-}
 ```
 
-## Performance Considerations
+## Examples
 
-1. **Streaming vs Batch**: Use streaming for real-time UI updates, batch for simpler integrations
-2. **Event Filtering**: Use event type filters to reduce data transfer
-3. **Connection Management**: Implement reconnection logic for resilient clients
-4. **Session Cleanup**: Sessions are automatically cleaned up after expiry
+See the `src/api/v2/examples/` directory for:
 
-## Development Tips
+- `test_debug.py` - Direct processor testing
+- `test_simple_agent.py` - Agent integration example
+- `test_stream_to_gradio.py` - Understanding stream_to_gradio
 
-1. **TypeScript**: Use the provided type definitions for type safety
-2. **Event Ordering**: Events are emitted in execution order
-3. **Error Recovery**: Handle both connection and execution errors
-4. **Testing**: Use the REST API for easier testing and debugging
+## Migration from Gradio UI
 
-## Compatibility
+For users migrating from the legacy Gradio UI:
 
-The Web API v2 is designed to coexist with:
-- Existing CLI functionality
-- FastAPI v1 endpoints
-- MCP server integration
+1. The v2 API provides similar real-time updates
+2. Message format is simpler and more predictable
+3. No need to run a separate Gradio server
+4. Better integration with modern web frameworks
 
-It does not interfere with or modify existing agent behavior.
+## Future Enhancements
+
+Planned improvements while maintaining simplicity:
+
+1. Message compression for large responses
+2. Batch message delivery option
+3. GraphQL endpoint for flexible queries
+4. WebRTC support for lower latency

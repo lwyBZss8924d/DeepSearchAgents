@@ -56,7 +56,14 @@
       "Bash(git reset:*)",
       "Bash(cat:*)",
       "Bash(jq:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(sed:*)",
+      "Bash(pkill:*)",
+      "Bash(kill:*)",
+      "Bash(true)",
+      "Bash(timeout 5 python -m src.agents.servers.run_fastmcp:*)",
+      "Bash(npm install:*)",
+      "Bash(node:*)"
     ],
     "deny": []
   }

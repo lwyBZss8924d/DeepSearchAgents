@@ -24,7 +24,7 @@ uv run -- pytest --cov=src tests
 
 # Start development servers
 make run        # FastAPI server (default port 8000)
-make app        # Gradio UI web interface
+# Web API v2 is accessible via the main FastAPI server
 make cli        # Interactive CLI mode
 
 # CLI with specific agent modes

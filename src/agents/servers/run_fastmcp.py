@@ -46,7 +46,7 @@ from fastmcp import FastMCP
 
 # Local imports
 from src.agents.runtime import agent_runtime
-from src.agents.ui_common.gradio_adapter import create_gradio_compatible_agent
+# Gradio adapter no longer needed for MCP server
 from src.core.config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ def build_agent(agent_type: str):
         Default is "codact"
 
     Returns:
-        A Gradio-compatible agent instance
+        A raw agent instance
     """
     if agent_type == "react":
         agent = agent_runtime.create_react_agent()
@@ -77,11 +77,8 @@ def build_agent(agent_type: str):
             "deep web research through code execution."
         )
 
-    return create_gradio_compatible_agent(
-        agent,
-        name=agent_name,
-        description=agent_description
-    )
+    # Return the raw agent - no longer need Gradio compatibility
+    return agent
 
 
 def create_deepsearch_tool(agent_type: str = "codact"):
@@ -99,13 +96,6 @@ def create_deepsearch_tool(agent_type: str = "codact"):
     """
     # Create the agent instance
     agent = build_agent(agent_type)
-
-    # use existing GradioUIAdapter to wrap agent, ensure compatible streaming
-    adapted_agent = create_gradio_compatible_agent(
-        agent,
-        name=f"DeepSearch {agent_type.capitalize()} Agent",
-        description="Provide DeepSearchAgent capabilities via MCP"
-    )
 
     async def deepsearch_tool(query: str, ctx=None) -> str:
         """Execute DeepSearchAgent for deep search"""
@@ -126,7 +116,7 @@ def create_deepsearch_tool(agent_type: str = "codact"):
             if ctx:
                 try:
                     # get generator, but not initialize as async type
-                    generator = adapted_agent.run(query, stream=True)
+                    generator = agent.run(query, stream=True)
 
                     # validate return type
                     if not hasattr(generator, "__iter__"):
@@ -162,10 +152,16 @@ def create_deepsearch_tool(agent_type: str = "codact"):
                             # content extraction - add type checking
                             # and more logging
                             logger.debug(f"Chunk type: {type(chunk)}")
-                            if isinstance(chunk, dict) and "content" in chunk:
-                                result_content = chunk.get("content", "")
-                            elif isinstance(chunk, str):
+                            if isinstance(chunk, str):
                                 result_content = chunk
+                            elif hasattr(chunk, '__dict__'):
+                                # Handle objects with attributes
+                                if hasattr(chunk, 'content'):
+                                    result_content = chunk.content
+                                else:
+                                    result_content = str(chunk)
+                            else:
+                                result_content = str(chunk)
 
                         # set final result
                         final_result = result_content
@@ -199,7 +195,7 @@ def create_deepsearch_tool(agent_type: str = "codact"):
                 logger.info("Using non-streaming mode")
 
                 # get result (not using await)
-                result_obj = adapted_agent.run(query, stream=False)
+                result_obj = agent.run(query, stream=False)
 
                 # check if result is an awaitable object
                 if hasattr(result_obj, "__await__"):
@@ -210,20 +206,14 @@ def create_deepsearch_tool(agent_type: str = "codact"):
                     result = result_obj
 
                 # handle different types of results
-                if isinstance(result, dict) and "content" in result:
-                    final_result = result["content"]
+                if hasattr(result, 'final_answer'):
+                    # It's a RunResult object
+                    final_result = result.final_answer
                 elif isinstance(result, str):
                     final_result = result
                 else:
                     # other types, try to convert to string
-                    try:
-                        import json
-                        if hasattr(result, "__dict__"):
-                            final_result = json.dumps(result.__dict__)
-                        else:
-                            final_result = str(result)
-                    except Exception:
-                        final_result = str(result)
+                    final_result = str(result)
 
             # ensure result is not empty
             return final_result or "Execution completed but no valid result " \

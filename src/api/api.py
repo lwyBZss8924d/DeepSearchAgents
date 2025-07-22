@@ -40,10 +40,19 @@ async def default_lifespan(app):
             print(f"Path: {route.path}, Methods: {methods_str}")
     print("--- Route list end ---\n")
 
+    # Start session manager if v2 API is available
+    if V2_API_AVAILABLE:
+        from .v2.session import session_manager
+        await session_manager.start()
+        logger.info("Started Web API v2 session manager")
+
     yield
 
     # Shutdown
-    pass
+    if V2_API_AVAILABLE:
+        from .v2.session import session_manager
+        await session_manager.shutdown()
+        logger.info("Shutdown Web API v2 session manager")
 
 
 def create_app(

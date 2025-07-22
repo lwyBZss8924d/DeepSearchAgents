@@ -1,0 +1,370 @@
+openapi: 3.1.0
+info:
+  title: DeepSearchAgents Web API v2
+  description: Simplified API using Gradio message pass-through
+  version: 2.0.0
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+
+tags:
+  - name: v2
+    description: API endpoints for v2
+
+paths:
+  /api/v2/sessions:
+    post:
+      summary: Create a new agent session
+      description: Use the returned WebSocket URL to connect and send queries.
+      operationId: createSession
+      tags:
+        - v2
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateSessionResponse'
+    get:
+      summary: Get list of active sessions
+      operationId: listSessions
+      tags:
+        - v2
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /api/v2/sessions/{session_id}:
+    get:
+      summary: Get session information
+      operationId: getSession
+      tags:
+        - v2
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+          description: Session ID to retrieve
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionState'
+        '404':
+          description: Session not found
+    delete:
+      summary: Delete a session
+      operationId: deleteSession
+      tags:
+        - v2
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+          description: Session ID to delete
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Deletion message
+        '404':
+          description: Session not found
+  /api/v2/sessions/{session_id}/messages:
+    get:
+      summary: Get messages from a session
+      operationId: getSessionMessages
+      tags:
+        - v2
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+          description: Session ID to retrieve messages from
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 100
+          description: Maximum messages to return
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    type: string
+                    description: Session ID
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DSAgentRunMessage'
+                  total:
+                    type: integer
+                    description: Total number of messages
+  /api/v2/health:
+    get:
+      summary: Health check endpoint
+      operationId: healthCheck
+      tags:
+        - v2
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/v2/ws/{session_id}:
+    get:
+      summary: WebSocket endpoint for real-time agent interaction
+      description: |
+        WebSocket endpoint for real-time agent interaction.
+
+        Protocol:
+        - Client sends: {"type": "query", "query": "..."}
+        - Server streams: DSAgentRunMessage objects
+        - Client sends: {"type": "ping"} (keepalive)
+        - Server sends: {"type": "pong"}
+        - Client sends: {"type": "get_messages", "limit": 100}
+        - Server sends: Multiple DSAgentRunMessage objects
+        - Client sends: {"type": "get_state"}
+        - Server sends: {"type": "state", "state": {...}}
+      operationId: agentWebsocket
+      tags:
+        - v2
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Session ID for the WebSocket connection
+        - name: agent_type
+          in: query
+          schema:
+            type: string
+            default: codact
+          description: Agent type (react/codact)
+      responses:
+        '101':
+          description: WebSocket connection established
+
+components:
+  schemas:
+    CreateSessionRequest:
+      type: object
+      properties:
+        agent_type:
+          type: string
+          default: codact
+          description: Agent type (react/codact)
+        max_steps:
+          type: integer
+          nullable: true
+          description: Maximum steps for agent
+      description: Request body for creating a new session
+    CreateSessionResponse:
+      type: object
+      properties:
+        session_id:
+          type: string
+          description: Created session ID
+        agent_type:
+          type: string
+          description: Agent type
+        websocket_url:
+          type: string
+          description: WebSocket URL for this session
+      description: Response body for session creation
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          default: healthy
+        timestamp:
+          type: string
+          format: date-time
+        active_sessions:
+          type: integer
+          description: Number of active sessions
+        version:
+          type: string
+          default: 2.0.0
+      description: Response body for health check endpoint
+    DSAgentRunMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          enum:
+            - user
+            - assistant
+          description: Message role
+        content:
+          type: string
+          description: Message content (markdown, code blocks, etc.)
+        metadata:
+          type: object
+          description: Original Gradio metadata (status, title, etc.)
+          properties:
+            streaming:
+              type: boolean
+              description: Indicates if message is being streamed
+            status:
+              type: string
+              description: Message status (e.g., "done")
+            title:
+              type: string
+              description: Tool execution title (e.g., "🛠️ Used tool python_interpreter")
+        message_id:
+          type: string
+          description: Unique message identifier
+        timestamp:
+          type: string
+          format: date-time
+        session_id:
+          type: string
+          nullable: true
+          description: Session identifier
+        step_number:
+          type: integer
+          nullable: true
+          description: Agent execution step number
+      description: DeepSearchAgent message format - direct mapping of Gradio ChatMessage
+    QueryRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - query
+          description: Message type
+        query:
+          type: string
+          description: User query to process
+      description: WebSocket query request
+    PingMessage:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - ping
+          description: Message type
+      description: WebSocket ping message for keepalive
+    PongMessage:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - pong
+          description: Message type
+      description: WebSocket pong response
+    ErrorMessage:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - error
+          description: Message type
+        message:
+          type: string
+          description: Error message
+        error_code:
+          type: string
+          nullable: true
+          description: Optional error code
+      description: WebSocket error message
+    SessionState:
+      type: object
+      properties:
+        session_id:
+          type: string
+          description: Session ID
+        agent_type:
+          type: string
+          description: Agent type
+        state:
+          type: string
+          description: Session state
+          enum:
+            - idle
+            - processing
+            - completed
+            - error
+            - expired
+        created_at:
+          type: string
+          format: date-time
+        last_activity:
+          type: string
+          format: date-time
+        message_count:
+          type: integer
+          description: Message count
+      description: Session state information
+    GetMessagesRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - get_messages
+          description: Message type
+        limit:
+          type: integer
+          default: 100
+          description: Maximum messages to retrieve
+      description: WebSocket request for retrieving message history
+    GetStateRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - get_state
+          description: Message type
+      description: WebSocket request for getting session state
+    StateResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - state
+          description: Message type
+        state:
+          $ref: '#/components/schemas/SessionState'
+      description: WebSocket response containing session state
