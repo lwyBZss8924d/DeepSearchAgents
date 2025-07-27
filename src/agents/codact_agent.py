@@ -349,42 +349,23 @@ class CodeActAgent(BaseAgent):
         # Disable streaming processing, use CodeAgent directly
         # Note: Even if enable_streaming=True is passed, non-streaming mode
         # will be used
-        if self.enable_streaming:
-            # Use normal agent, but output warning only in verbose mode
-            if self.verbosity_level >= 2:
-                print("Warning: Streaming mode is temporarily disabled in "
-                      "this version.")
-            agent = CodeAgent(
-                tools=self.tools,
-                model=model_router,  # Use model router here
-                prompt_templates=extended_prompt_templates,
-                additional_authorized_imports=authorized_imports,
-                executor_type=self.executor_type,
-                executor_kwargs=self.executor_kwargs,
-                max_steps=self.max_steps,
-                verbosity_level=self.verbosity_level,
-                grammar=json_grammar if not self.use_structured_outputs_internally else None,
-                planning_interval=self.planning_interval,
-                step_callbacks=self.step_callbacks,
-                use_structured_outputs_internally=self.use_structured_outputs_internally,
-                managed_agents=self.managed_agents
-            )
-        else:
-            agent = CodeAgent(
-                tools=self.tools,
-                model=model_router,  # Use model router here
-                prompt_templates=extended_prompt_templates,
-                additional_authorized_imports=authorized_imports,
-                executor_type=self.executor_type,
-                executor_kwargs=self.executor_kwargs,
-                max_steps=self.max_steps,
-                verbosity_level=self.verbosity_level,
-                grammar=json_grammar if not self.use_structured_outputs_internally else None,
-                planning_interval=self.planning_interval,
-                step_callbacks=self.step_callbacks,
-                use_structured_outputs_internally=self.use_structured_outputs_internally,
-                managed_agents=self.managed_agents
-            )
+        # Create agent with streaming support
+        agent = CodeAgent(
+            tools=self.tools,
+            model=model_router,  # Use model router here
+            prompt_templates=extended_prompt_templates,
+            additional_authorized_imports=authorized_imports,
+            executor_type=self.executor_type,
+            executor_kwargs=self.executor_kwargs,
+            max_steps=self.max_steps,
+            verbosity_level=self.verbosity_level,
+            grammar=json_grammar if not self.use_structured_outputs_internally else None,
+            planning_interval=self.planning_interval,
+            step_callbacks=self.step_callbacks,
+            use_structured_outputs_internally=self.use_structured_outputs_internally,
+            managed_agents=self.managed_agents,
+            stream_outputs=self.enable_streaming  # Enable streaming based on configuration
+        )
 
         # Initialize agent state
         agent.state.update(self.initial_state)

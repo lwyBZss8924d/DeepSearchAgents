@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planning Message Test V2</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .section {
+            flex: 1;
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #4a9eff;
+        }
+        .message {
+            background: #3a3a3a;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 3px solid #4a9eff;
+        }
+        .message.planning {
+            border-left-color: #ffeb3b;
+        }
+        .message.streaming {
+            border-left-color: #4caf50;
+        }
+        .message-header {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 5px;
+        }
+        .message-content {
+            white-space: pre-wrap;
+        }
+        .message-key {
+            display: inline-block;
+            background: #555;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 11px;
+            margin-right: 5px;
+        }
+        .message-type {
+            display: inline-block;
+            background: #6b46c1;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-right: 5px;
+        }
+        button {
+            background: #4a9eff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #357ae8;
+        }
+        .log {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin: 2px 0;
+        }
+        .log-entry.create { color: #4caf50; }
+        .log-entry.update { color: #2196f3; }
+        .log-entry.delete { color: #f44336; }
+        .log-entry.add { color: #ff9800; }
+    </style>
+</head>
+<body>
+    <h1>Planning Message WebSocket Test V2</h1>
+    
+    <div class="container">
+        <div class="section">
+            <h2>Controls</h2>
+            <button onclick="runTest1()">Test 1: Normal Planning Flow</button>
+            <button onclick="runTest2()">Test 2: Empty Content Updates</button>
+            <button onclick="runTest3()">Test 3: Full smolagents Sequence</button>
+            <button onclick="clearAll()">Clear All</button>
+            
+            <h3>Test Scenarios</h3>
+            <p><strong>Test 1:</strong> Simulates normal planning message flow</p>
+            <p><strong>Test 2:</strong> Simulates empty content updates that might clear planning</p>
+            <p><strong>Test 3:</strong> Simulates the full smolagents message sequence with unique keys</p>
+        </div>
+        
+        <div class="section">
+            <h2>Messages</h2>
+            <div id="messages"></div>
+        </div>
+        
+        <div class="section">
+            <h2>Debug Log</h2>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        // Simulate the message store
+        const messageStore = new Map();
+        const streamingMessages = new Map();
+        let messageIdCounter = 1;
+        let messageSequence = 0;
+        
+        // Helper functions for planning message detection
+        const isPlanningHeader = (content) => {
+            return content === '**Planning step**' || content === 'Planning step';
+        };
+        
+        const isPlanningFooter = (content) => {
+            return content.includes('Duration:') && (content.includes('Input tokens:') || content.includes('Planning step'));
+        };
+        
+        const isSeparator = (content) => {
+            return content === '-----' || content === '---';
+        };
+        
+        const isPlanningContent = (content) => {
+            return !isPlanningHeader(content) && 
+                   !isPlanningFooter(content) && 
+                   !isSeparator(content) &&
+                   content.length > 20 &&
+                   (content.includes('1.') || content.includes('2.') || content.includes('-') || content.includes('*'));
+        };
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function renderMessages() {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
+            
+            // Show streaming messages
+            if (streamingMessages.size > 0) {
+                const streamingHeader = document.createElement('h3');
+                streamingHeader.textContent = `Streaming Messages (${streamingMessages.size})`;
+                messagesDiv.appendChild(streamingHeader);
+                
+                streamingMessages.forEach((msg, key) => {
+                    const msgDiv = createMessageDiv(msg, key, true);
+                    messagesDiv.appendChild(msgDiv);
+                });
+            }
+            
+            // Show stored messages
+            const storedHeader = document.createElement('h3');
+            storedHeader.textContent = `Stored Messages (${messageStore.size})`;
+            messagesDiv.appendChild(storedHeader);
+            
+            messageStore.forEach((msg, id) => {
+                const msgDiv = createMessageDiv(msg, id, false);
+                messagesDiv.appendChild(msgDiv);
+            });
+        }
+        
+        function createMessageDiv(msg, key, isStreaming) {
+            const div = document.createElement('div');
+            div.className = 'message';
+            if (msg.metadata?.event_type === 'planning' || key.includes('planning')) {
+                div.classList.add('planning');
+            }
+            if (isStreaming) {
+                div.classList.add('streaming');
+            }
+            
+            const header = document.createElement('div');
+            header.className = 'message-header';
+            
+            // Extract message type from key
+            const typeMatch = key.match(/\d+-(.+?)(?:-seq\d+)?$/);
+            const messageType = typeMatch ? typeMatch[1] : 'unknown';
+            
+            header.innerHTML = `
+                <span class="message-key">${key}</span>
+                <span class="message-type">${messageType}</span>
+                ID: ${msg.message_id || key} | Step: ${msg.step_number} | Streaming: ${msg.metadata?.streaming || false}
+            `;
+            
+            const content = document.createElement('div');
+            content.className = 'message-content';
+            content.textContent = msg.content || '(empty content)';
+            
+            div.appendChild(header);
+            div.appendChild(content);
+            return div;
+        }
+        
+        function processWebSocketMessage(data) {
+            log(`📨 WS Message: ${JSON.stringify(data).substring(0, 100)}...`);
+            
+            if ('role' in data || 'content' in data || 'metadata' in data) {
+                const stepNumber = data.step_number ?? 0;
+                
+                if (data.metadata?.streaming === true) {
+                    // Streaming message
+                    const isPlanningMessage = data.metadata?.event_type === 'planning' || 
+                                            data.content?.includes('Planning step');
+                    
+                    let messageType = 'default';
+                    if (isPlanningMessage && data.content) {
+                        if (isPlanningContent(data.content)) {
+                            messageType = 'planning-content';
+                        } else if (isPlanningHeader(data.content)) {
+                            messageType = 'planning-header';
+                        } else {
+                            messageType = 'planning-other';
+                        }
+                    }
+                    
+                    const streamKey = (messageType === 'planning-content' || messageType === 'default')
+                        ? `${stepNumber}-${messageType}`
+                        : `${stepNumber}-${messageType}-seq${++messageSequence}`;
+                    
+                    let streamingMessage = streamingMessages.get(streamKey);
+                    
+                    if (!streamingMessage) {
+                        // Create new streaming message
+                        const messageId = `msg-${stepNumber}-${messageType}`;
+                        streamingMessage = {
+                            ...data,
+                            message_id: messageId
+                        };
+                        streamingMessages.set(streamKey, streamingMessage);
+                        messageStore.set(messageId, streamingMessage);
+                        log(`🟢 Created streaming ${messageType} message: ${streamKey}`, 'create');
+                    } else {
+                        // Update existing
+                        const oldContent = streamingMessage.content;
+                        streamingMessage.content = data.content || streamingMessage.content;
+                        log(`🔄 Updated streaming ${messageType}: ${oldContent?.length} -> ${streamingMessage.content?.length}`, 'update');
+                    }
+                } else {
+                    // Complete message
+                    const sequenceNum = ++messageSequence;
+                    const isPlanningMessage = data.metadata?.event_type === 'planning' || 
+                                            data.content?.includes('Planning step');
+                    
+                    let messageType = 'default';
+                    if (isPlanningMessage && data.content) {
+                        if (isPlanningContent(data.content)) {
+                            messageType = 'planning-content';
+                        } else if (isPlanningHeader(data.content)) {
+                            messageType = 'planning-header';
+                        } else if (isPlanningFooter(data.content)) {
+                            messageType = 'planning-footer';
+                        } else if (isSeparator(data.content)) {
+                            messageType = 'separator';
+                        } else {
+                            messageType = 'planning-other';
+                        }
+                    }
+                    
+                    const isMetadataMessage = (messageType === 'planning-header' || 
+                                              messageType === 'planning-footer' || 
+                                              messageType === 'separator' ||
+                                              messageType === 'planning-other');
+                    
+                    const streamKey = isMetadataMessage 
+                        ? `${stepNumber}-${messageType}-seq${sequenceNum}`
+                        : `${stepNumber}-${messageType}`;
+                    
+                    const streamingMessage = isMetadataMessage ? null : streamingMessages.get(streamKey);
+                    
+                    if (streamingMessage && !isMetadataMessage) {
+                        // Replace streaming message
+                        const message = {
+                            ...data,
+                            message_id: streamingMessage.message_id,
+                            content: data.content || streamingMessage.content
+                        };
+                        messageStore.set(message.message_id, message);
+                        streamingMessages.delete(streamKey);
+                        log(`🔴 Replaced streaming ${messageType} with complete message`, 'delete');
+                    } else {
+                        // New message (always new for metadata messages)
+                        const messageId = isMetadataMessage 
+                            ? `msg-${stepNumber}-${messageType}-seq${sequenceNum}`
+                            : `msg-${stepNumber}-${messageType}`;
+                        const message = {
+                            ...data,
+                            message_id: messageId
+                        };
+                        messageStore.set(messageId, message);
+                        log(`➕ Added new ${messageType} message: ${streamKey}`, 'add');
+                    }
+                }
+            }
+            
+            renderMessages();
+        }
+        
+        function clearAll() {
+            messageStore.clear();
+            streamingMessages.clear();
+            messageSequence = 0;
+            document.getElementById('log').innerHTML = '';
+            renderMessages();
+        }
+        
+        // Test scenarios
+        function runTest1() {
+            clearAll();
+            log('=== Test 1: Normal Planning Flow ===');
+            
+            // 1. Streaming planning message starts
+            processWebSocketMessage({
+                role: 'assistant',
+                content: '1. Facts survey\n',
+                metadata: { streaming: true, event_type: 'planning' },
+                step_number: 0
+            });
+            
+            // 2. Content accumulates
+            setTimeout(() => {
+                processWebSocketMessage({
+                    role: 'assistant',
+                    content: '1. Facts survey\n2. Search for weather data\n',
+                    metadata: { streaming: true, event_type: 'planning' },
+                    step_number: 0
+                });
+            }, 500);
+            
+            // 3. Complete message arrives
+            setTimeout(() => {
+                processWebSocketMessage({
+                    role: 'assistant',
+                    content: '1. Facts survey\n2. Search for weather data\n3. Summarize findings',
+                    metadata: { event_type: 'planning' },
+                    step_number: 0
+                });
+            }, 1000);
+        }
+        
+        function runTest2() {
+            clearAll();
+            log('=== Test 2: Empty Content Updates ===');
+            
+            // 1. Streaming planning with content
+            processWebSocketMessage({
+                role: 'assistant',
+                content: '1. Facts survey\n2. Search for weather',
+                metadata: { streaming: true, event_type: 'planning' },
+                step_number: 0
+            });
+            
+            // 2. Empty streaming update
+            setTimeout(() => {
+                processWebSocketMessage({
+                    role: 'assistant',
+                    content: '',
+                    metadata: { streaming: true, event_type: 'planning' },
+                    step_number: 0
+                });
+            }, 500);
+            
+            // 3. Complete message with empty content
+            setTimeout(() => {
+                processWebSocketMessage({
+                    role: 'assistant',
+                    content: '',
+                    metadata: { event_type: 'planning' },
+                    step_number: 0
+                });
+            }, 1000);
+        }
+        
+        function runTest3() {
+            clearAll();
+            log('=== Test 3: Full smolagents Sequence ===');
+            
+            // Based on the smolagents code, it sends multiple messages for planning
+            
+            // 1. Streaming planning content
+            processWebSocketMessage({
+                role: 'assistant',
+                content: '## 1. Facts survey\n- Current location: San Francisco\n- Time period: Tomorrow',
+                metadata: { streaming: true },
+                step_number: 0
+            });
+            
+            // 2. Planning header (non-streaming) - should NOT replace content
+            setTimeout(() => {
+                processWebSocketMessage({
+                    role: 'assistant',
+                    content: '**Planning step**',
+                    metadata: { status: 'done' },
+                    step_number: 0
+                });
+            }, 500);
+            
+            // 3. Planning content (non-streaming) - should replace streaming
+            setTimeout(() => {
+                processWebSocketMessage({
+                    role: 'assistant',
+                    content: '## 1. Facts survey\n- Current location: San Francisco\n- Time period: Tomorrow',
+                    metadata: { status: 'done' },
+                    step_number: 0
+                });
+            }, 750);
+            
+            // 4. Planning footer - should NOT replace content
+            setTimeout(() => {
+                processWebSocketMessage({
+                    role: 'assistant',
+                    content: '<span style="color: #bbbbc2; font-size: 12px;">**Planning step** | Duration: 2.5s</span>',
+                    metadata: { status: 'done' },
+                    step_number: 0
+                });
+            }, 1000);
+            
+            // 5. Separator - should NOT replace content
+            setTimeout(() => {
+                processWebSocketMessage({
+                    role: 'assistant',
+                    content: '-----',
+                    metadata: { status: 'done' },
+                    step_number: 0
+                });
+            }, 1250);
+        }
+        
+        // Initial render
+        renderMessages();
+    </script>
+</body>
+</html>

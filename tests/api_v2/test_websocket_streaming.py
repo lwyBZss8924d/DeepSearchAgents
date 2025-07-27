@@ -51,26 +51,62 @@ class TestWebSocketStreaming:
             assert any(msg["role"] == "assistant" for msg in messages)
 
     @pytest.mark.asyncio
-    async def test_streaming_updates(self, test_client, websocket_url):
+    async def test_streaming_updates(self, api_client):
         """Test that messages are streamed progressively."""
-        async with websocket_session(test_client, websocket_url) as manager:
+        # Create session first
+        response = await api_client.post(
+            "/api/v2/sessions",
+            json={"agent_type": "codact", "max_steps": 25}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        websocket_url = data["websocket_url"]
+        
+        # Use the actual running server URL
+        import websockets
+        ws_url = f"ws://0.0.0.0:8000{websocket_url}"
+        
+        async with websockets.connect(ws_url) as websocket:
+            # Create a message collector
+            collector = MessageCollector()
+            
+            # Start collecting messages in background
+            async def collect_messages():
+                try:
+                    async for message in websocket:
+                        import json
+                        msg = json.loads(message)
+                        collector.add_message(msg)
+                except Exception as e:
+                    print(f"Collection error: {e}")
+            
+            collect_task = asyncio.create_task(collect_messages())
+            
             # Send query that requires multiple steps
-            await manager.send_query(
-                "Solve the x^2 + b x + c = 0 for x"
-            )
-
+            await websocket.send(json.dumps({
+                "type": "query",
+                "query": "Solve the equation x^2 + 5x + 6 = 0"
+            }))
+            
             # Collect messages for a few seconds
             await asyncio.sleep(5)
-
+            
+            # Cancel collection
+            collect_task.cancel()
+            try:
+                await collect_task
+            except asyncio.CancelledError:
+                pass
+            
             # Should have multiple messages
-            assert len(manager.collector.messages) > 2
-
+            assert len(collector.messages) > 2
+            
             # Should have progressive updates
-            assistant_messages = manager.collector.assistant_messages
+            assistant_messages = collector.assistant_messages
             assert len(assistant_messages) > 0
-
+            
             # Validate all messages
-            for msg in manager.collector.messages:
+            for msg in collector.messages:
                 assert_message_format(msg)
 
     @pytest.mark.asyncio

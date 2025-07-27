@@ -63,7 +63,12 @@
       "Bash(true)",
       "Bash(timeout 5 python -m src.agents.servers.run_fastmcp:*)",
       "Bash(npm install:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm cache clean:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx next:*)",
+      "Bash(unset:*)"
     ],
     "deny": []
   }

@@ -19,7 +19,7 @@ from collections import deque
 
 from src.agents.runtime import agent_runtime
 from .models import DSAgentRunMessage, SessionState as SessionStateModel
-from .gradio_passthrough_processor import GradioPassthroughProcessor
+from .ds_agent_message_processor import DSAgentMessageProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +89,7 @@ class AgentSession:
 
         self.state = SessionState.IDLE
         self.message_store = MessageStore()
-        self.processor = GradioPassthroughProcessor(session_id)
+        self.processor = DSAgentMessageProcessor(session_id)
 
         self.agent = None
         self.current_task: Optional[str] = None
@@ -116,16 +116,8 @@ class AgentSession:
                 debug_mode=False
             )
 
-        # Enable streaming
-        if hasattr(self.agent, "enable_streaming"):
-            self.agent.enable_streaming = True
-        if hasattr(self.agent, "stream_outputs"):
-            self.agent.stream_outputs = True
-
-        # Also check if agent has an inner agent object
-        if hasattr(self.agent, "agent"):
-            if hasattr(self.agent.agent, "stream_outputs"):
-                self.agent.agent.stream_outputs = True
+        # Agent streaming is now configured at creation time in runtime.py
+        # based on the enable_streaming setting in config.toml
 
         # Set max steps
         if hasattr(self.agent, "max_steps"):
@@ -175,9 +167,13 @@ class AgentSession:
                 reset_agent_memory=False
             ):
                 # Store and yield each message
-                self.message_store.add(message)
+                # Only store non-delta messages
+                if not message.metadata.get('is_delta', False):
+                    self.message_store.add(message)
                 self.last_activity = datetime.now(timezone.utc)
                 yield message
+                # Ensure message is processed before continuing
+                await asyncio.sleep(0)
 
         except Exception as e:
             logger.error(f"Error processing query: {e}", exc_info=True)

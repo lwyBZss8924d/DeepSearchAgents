@@ -87,5 +87,11 @@ if __name__ == "__main__":
         host=host,
         port=port,
         reload=False,
-        log_level="info"
+        log_level="info",
+        # WebSocket specific settings for real-time streaming
+        ws_ping_interval=20,  # Keep connection alive
+        ws_ping_timeout=60,   # Timeout for ping response
+        ws_max_size=16777216, # 16MB max message size
+        # Disable compression for lower latency
+        ws_per_message_deflate=False
     )

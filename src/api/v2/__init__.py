@@ -15,7 +15,7 @@ without impacting their functionality.
 
 from .models import DSAgentRunMessage
 from .session import SessionState, AgentSession, AgentSessionManager
-from .gradio_passthrough_processor import GradioPassthroughProcessor
+from .ds_agent_message_processor import DSAgentMessageProcessor
 
 __all__ = [
     # Message model
@@ -25,5 +25,5 @@ __all__ = [
     "AgentSession",
     "AgentSessionManager",
     # Message processor
-    "GradioPassthroughProcessor"
+    "DSAgentMessageProcessor"
 ]

@@ -11,6 +11,7 @@ Uses direct Gradio message pass-through for maximum reliability.
 
 import json
 import logging
+import asyncio
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
@@ -98,6 +99,9 @@ async def agent_websocket(
     """
     await websocket.accept()
     logger.info(f"WebSocket connection accepted for session {session_id}")
+    
+    # Note: TCP_NODELAY configuration removed due to compatibility issues
+    # The asyncio.sleep(0) after each message send is sufficient for streaming
 
     # Get or create session with specified agent type
     session = session_manager.get_or_create(session_id, agent_type=agent_type)
@@ -139,11 +143,28 @@ async def agent_websocket(
 
                 # Process query and stream messages
                 try:
+                    message_count = 0
                     async for message in session.process_query(query):
+                        message_count += 1
+                        # Log streaming messages with more detail
+                        logger.info(
+                            f"Sending message #{message_count} - "
+                            f"message_id: {message.message_id}, "
+                            f"streaming: {message.metadata.get('streaming', False)}, "
+                            f"is_delta: {message.metadata.get('is_delta', False)}, "
+                            f"is_initial_stream: {message.metadata.get('is_initial_stream', False)}, "
+                            f"stream_id: {message.metadata.get('stream_id')}, "
+                            f"step: {message.step_number}, "
+                            f"content_length: {len(message.content) if message.content else 0}"
+                        )
                         # Send message as JSON
                         await websocket.send_json(
                             message.model_dump(mode='json')
                         )
+                        
+                        # Force immediate delivery - critical for streaming
+                        # Yield control to allow message to be sent
+                        await asyncio.sleep(0)
 
                 except Exception as e:
                     logger.error(
