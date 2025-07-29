@@ -1,4 +1,4 @@
-.PHONY: run run-mcp cli cli-react cli-codact check-ports kill-ports test redis-start redis-stop run-with-redis
+.PHONY: run run-mcp cli cli-react cli-codact check-ports kill-ports test redis-start redis-stop run-with-redis frontend-install webui dev kill-dev
 
 # Default port settings (can be overridden by environment variables)
 AGENT_PORT ?= 8000
@@ -42,3 +42,34 @@ diagrams:
 diagrams-watch:
 	@echo "Watching for diagram changes..."
 	@cd docs/architecture-diagram && npm run watch
+
+# Frontend setup and development
+frontend-install:
+	@echo "Installing frontend dependencies..."
+	@cd frontend && npm install
+
+# Start Web UI (Next.js frontend)
+webui:
+	@echo "Starting Next.js Web UI (http://localhost:3000)..."
+	@cd frontend && npm run dev
+
+# Start full development environment (frontend + backend)
+dev:
+	@echo "Starting DeepSearchAgents full development environment..."
+	@echo "Backend API: http://localhost:$(AGENT_PORT)"
+	@echo "Web UI: http://localhost:3000"
+	@echo "Press Ctrl+C to stop all services"
+	@trap 'make kill-dev' INT; \
+	make run & \
+	BACKEND_PID=$$!; \
+	make webui & \
+	FRONTEND_PID=$$!; \
+	wait $$BACKEND_PID $$FRONTEND_PID
+
+# Stop all development services
+kill-dev:
+	@echo "Stopping development services..."
+	@pkill -f "uvicorn src.main:app" || true
+	@pkill -f "next-server" || true
+	@pkill -f "next dev" || true
+	@echo "Development services stopped"
