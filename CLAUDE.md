@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 DeepSearchAgent is an intelligent agent system that combines the ReAct (Reasoning + Acting) framework and the CodeAct concept (executable code agents) to enable deep web search and reasoning capabilities. Built on Hugging Face's `smolagents` framework, it provides multi-step reasoning for complex queries through various interfaces.
 
+**Version 0.3.3.dev** introduces a complete web frontend with real-time streaming, metadata-driven component routing, and a simplified WebSocket API architecture.
+
 ## Development Commands
 
 ### Common Development Tasks
@@ -33,6 +35,12 @@ make cli-codact # CodeAct agent (non-interactive)
 
 # MCP server
 python -m src.agents.servers.run_fastmcp
+
+# Frontend development
+cd frontend && npm install   # Install dependencies
+cd frontend && npm run dev   # Start development server (port 3000)
+cd frontend && npm run build # Build for production
+cd frontend && npm run lint  # Run linting
 ```
 
 ### Configuration Setup
@@ -58,6 +66,26 @@ User Input → Agent Selection → Planning/Reasoning → Tool Execution → Res
               config.toml          Prompt Templates    Toolbox Manager
                     
 Web API v2 → WebSocket → Session Manager → Gradio Passthrough → stream_to_gradio → Agent
+                           │
+                           ▼
+                    Frontend (Next.js)
+                           │
+                    ┌──────┴──────┐
+                    │  WebSocket  │
+                    │    Hook     │
+                    └──────┬──────┘
+                           │
+                    ┌──────▼──────┐
+                    │  Component  │
+                    │   Router    │
+                    └──────┬──────┘
+                           │
+         ┌─────────────────┼─────────────────┐
+         │                 │                 │
+    ┌────▼────┐      ┌────▼────┐      ┌────▼────┐
+    │Planning │      │ Action  │      │ Final   │
+    │  Card   │      │ Thought │      │ Answer  │
+    └─────────┘      └─────────┘      └─────────┘
 ```
 
 ### Tool Ecosystem
@@ -143,7 +171,8 @@ src/
 │   └── v2/                # API version 2 endpoints
 │       ├── __init__.py
 │       ├── models.py      # Simple Pydantic models
-│       ├── gradio_passthrough_processor.py  # Core pass-through logic
+│       ├── web_ui.py      # Agent event processing
+│       ├── ds_agent_message_processor.py  # Message processor wrapper
 │       ├── endpoints.py   # WebSocket and REST endpoints
 │       ├── session.py     # Session management
 │       ├── main.py        # Standalone API server
@@ -173,6 +202,27 @@ tests/
     ├── test_agent_steps.py          # Agent step progression tests
     ├── test_final_answer.py         # Final answer delivery tests
     └── utils.py           # Test utilities
+
+frontend/                  # Next.js web frontend
+├── app/                   # Next.js app directory
+│   ├── page.tsx          # Main page component
+│   ├── layout.tsx        # Root layout
+│   └── globals.css       # Global styles
+├── components/           # React components
+│   ├── agent-chat.tsx    # Main chat interface
+│   ├── action-thought-card.tsx  # Agent thinking display  
+│   ├── planning-card.tsx # Planning step display
+│   ├── final-answer-display.tsx # Structured answers
+│   ├── tool-call-badge.tsx      # Tool execution badges
+│   └── ui/               # Shadcn UI components
+├── hooks/                # Custom React hooks
+│   ├── use-websocket.tsx # WebSocket connection management
+│   └── use-session.tsx   # Session state management
+├── typings/              # TypeScript definitions
+│   ├── dsagent.ts       # DSAgentRunMessage types
+│   └── agent.ts         # Legacy agent types
+└── utils/                # Utility functions
+    └── extractors.ts     # Content extraction helpers
 ```
 
 ## Development Guidelines
@@ -197,3 +247,116 @@ tests/
 - **Logging**: Use configured loggers, not print statements
 - **Configuration**: All settings through config system, no hardcoded values
 - **Token Counting**: Uses smolagents v1.20.0 TokenUsage API for accurate token tracking
+
+## Frontend Architecture
+
+### Message Protocol
+
+The frontend communicates via WebSocket using the DSAgentRunMessage format:
+
+```typescript
+interface DSAgentRunMessage {
+  // Core fields
+  message_id: string;
+  role: "user" | "assistant";
+  content: string;
+  
+  // Metadata for routing and rendering
+  metadata: {
+    // Component routing
+    component?: "chat" | "webide" | "terminal";
+    
+    // Message type identification
+    message_type?: string;
+    step_type?: "planning" | "action" | "final_answer";
+    
+    // Streaming state
+    streaming?: boolean;
+    is_delta?: boolean;
+    stream_id?: string;
+    
+    // UI-specific fields
+    thoughts_content?: string;  // First 60 chars of thinking
+    has_structured_data?: boolean;
+    answer_title?: string;
+    tool_name?: string;
+  };
+}
+```
+
+### Component Routing
+
+Messages are routed to UI components based on metadata:
+
+- **Chat Component** (`component: "chat"`):
+  - Planning messages (badges and content)
+  - Action thoughts (truncated with special formatting)
+  - Tool call badges
+  - Final answers with structured data
+  
+- **Code Editor** (`component: "webide"`):
+  - Python code execution with syntax highlighting
+  
+- **Terminal** (`component: "terminal"`):
+  - Execution logs and command outputs
+
+### Streaming Message Handling
+
+The frontend handles streaming with delta accumulation:
+
+1. **Initial Message**: Empty content with `streaming: true`
+2. **Delta Updates**: Incremental content with `is_delta: true`
+3. **Final Message**: Complete content with `streaming: false`
+
+Messages are accumulated by `stream_id` in the WebSocket hook.
+
+## Testing
+
+### Backend Testing
+```bash
+# Run all tests
+make test
+
+# Run API v2 tests specifically
+uv run -- pytest tests/api_v2/
+
+# Test WebSocket streaming
+uv run -- pytest tests/api_v2/test_websocket_streaming.py -v
+```
+
+### Frontend Testing
+```bash
+# Frontend unit tests
+cd frontend && npm test
+
+# E2E WebSocket testing
+python debug-archive/scripts/test_websocket_e2e.py
+python debug-archive/scripts/test_frontend_ui_fixes.py
+python debug-archive/scripts/test_action_thought_e2e.py
+```
+
+### Debug Mode
+
+Enable debug logging in the frontend:
+
+```typescript
+// In frontend/hooks/use-websocket.tsx
+const DEBUG_PLANNING = true;
+```
+
+## Development Best Practices
+
+### Frontend Development
+
+1. **Metadata-First Approach**: Always use metadata for routing decisions, not content parsing
+2. **Type Safety**: Use TypeScript interfaces from `typings/dsagent.ts`
+3. **Component Isolation**: Each component handles its own rendering logic
+4. **Streaming Support**: Handle both streaming and non-streaming modes gracefully
+5. **WebSocket Resilience**: Implement automatic reconnection and error handling
+
+### Message Processing
+
+1. **Trust Backend Metadata**: The backend provides authoritative routing information
+2. **Handle Unknown Types**: Always provide fallback rendering for unknown message types
+3. **Debug Strategically**: Add targeted debug logs but clean up after feature completion
+4. **Test Both Agents**: Ensure features work with both ReAct and CodeAct agents
