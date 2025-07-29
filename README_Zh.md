@@ -16,7 +16,7 @@
 
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![version](https://img.shields.io/badge/version-v0.3.2.rc2-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.3.2.rc2)
+[![version](https://img.shields.io/badge/version-v0.3.3.dev-blue.svg)](https://github.com/DeepSearch-AgentTeam/DeepSearchAgent/releases/tag/v0.3.3.dev)
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/lwyBZss8924d/DeepSearchAgents)
 
@@ -28,7 +28,7 @@
 
 文档更新日期: `2025-07-29`
 
-[`v0.3.2.rc2`] 开发状态: `"新版 Web 前端集成进行中"`
+[`v0.3.3.dev`] 开发状态: `"新版 Web 前端集成进行中"`
 
 ## 1. 项目介绍 | Introduction
 

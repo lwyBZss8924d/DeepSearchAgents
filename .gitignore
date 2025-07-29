@@ -274,6 +274,3 @@ frontend/index.html
 
 # Debug archives
 # debug-archive/  # Commented out - we want to track the debug documentation
-
-# Frontend template (temporary)
-frontend_template_codactagent/
