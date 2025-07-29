@@ -1,16 +1,16 @@
 # DeepSearchAgents Web API v2
 
-A simplified, real-time API for interaction with DeepSearchAgents through WebSocket streaming. This API provides direct pass-through of agent execution messages using the proven `smolagents.gradio_ui` interface.
+A simplified, real-time API for interaction with DeepSearchAgents through WebSocket streaming. This API processes agent execution events and streams them with metadata-driven component routing for the frontend.
 
 ## Overview
 
 The Web API v2 is designed with simplicity and reliability in mind:
 
-- **Real-time streaming** via WebSocket with direct message pass-through
-- **Simple message format** based on Gradio ChatMessage structure
+- **Real-time streaming** via WebSocket with event-driven architecture
+- **Metadata-driven routing** for frontend component selection
 - **Session management** for multi-turn conversations
-- **Minimal transformation** - leverages smolagents' battle-tested streaming
-- **Clean architecture** with straightforward data flow
+- **Direct event processing** from smolagents with minimal transformation
+- **Support for streaming** with initial → delta → final message pattern
 
 ## Architecture
 
@@ -28,15 +28,14 @@ The Web API v2 is designed with simplicity and reliability in mind:
                                                  │
                                                  ▼
                                           ┌──────────────┐
-                                          │   Gradio     │
-                                          │ Passthrough  │
+                                          │   web_ui     │
                                           │  Processor   │
                                           └──────┬───────┘
                                                  │
                                                  ▼
                                           ┌──────────────┐
-                                          │stream_to_gradio│
-                                          │ (smolagents) │
+                                          │ Agent Events │
+                                          │(smolagents)  │
                                           └──────┬───────┘
                                                  │
                                                  ▼
@@ -50,11 +49,11 @@ The Web API v2 is designed with simplicity and reliability in mind:
 
 The v2 API follows these core principles:
 
-1. **Direct Pass-through**: Messages from `smolagents.gradio_ui.stream_to_gradio` are passed through with minimal transformation
-2. **Field Renaming Only**: Gradio ChatMessage fields are renamed to DS-specific names (DSAgentRunMessage)
-3. **No Complex Event Parsing**: Avoids fragile regex-based parsing of message content
-4. **Leverage Proven Code**: Uses smolagents' well-tested streaming infrastructure
-5. **Simple Maintenance**: Minimal custom code means fewer bugs and easier updates
+1. **Event-Driven Processing**: Directly processes smolagents events (PlanningStep, ActionStep, etc.)
+2. **Metadata-Based Routing**: Each message includes metadata for frontend component selection
+3. **Minimal Transformation**: Events are enhanced with routing metadata, not transformed
+4. **Streaming Support**: Handles both streaming and non-streaming agent configurations
+5. **Session Isolation**: Each WebSocket connection maintains its own agent session
 
 ## Quick Start
 
@@ -80,13 +79,22 @@ const ws = new WebSocket('ws://localhost:8000/api/v2/ws/my-session?agent_type=co
 // Handle incoming messages
 ws.onmessage = (event) => {
   const message = JSON.parse(event.data);
-  console.log(`${message.role}: ${message.content}`);
+  console.log('Received:', message);
+  
+  // Route based on metadata
+  if (message.metadata?.component === 'chat') {
+    // Display in chat
+  } else if (message.metadata?.component === 'webide') {
+    // Show in code editor
+  } else if (message.metadata?.component === 'terminal') {
+    // Display in terminal
+  }
 };
 
 // Send a query
 ws.send(JSON.stringify({
   type: 'query',
-  query: 'What is 2 + 2?'
+  query: 'What is the capital of France?'
 }));
 ```
 
@@ -94,21 +102,57 @@ ws.send(JSON.stringify({
 
 ### DSAgentRunMessage
 
-All messages follow this simple structure:
+All messages follow this structure:
 
 ```typescript
 interface DSAgentRunMessage {
+  // Core fields
   role: 'user' | 'assistant';
   content: string;
-  metadata: Record<string, any>;
   message_id: string;
   timestamp: string;
+  
+  // Metadata for routing and display
+  metadata: {
+    // Component routing
+    component?: 'chat' | 'webide' | 'terminal';
+    
+    // Message type identification
+    message_type?: 'planning_header' | 'planning_content' | 'action_thought' | 
+                   'tool_call' | 'final_answer' | 'error' | etc.;
+    
+    // Step information
+    step_type?: 'planning' | 'action' | 'final_answer';
+    step_number?: number;
+    
+    // Planning specific
+    planning_type?: 'initial' | 'update';
+    
+    // Action specific
+    tool_name?: string;
+    thoughts_content?: string;  // First 60 chars of thinking
+    
+    // Final answer specific
+    has_structured_data?: boolean;
+    answer_title?: string;
+    answer_content?: string;
+    answer_sources?: string[];
+    
+    // Streaming state
+    streaming?: boolean;
+    is_delta?: boolean;
+    stream_id?: string;
+    
+    // Status
+    status?: 'streaming' | 'done';
+    error?: boolean;
+  };
+  
+  // Context
   session_id?: string;
   step_number?: number;
 }
 ```
-
-This is a direct mapping from Gradio's ChatMessage with DS-specific field names.
 
 ## WebSocket Protocol
 
@@ -125,98 +169,244 @@ This is a direct mapping from Gradio's ChatMessage with DS-specific field names.
 {
   "type": "ping"
 }
+
+// Get session messages
+{
+  "type": "get_messages",
+  "limit": 100
+}
+
+// Get session state
+{
+  "type": "get_state"
+}
 ```
 
 ### Server → Client
 
-The server streams DSAgentRunMessage objects as the agent executes:
+The server streams various message types:
 
+#### Planning Messages
 ```json
+// Planning header (badge)
+{
+  "role": "assistant",
+  "content": "",
+  "metadata": {
+    "component": "chat",
+    "message_type": "planning_header",
+    "planning_type": "initial",
+    "status": "done"
+  }
+}
+
+// Planning content
+{
+  "role": "assistant",
+  "content": "I'll help you find information about...",
+  "metadata": {
+    "component": "chat",
+    "message_type": "planning_content",
+    "planning_type": "initial"
+  }
+}
+```
+
+#### Action Messages
+```json
+// Action thought
 {
   "role": "assistant",
   "content": "Let me search for that information...",
-  "metadata": {"streaming": true},
-  "message_id": "msg_abc123",
-  "timestamp": "2024-01-20T10:30:00Z",
-  "session_id": "my-session",
-  "step_number": 1
+  "metadata": {
+    "component": "chat",
+    "message_type": "action_thought",
+    "thoughts_content": "Let me search for that inf...",
+    "status": "done"
+  }
+}
+
+// Tool call
+{
+  "role": "assistant",
+  "content": "",
+  "metadata": {
+    "component": "chat",
+    "message_type": "tool_call",
+    "tool_name": "search",
+    "tool_args_summary": "query=capital of France"
+  }
+}
+```
+
+#### Streaming Messages
+```json
+// Initial streaming message
+{
+  "role": "assistant",
+  "content": "",
+  "metadata": {
+    "streaming": true,
+    "is_initial_stream": true,
+    "stream_id": "msg-1-planning_content-stream"
+  }
+}
+
+// Delta updates
+{
+  "role": "assistant",
+  "content": "The capital of France is ",
+  "metadata": {
+    "streaming": true,
+    "is_delta": true,
+    "stream_id": "msg-1-planning_content-stream"
+  }
 }
 ```
 
 ## REST Endpoints
 
-### Core Endpoints
+### Session Management
 
-- `POST /api/v2/session/create` - Create a new session
-- `GET /api/v2/session/{session_id}` - Get session info
-- `DELETE /api/v2/session/{session_id}` - Delete session
+- `POST /api/v2/sessions` - Create a new session
+  ```json
+  {
+    "agent_type": "codact",
+    "max_steps": 30
+  }
+  ```
+
 - `GET /api/v2/sessions` - List active sessions
-- `GET /api/v2/health` - Health check
+- `GET /api/v2/sessions/{session_id}` - Get session info
+- `DELETE /api/v2/sessions/{session_id}` - Delete session
+- `GET /api/v2/sessions/{session_id}/messages` - Get session messages
+
+### Health Check
+
+- `GET /api/v2/health` - API health status
 
 ## Session Management
 
-Sessions provide conversation isolation:
+Sessions provide conversation isolation and state management:
 
-- Unique session ID per conversation
-- Each session maintains its own agent instance
-- Sessions expire after 1 hour of inactivity
-- Automatic cleanup of expired sessions
+- **Unique session ID** per conversation
+- **Agent instance** per session (React or CodeAct)
+- **Message history** with configurable limit (default 10,000)
+- **Automatic cleanup** of expired sessions (1 hour timeout)
+- **Session states**: idle, processing, completed, error, expired
+
+## Configuration
+
+### Agent Configuration
+
+Sessions can be configured with:
+- `agent_type`: "react" or "codact" (default: "codact")
+- `max_steps`: Maximum agent steps (default: 25)
+
+### Streaming Configuration
+
+Streaming is controlled by agent configuration in `config.toml`:
+
+```toml
+[agents.codact]
+enable_streaming = true
+```
 
 ## Implementation Details
 
-### GradioPassthroughProcessor
+### web_ui.py Processing
 
-The core of the v2 API is the `GradioPassthroughProcessor` which:
+The core processing happens in `web_ui.py`:
 
-1. Receives agent and query
-2. Calls `smolagents.gradio_ui.stream_to_gradio`
-3. Converts Gradio ChatMessages to DSAgentRunMessages
-4. Yields messages through async generator
+1. **Event Processing**: Handles PlanningStep, ActionStep, FinalAnswerStep, ChatMessageStreamDelta
+2. **Metadata Enrichment**: Adds component routing and UI-specific metadata
+3. **Content Formatting**: Handles code blocks, truncation, structured data
+4. **Streaming Context**: Maintains state across streaming messages
 
-### Why a Separate main.py?
+### Message Type Mapping
 
-The v2 API has its own `main.py` for:
+- **PlanningStep** → planning_header, planning_content, planning_footer
+- **ActionStep** → action_header, action_thought, tool_call, tool_invocation, execution_logs
+- **FinalAnswerStep** → final_answer (with structured data support)
+- **ChatMessageStreamDelta** → streaming deltas with appropriate message_type
 
-1. **Development Isolation**: Can be developed/tested independently
-2. **Future Flexibility**: Easy to deploy as a separate microservice
-3. **Clear Boundaries**: Explicit separation from v1 API
-4. **Simplified Testing**: Can be tested without the full application
+### Component Routing Logic
 
-However, in production, v2 endpoints are mounted into the main FastAPI application.
+Messages are routed to frontend components based on metadata:
+
+- **Chat Component** (`component: "chat"`):
+  - Planning messages
+  - Action thoughts
+  - Tool call badges
+  - Final answers
+  - General messages
+
+- **Code Editor** (`component: "webide"`):
+  - Python code execution
+  - Code with syntax highlighting
+
+- **Terminal** (`component: "terminal"`):
+  - Execution logs
+  - Command outputs
+  - Error traces
 
 ## Error Handling
 
-Errors are returned as standard messages:
+Errors are returned as DSAgentRunMessage with error metadata:
 
 ```json
 {
-  "type": "error",
-  "message": "Detailed error message"
+  "role": "assistant",
+  "content": "Error: Failed to execute query",
+  "metadata": {
+    "component": "chat",
+    "message_type": "error",
+    "error": true,
+    "error_type": "RuntimeError",
+    "status": "done"
+  }
 }
 ```
 
-## Examples
+## Frontend Integration
 
-See the `src/api/v2/examples/` directory for:
+The v2 API is designed for the DeepSearchAgents frontend which:
 
-- `test_debug.py` - Direct processor testing
-- `test_simple_agent.py` - Agent integration example
-- `test_stream_to_gradio.py` - Understanding stream_to_gradio
+1. Connects via WebSocket
+2. Routes messages based on metadata.component
+3. Handles streaming with message accumulation
+4. Displays UI elements based on message_type:
+   - Planning badges for planning_header
+   - Action thought cards for action_thought
+   - Structured cards for final_answer
+   - Code editor for webide components
+   - Terminal output for terminal components
 
-## Migration from Gradio UI
+## Streaming Architecture
 
-For users migrating from the legacy Gradio UI:
+### Message Flow
+1. **Initial Message**: Empty content with `streaming: true`
+2. **Delta Messages**: Incremental updates with `is_delta: true`
+3. **Final Message**: Complete content with `streaming: false`
 
-1. The v2 API provides similar real-time updates
-2. Message format is simpler and more predictable
-3. No need to run a separate Gradio server
-4. Better integration with modern web frameworks
+### Frontend Handling
+- Accumulate deltas by stream_id
+- Replace with final message when streaming completes
+- Handle both streaming and non-streaming modes
 
-## Future Enhancements
+## Best Practices
 
-Planned improvements while maintaining simplicity:
+1. **Session Management**: Create a new session for each conversation
+2. **Error Handling**: Always handle WebSocket disconnections gracefully
+3. **Message Routing**: Use metadata.component for UI routing decisions
+4. **Streaming**: Accumulate delta messages by stream_id
+5. **Keepalive**: Send periodic ping messages to maintain connection
 
-1. Message compression for large responses
-2. Batch message delivery option
-3. GraphQL endpoint for flexible queries
-4. WebRTC support for lower latency
+## Migration from v1
+
+Key differences from v1 API:
+
+1. **Simplified Architecture**: Direct event processing instead of complex transformations
+2. **Metadata Routing**: Component selection via metadata instead of content parsing
+3. **Better Streaming**: Proper delta message handling with stream_id
+4. **Session-Based**: Each conversation has its own session and agent instance

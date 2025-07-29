@@ -131,7 +131,10 @@ export function isPlanningStep(metadata: Record<string, any>): boolean {
 
 // Check if message is an action step thought
 export function isActionStepThought(metadata: Record<string, any>, content?: string): boolean {
-  // Check event_type first
+  // Check message_type first (used by v2 API)
+  if (metadata?.message_type === 'action_thought') return true;
+  
+  // Fallback: check event_type for backwards compatibility
   if (metadata?.event_type === 'action_thought') return true;
   
   // Check if it's Step N content that's not code or execution logs
@@ -166,6 +169,7 @@ export function isCodeEditorMessage(metadata: Record<string, any>): boolean {
 export function isFinalAnswer(metadata: Record<string, any>, content?: string): boolean {
   // Check metadata
   if (metadata?.is_final_answer || 
+      metadata?.message_type === 'final_answer' ||
       metadata?.tool_name === 'final_answer' ||
       metadata?.status === 'complete' || 
       metadata?.title?.toLowerCase().includes('final answer')) {

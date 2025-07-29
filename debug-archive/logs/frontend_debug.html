@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend Debug Console</title>
+    <style>
+        body { font-family: monospace; background: #1a1a1a; color: #0f0; padding: 20px; }
+        .section { margin: 20px 0; padding: 10px; border: 1px solid #0f0; }
+        button { background: #333; color: #0f0; border: 1px solid #0f0; padding: 10px; cursor: pointer; }
+        button:hover { background: #444; }
+        #log { height: 400px; overflow-y: auto; background: #000; padding: 10px; white-space: pre; }
+        .highlight { color: #ff0; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>DeepSearchAgents Frontend Debug Console</h1>
+    
+    <div class="section">
+        <h2>Instructions:</h2>
+        <p>1. Open http://localhost:3000 in another tab</p>
+        <p>2. Open browser console (F12)</p>
+        <p>3. Run the query: "Solve the differential equation: y' = y^x"</p>
+        <p>4. Watch for these console logs:</p>
+        <ul>
+            <li class="highlight">[WebSocket] ACTION_THOUGHT message received</li>
+            <li class="highlight">[Action Thought FILTER]</li>
+            <li class="highlight">[renderAssistantMessage] Processing</li>
+            <li class="highlight">[ACTION_THOUGHT DETECTED]</li>
+            <li class="highlight">[RENDER CONDITION CHECK]</li>
+        </ul>
+    </div>
+    
+    <div class="section">
+        <h2>Expected UI Elements:</h2>
+        <ul>
+            <li>✅ Initial Plan badge (blue) - Should show "Initial Plan"</li>
+            <li>✅ Action Thought Card - Should show "Thinking🤔...{60 chars}...and Action Running[Terminal]..."</li>
+            <li>✅ Final Answer Card - Should show formatted content, NOT raw JSON</li>
+        </ul>
+    </div>
+    
+    <div class="section">
+        <h2>Quick Test Script:</h2>
+        <p>Run this in browser console to check if components exist:</p>
+        <pre>
+// Check for planning badges
+console.log('Planning badges:', document.querySelectorAll('.planning-badge'));
+
+// Check for action thought cards  
+console.log('Action thought cards:', document.querySelectorAll('[class*="purple"]'));
+
+// Check for final answer
+console.log('Final answer cards:', document.querySelectorAll('[class*="green"]'));
+
+// Check message metadata
+const messages = document.querySelectorAll('[class*="mb-4"]');
+console.log('Total messages:', messages.length);
+        </pre>
+    </div>
+    
+    <div class="section">
+        <h2>Console Log Monitor:</h2>
+        <button onclick="startMonitoring()">Start Monitoring Console</button>
+        <button onclick="clearLog()">Clear Log</button>
+        <div id="log"></div>
+    </div>
+    
+    <script>
+        const logDiv = document.getElementById('log');
+        let monitoring = false;
+        
+        function startMonitoring() {
+            monitoring = true;
+            logDiv.innerHTML += '\n=== Started monitoring at ' + new Date().toLocaleTimeString() + ' ===\n';
+            
+            // Override console.log in the other window
+            const otherWindow = window.open('http://localhost:3000', 'target');
+            if (otherWindow) {
+                setTimeout(() => {
+                    otherWindow.console._log = otherWindow.console.log;
+                    otherWindow.console.log = function(...args) {
+                        otherWindow.console._log(...args);
+                        const msg = args.map(arg => 
+                            typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg
+                        ).join(' ');
+                        
+                        if (msg.includes('ACTION_THOUGHT') || 
+                            msg.includes('renderAssistantMessage') ||
+                            msg.includes('RENDER CONDITION') ||
+                            msg.includes('Planning')) {
+                            logDiv.innerHTML += '<span class="highlight">' + msg + '</span>\n';
+                        } else {
+                            logDiv.innerHTML += msg + '\n';
+                        }
+                        logDiv.scrollTop = logDiv.scrollHeight;
+                    };
+                    alert('Console monitoring started! Switch to the other tab.');
+                }, 1000);
+            }
+        }
+        
+        function clearLog() {
+            logDiv.innerHTML = '';
+        }
+    </script>
+</body>
+</html>

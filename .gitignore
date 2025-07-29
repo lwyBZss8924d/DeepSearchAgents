@@ -236,6 +236,8 @@ mcp.json # If mcp.json can appear elsewhere
 /HiRA-Temporary
 /src/core/academic_tookit/bk_futurehouse_retrieval/
 /src/core/academic_tookit/prd_demo_examps/
+/callback_logs
+/final_answer_messages.json
 
 # docker
 /docker
@@ -247,3 +249,31 @@ coverage.xml
 
 # docs exclude
 !/docs/VIBE/
+
+# Frontend specific ignores
+# Next.js build output
+frontend/.next/
+
+# Yarn package manager
+frontend/.yarn/
+frontend/.pnp.*
+frontend/yarn.lock
+
+# Local env files
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Frontend logs
+frontend/*.log
+
+# Test files
+frontend/test-*.html
+frontend/index.html
+
+# Debug archives
+# debug-archive/  # Commented out - we want to track the debug documentation
+
+# Frontend template (temporary)
+frontend_template_codactagent/

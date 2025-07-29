@@ -102,6 +102,16 @@ export function useWebSocket(sessionId: string | null) {
         
         // 2. Check if this is a DSAgentRunMessage (has role, content, or metadata)
         if ('role' in data || 'content' in data || 'metadata' in data) {
+          // Log the raw data structure
+          console.log('[WebSocket] Raw DSAgentRunMessage data:', {
+            hasRole: 'role' in data,
+            hasContent: 'content' in data,
+            hasMetadata: 'metadata' in data,
+            metadataKeys: data.metadata ? Object.keys(data.metadata) : [],
+            messageType: data.metadata?.message_type,
+            fullData: data
+          });
+          
           const stepNumber = data.step_number ?? 0;
           
           if (DEBUG_PLANNING) {
@@ -277,6 +287,16 @@ export function useWebSocket(sessionId: string | null) {
                 console.log(`  message_type: ${data.metadata?.message_type}`);
                 console.log(`  streamingMessagesRef now has keys:`, Array.from(streamingMessagesRef.current.keys()));
               }
+            }
+            
+            // Debug action_thought messages specifically
+            if (data.metadata?.message_type === 'action_thought') {
+              console.log('[WebSocket] ACTION_THOUGHT message received:', {
+                message_id: data.message_id,
+                content: data.content?.substring(0, 50) + '...',
+                metadata: data.metadata,
+                step_number: data.step_number
+              });
             }
             
             dispatch({ type: 'ADD_MESSAGE', payload: data as DSAgentRunMessage });

@@ -21,23 +21,23 @@ logger = logging.getLogger(__name__)
 class DSAgentMessageProcessor:
     """
     Processor for DSAgent messages with proper formatting and routing.
-    
+
     This processor:
     1. Uses web_ui.stream_agent_messages to process agent events
     2. Generates DSAgentRunMessage objects with component routing metadata
     3. Handles session management and error handling
     """
-    
+
     def __init__(self, session_id: Optional[str] = None):
         """
         Initialize the processor.
-        
+
         Args:
             session_id: Session ID for message correlation
         """
         self.session_id = session_id
         self.message_count = 0
-    
+
     async def process_agent_stream(
         self,
         agent,
@@ -48,14 +48,14 @@ class DSAgentMessageProcessor:
     ) -> AsyncGenerator[DSAgentRunMessage, None]:
         """
         Stream agent messages with proper formatting and metadata.
-        
+
         Args:
             agent: The agent instance to run
             task: The task/query to execute
             task_images: Optional images for the task
             reset_agent_memory: Whether to reset agent memory
             additional_args: Additional arguments for agent
-            
+
         Yields:
             DSAgentRunMessage objects
         """
@@ -80,7 +80,7 @@ class DSAgentMessageProcessor:
                         f"step={message.step_number}"
                     )
                 yield message
-                
+
         except Exception as e:
             logger.error(
                 f"Error in agent stream processing: {e}",

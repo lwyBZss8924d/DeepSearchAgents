@@ -262,7 +262,7 @@ class CodeActAgent(BaseAgent):
             "logging", "json", "re", "time", "datetime",
             "copy", "requests", "aiohttp", "asyncio",
             "bs4", "urllib", "html",
-            "math", "csv", "pandas", "numpy", "tabulate2",
+            "sympy", "math", "csv", "pandas", "numpy", "tabulate2",
             "arxiv", "wikipediaapi",
             "pymupdf", "markitdown",
             "dotenv",

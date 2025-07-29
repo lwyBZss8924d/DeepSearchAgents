@@ -4,7 +4,7 @@ VIBE 🖖 Build with 💖 for Humanity with AI
 
 <h2>
 
-![Smolagents](https://img.shields.io/badge/Smolagents-1.19.0+-yellow.svg) <img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/smolagents/smolagents.png" alt="Smol Pingu" height="25">
+![Smolagents](https://img.shields.io/badge/Smolagents-1.20.0+-yellow.svg) <img src="https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/smolagents/smolagents.png" alt="Smol Pingu" height="25">
 
 ![MCP](https://img.shields.io/badge/MCP-1.9.0+-009688.svg?logo=mcp&logoColor=white) <img src="https://raw.githubusercontent.com/modelcontextprotocol/modelcontextprotocol/main/docs/logo/dark.svg" alt="MCP" height="25">
 
@@ -26,15 +26,15 @@ VIBE 🖖 Build with 💖 for Humanity with AI
 
 [中文版](README_Zh.md)
 
-README Update Date: `2025-07-22`
+README Update Date: `2025-07-29`
 
-[`v0.3.2.rc2`] Development Status: `"DOING"`
+[`v0.3.2.rc2`] Dev Status: `"New version of Web frontend integration in progress"`
 
 ## 1. Introduction
 
 The DeepSearchAgent project is an intelligent agent system based on the ReAct (Reasoning + Acting) reasoning and action framework and the CodeAct ("Code as Action") AI agent concept. It aims to realize broader task reasoning and execution through "DeepResearch" `DR-Multi-Agent`, leveraging DeepSearch’s multi-step network deep search foundational capabilities. It utilizes the reasoning power of AI language models (LLMs), along with a toolbox collection and programming action invocation abilities within a Python packages sandbox, enabling it to handle complex web search tasks that are both broad and deep via multi-step deep search, multimodal webpage text processing, reading, and multi-step reasoning. The system also provides traceable reference materials. Built upon Hugging Face’s smolagents framework, this project implements a dual-mode intelligent agent system capable of invoking predefined toolboxes as well as writing action code—realizing both "generation of dedicated dynamic DSLs based on task plans" and "AI self-created dynamic one-time dedicated tools.
 
-The project supports a CLI TUI interface for terminal Run operation, a standard FastAPI service, the FastMCP MCP server, and a Web GUI service (v0.3.2.rc2 has provided supporting web APIs and the web frontend is under design and development) suitable for displaying the CodeAct Agent Run process. It facilitates developers in experimentation, integration, and usage across various systems. This is an open-source project aimed at providing VIBER beginners with a friendly Code Agent experience, learning opportunities, and extensibility.
+The project supports a CLI TUI interface for terminal command-line operation, a standard FastAPI service, the FastMCP MCP server, and an accompanying Web GUI frontend service that showcases CodeAct Agent's long-running multi-step task execution. (v0.3.2.rc2 has provided a supporting web API, and the web frontend is currently being integrated and debugged) suitable for displaying the CodeAct Agent Run process. It facilitates developers in experimentation, integration, and usage across various systems. This is an open-source project aimed at providing VIBER beginners with a friendly Code Agent experience, learning opportunities, and extensibility.
 
 ## 2. ✨ Features
 
@@ -48,10 +48,10 @@ The project supports a CLI TUI interface for terminal Run operation, a standard 
 - 🐦 **X.com Deep Query** (v0.3.1): Specialized tools for searching, reading, and analyzing X.com (Twitter) content using xAI's Live Search API.
 - 🧠 **Periodic Planning and Updates**: Implements strategic reevaluation during execution to optimize search paths.
 - 🔄 **Iterative Optimization**: The AI specialist continuously improves search and analysis strategies based on initial findings through self-optimization, and continuously optimizes task execution paths by updating the task plan to achieve task objectives.
-- 💻 **Multiple Development and Debugging Interaction Modes**: Offers CLI command-line interaction, standard FastAPI service, and Web API v2 with real-time WebSocket streaming.
+- 💻 **Multiple development debugging and user interaction modes**: Provides CLI command-line interaction, standard FastAPI service, and Web GUI frontend service
 - 🔗 **Traceable References**: Provides sources and references for generated answers.
 - 📺 **Streaming Output**: Supports real-time streaming of agent steps and final answers, with rich text formatting.
-- 🧮 **Computational Engine**: Integrates WolframAlpha for mathematical and computational queries.
+- 🧮 **Symbolic Computation**: Integrated WolframAlpha symbolic computation engine, supporting mathematical and computational problems
 - 📝 **JSON/Markdown Rendering**: Automatically detects and presents structured outputs in user-friendly formats.
 - 🤝 **Hierarchical Multi-Agent Support** (v0.2.9): Manager agent mode orchestrates teams of specialized agents for collaborative problem-solving.
 - ⚡ **Parallel Tool Execution** (v0.2.9): Multiple concurrent tool calls for improved performance and efficiency.
@@ -102,11 +102,9 @@ The project supports a CLI TUI interface for terminal Run operation, a standard 
 
 13. [TODO] Human-in-the-loop & multi-path branching backtracking functionality for Agent Runs;
 
-14. Concurrent arena mode for Agent Runs;
+14. [Experimental] Special implementation version of multi_agent_HiRA (Hierarchical Reasoning Framework for Deep Search) based on special tokens protocol (`arXiv-2507.02652v1`);
 
-15. [Experimental] Special implementation version of multi_agent_HiRA (Hierarchical Reasoning Framework for Deep Search) based on special tokens protocol (`arXiv-2507.02652v1`);
-
-16. [Experimental] Add auxiliary method optimization to the agent omni-tools-query pipeline based on [`submodular-optimization`] ("submodular optimization algorithm") to improve reQuery query effectiveness when using various external query tools; this auxiliary pipeline uses "submodular optimization algorithms" to optimize query selection, generate diversified tool search query inputs, perform effect evaluation, and return ReAct Agent action callbacks to help the Agent observe query result optimization effects in order to continuously iterate towards retrieval goals in subsequent Steps Actions. (https://jina.ai/news/submodular-optimization-for-diverse-query-generation-in-deepresearch/)
+15. [Experimental] Add auxiliary method optimization to the agent omni-tools-query pipeline based on [`submodular-optimization`] ("submodular optimization algorithm") to improve reQuery query effectiveness when using various external query tools; this auxiliary pipeline uses "submodular optimization algorithms" to optimize query selection, generate diversified tool search query inputs, perform effect evaluation, and return ReAct Agent action callbacks to help the Agent observe query result optimization effects in order to continuously iterate towards retrieval goals in subsequent Steps Actions. (https://jina.ai/news/submodular-optimization-for-diverse-query-generation-in-deepresearch/)
 
 ## 3. 🚀 Quick Start (CLI & FastAPI)
 
@@ -191,11 +189,11 @@ make cli
 uv run python -m src.agents.cli
 
 # Run with specific agent mode
-python -m src.cli --agent-type react    # ReAct agent mode
-python -m src.cli --agent-type codact   # CodeAct agent mode
-python -m src.cli --agent-type manager  # Manager agent mode (v0.2.9)
+python -m src.cli --agent-type react    # ReAct DeepSearch agent mode (Baseline ToolCalling mode)
+python -m src.cli --agent-type codact   # CodeAct DeepSearch agent mode
+python -m src.cli --agent-type manager  # Manager multi-agent mode (v0.2.9)
 
-# Manager mode with research team
+# Manager multi-agent mode with research team
 python -m src.cli --agent-type manager --team research
 ```
 
@@ -216,7 +214,7 @@ uv run -- uvicorn src.agents.main:app --reload
 
 **API Endpoints:**
 
-*   `POST /run_react_agent`: Runs the React agent.
+*   `POST /run_codact_agent`: Runs the CodeAct DeepSearch agent.
 *   `POST /run_deepsearch_agent`: Runs the agent configured by `service.deepsearch_agent_mode` in `config.toml` (or `DEEPSEARCH_AGENT_MODE` env var).
 *   `GET /`: API info and health check.
 
@@ -232,30 +230,53 @@ curl -X POST http://localhost:8000/run_deepsearch_agent \
 
 ### (3) Using the Web API v2
 
-The Web API v2 provides real-time WebSocket streaming for web frontend integration with a simplified Gradio message pass-through architecture. This major refactoring (v0.3.2) replaced the complex event-driven system with a clean, maintainable design that leverages smolagents' proven streaming infrastructure.
+The Web API v2 provides real-time WebSocket streaming for web frontend integration. This major refactoring (v0.3.2) delivers a clean, maintainable architecture that processes agent events directly through the `web_ui.py` module.
+
+**Architecture Overview:**
+```
+Agent (React/CodeAct) → stream_agent_messages() → DSAgentMessageProcessor → WebSocket → Frontend
+```
 
 **Key Features:**
-- **Direct Message Pass-through**: Minimal transformation of Gradio ChatMessages to DSAgentRunMessage format
+- **Direct Event Processing**: Handles 4 main event types from smolagents:
+  - `PlanningStep`: Agent planning with strategy updates
+  - `ActionStep`: Tool execution with thoughts and results
+  - `FinalAnswerStep`: Structured final answers
+  - `ChatMessageStreamDelta`: Real-time streaming updates
+- **Metadata-Driven Routing**: Frontend components selected via message metadata
 - **Real-time Streaming**: Watch agent reasoning, tool execution, and results as they happen
 - **Session Management**: Multi-turn conversations with session isolation
-- **REST + WebSocket**: Complete API surface for frontend development
-- **OpenAPI Specification**: Full API documentation for easy integration
+- **Component Routing**: Messages routed to chat, webide, or terminal based on content
 
+**Quick Start:**
 ```javascript
 // Connect to WebSocket
 const ws = new WebSocket('ws://localhost:8000/api/v2/ws/my-session?agent_type=codact');
 
-// Handle incoming messages
+// Handle incoming messages with component routing
 ws.onmessage = (event) => {
   const message = JSON.parse(event.data);
-  console.log(`${message.role}: ${message.content}`);
+  
+  // Route based on metadata
+  if (message.metadata?.component === 'chat') {
+    // Display in chat (planning, thoughts, final answers)
+  } else if (message.metadata?.component === 'webide') {
+    // Show in code editor (Python execution)
+  } else if (message.metadata?.component === 'terminal') {
+    // Display in terminal (tool outputs, logs)
+  }
 };
 
 // Send query
 ws.send(JSON.stringify({type: 'query', query: 'Your question here'}));
 ```
 
-See `src/api/v2/README.md` for comprehensive documentation and `src/api/v2/examples/` for example implementations.
+**Message Format:**
+- Each `DSAgentRunMessage` includes routing metadata
+- Message types: planning_header, action_thought, tool_call, final_answer, etc.
+- Streaming support with initial → delta → final pattern
+
+See `src/api/v2/README.md` for comprehensive documentation, `src/api/v2/STREAM_EVENTS.md` for event flow details, and `src/api/v2/examples/` for example implementations.
 
 ### (4) Running the MCP Server (MCP Tools `deepsearch_tool`)
 
@@ -315,6 +336,97 @@ python -m src.main --enable-fastmcp --agent-type codact
 
 When run with `--enable-fastmcp`, the main API server mounts the FastMCP server at `/mcp-server` (default) for integrated operation.
 
+### (5) Frontend Development Quick Start
+
+DeepSearchAgents includes a modern web frontend built with Next.js that provides a rich interface for interacting with agents through the Web API v2.
+
+**Technology Stack:**
+- **Framework**: Next.js 15.3.3 with App Router
+- **UI Library**: React 19 with TypeScript
+- **Styling**: TailwindCSS with custom design tokens
+- **Components**: Radix UI primitives, Monaco Editor, XTerm.js
+- **Real-time**: WebSocket with automatic reconnection
+- **Rendering**: React Markdown with syntax highlighting
+
+**Setup Frontend Development Environment:**
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+# or
+yarn install
+
+# Create environment variables
+cp .env.example .env.local
+
+# Edit .env.local to set backend URLs
+# NEXT_PUBLIC_API_URL=http://localhost:8000
+# NEXT_PUBLIC_WS_URL=ws://localhost:8000
+```
+
+**Development Commands:**
+
+```bash
+# Start development server (http://localhost:3000)
+npm run dev
+
+# Build for production
+npm run build
+
+# Run production server
+npm run start
+
+# Run linting
+npm run lint
+```
+
+**Key Frontend Features:**
+- **Component-Based Routing**: Messages automatically routed to appropriate UI components
+- **Real-time Streaming**: See agent thoughts, actions, and results as they happen
+- **Rich UI Components**:
+  - `AgentChat`: Main chat interface with message grouping
+  - `ActionThoughtCard`: Displays agent reasoning (truncated to 60 chars)
+  - `PlanningCard`: Shows planning steps with badges
+  - `FinalAnswerDisplay`: Structured final answer rendering
+  - Code editor for Python execution
+  - Terminal for tool outputs
+- **Session Management**: Persistent sessions with conversation history
+- **Responsive Design**: Optimized for desktop and mobile
+
+**Frontend Integration Example:**
+
+```typescript
+// Using the WebSocket hook
+import { useWebSocket } from '@/hooks/use-websocket';
+
+function MyComponent() {
+  const { messages, sendMessage, isConnected } = useWebSocket({
+    sessionId: 'my-session',
+    agentType: 'codact'
+  });
+
+  const handleQuery = () => {
+    sendMessage({
+      type: 'query',
+      query: 'Search for latest AI developments'
+    });
+  };
+
+  return (
+    <div>
+      {messages.map(msg => (
+        <AgentChat key={msg.message_id} message={msg} />
+      ))}
+    </div>
+  );
+}
+```
+
+See `frontend/README-DeepSearchAgents.md` for comprehensive frontend documentation and development guidelines.
+
 ## 4. 🛠️ Architecture and Modules
 
 The core system architecture includes:
@@ -324,12 +436,33 @@ The core system architecture includes:
 3. **Agent Toolkit Collection (`src/tools/`)**: Functions that the agent can invoke (such as web search, reading URLs, etc.).
 4. **FastAPI Service (`src/api`)**: FastAPI service providing REST API related services.
 5. **CLI Interface (`src/cli.py`)**: Provides an interactive command-line interface with rich formatting.
-6. **Web API v2 (`src/api/v2/`)**: Real-time WebSocket API for web frontend integration.
+6. **Web API v2 (`src/api/v2/`)**: Real-time WebSocket API with direct agent event processing via `web_ui.py` and `DSAgentMessageProcessor`, transforming smolagents events into metadata-rich messages for frontend component routing.
 7. **MCP Server (`src/agents/servers/run_fastmcp.py`)**: FastMCP server providing MCP tools services with Streamable HTTP transport.
+
+### Web API v2 Architecture (v0.3.2.rc2)
+
+The Web API v2 features a streamlined architecture that processes AI agent long-running multi-step task events directly:
+
+**Event Processing Pipeline:**
+```
+smolagents Events → web_ui.py → DSAgentMessageProcessor → WebSocket → Frontend Components
+```
+
+**Key Components:**
+- **`web_ui.py`**: Core event processor handling 4 main event types from smolagents
+- **`DSAgentMessageProcessor`**: Wraps processed events into DSAgentRunMessage format
+- **Session Manager**: Handles multi-session support and agent lifecycle
+- **WebSocket Endpoint**: Streams messages with extensive metadata for frontend routing
+
+**Event Type Mapping:**
+- **PlanningStep** → [InitialPlanning&UpdatePlanning] Multiple messages: planning_header, planning_content, planning_footer
+- **ActionStep** → [ActionReasoning&CodeGeneration&SandboxExecution&Observation] Multiple messages: action_header, action_thought, tool_call, execution_logs
+- **FinalAnswerStep** → [FinalAnswerStructuredOutput] final_answer with structured data
+- **ChatMessageStreamDelta** → Streaming deltas for real-time updates
 
 *Architecture diagram updated for version `v0.3.2.rc2`*
 
-See [docs/architecture-diagram/architecture-diagram-v0.3.2.rc2.md](docs/architecture-diagram/architecture-diagram-v0.3.2.rc2.md) for the latest architecture diagram details.
+See [docs/architecture-diagram/architecture-diagram-v0.3.2.rc2.mmd](docs/architecture-diagram/architecture-diagram-v0.3.2.rc2.mmd) for the latest architecture diagram details.
 
 ![DeepSearchAgent System Architecture Diagram v0.3.2.rc2](docs/architecture-diagram/architecture-diagram-v0.3.2.rc2.svg)
 
@@ -351,7 +484,7 @@ content = read_url(results[0]["link"])
 final_answer("The result is...")
 ```
 
-### ReAct Mode (Tool Calling)
+### ReAct (Function Calling Tool) Baseline Mode
 
 In ReAct mode, the agent operates in the classic reasoning+acting manner, with actions executed by invoking predefined tools. During its reasoning process, the LLM generates structured "action" outputs that specify which tool to use and with what parameters.
 
@@ -504,56 +637,34 @@ The enhanced toolchain now offers:
 - **Real-Time Data**: Access to real-time social media content via xAI integration.
 - **Code Repository Understanding**: AI-driven code repository analysis through DeepWiki integration.
 
-## 7. 📺 Streaming and Rendering Features
+## 7. 💡 Theoretical Foundations
 
-In version >= `v0.2.6.dev`, DeepSearchAgent now includes comprehensive streaming and rendering capabilities (CLI & GUI):
+### CodeAct Executable Code Agents | CodeAct Executable Code Agents
 
-### Streaming Output
+CodeAct refers to a method where agents generate and execute actions in the form of code. The core idea is that at each decision step, the model directly produces executable code, which is run to invoke tools or perform computations.
 
-- **Real-time Responses**: See the agent's thinking process and results as they occur
-- **Token-by-token Generation**: Watch as the answer is built piece by piece
-- **Progress Visualization**: Track search progress, visited URLs, and query execution
-- **Planning Steps Display**: View periodic planning steps as the agent reassesses its strategy
+Compared to static instructions, using code as an action representation offers greater expressive power and flexibility: it can combine multiple tool calls, apply programming logic to handle complex data structures, and even reuse previously defined functions, greatly expanding the agent’s action space.
 
-### Rich Rendering
+### Periodic Planning and Adaptive Search | Periodic Planning and Adaptive Search
 
-- **JSON Structure Detection**: Automatically identifies and parses JSON outputs
-- **Markdown Formatting**: Renders Markdown content with proper formatting
-- **Structured Reports**: Creates well-organized panels for easy information consumption
-- **Source Attribution**: Clearly displays reference sources used in the final answer
-- **Statistics Display**: Shows token counts, generation speed, and search metrics
+The agent mode implements periodic planning intervals, allowing the agent to reassess its strategy every N steps. This enables more efficient search paths by:
+- Evaluating progress relative to the original task
+- Identifying gaps in information gathering
+- Adjusting search direction based on discovered content
+- Prioritizing new search avenues when current approaches are ineffective
 
-### CLI Experience Enhancements
+### References
 
-- **Interactive Controls**: Use slash commands like `/exit`, `/quit`, and `/multiline`
-- **Error Handling**: Robust error recovery keeps the session running even if issues occur
-- **Task Display Management**: Prevents duplicate task displays in streaming mode
-- **Format Auto-detection**: Recognizes and renders final outputs in the most appropriate format
+> - [ReAct: Synergizing Reasoning and Acting in Language Models](https://react-lm.github.io/) `arXiv:2210.03629v3`
+> - [Executable Code Actions Elicit Better LLM Agents](https://arxiv.org/html/2402.01030v4) `arXiv:2402.01030v4`
+> - [DynaSaur: Large Language Agents Beyond Predefined Actions](https://arxiv.org/html/2411.01747v1) `arXiv:2411.01747v1`
+> - [LLMCompiler: An LLM Compiler for Parallel Function Calling](https://arxiv.org/abs/2312.04511v3) `arXiv:2312.04511v3`
+> - [ReWOO: Decoupling Reasoning from Observations for Efficient Augmented Language Models](https://arxiv.org/abs/2305.18323) `arXiv:2305.18323v1`
+> - [smolagents.agents.CodeAgent](https://github.com/huggingface/smolagents/blob/7983378593da4b393a95335aad8431f6c9d2ac23/src/smolagents/agents.py)
+> - [Jina AI DeepResearch repository](https://github.com/jina-ai/node-DeepResearch)
+> - [A Practical Guide to Implementing DeepSearch/DeepResearch](https://jina.ai/news/a-practical-guide-to-implementing-deepsearch-deepresearch/)
 
-## 8. 💡 Theoretical Foundations
-
-### ReAct Paradigm Principles
-
-ReAct (Reasoning + Acting) is a paradigm that enables a language model to produce both a chain-of-thought reasoning trace and action directives interleaved. This framework interweaves "reasoning" with "acting": the model thinks in natural language (recording its thought process) and also produces concrete actions (such as searching or reading) to interact with external tools or the environment.
-
-Studies have shown that this tight integration of reasoning and acting outperforms reasoning-only or acting-only methods, effectively reducing hallucinations and error propagation while improving interpretability and controllability of the problem-solving process.
-
-### CodeAct Executable Code Agents
-
-CodeAct refers to approaches that have the agent generate and execute actions in the form of code. The core idea is that at each decision step, the model directly produces executable code, and by running this code the agent invokes tools or performs computations.
-
-Compared to static instructions, code as an action representation offers greater expressiveness and flexibility: it can combine multiple tool calls, use programming logic to handle complex data structures, and even reuse previously defined functions, vastly expanding the agent's action space.
-
-### Periodic Planning and Adaptive Search
-
-Both agent modes implement periodic planning intervals, allowing agents to reassess their strategy every N steps. This enables more effective search paths by:
-
-- Evaluating progress against the original task
-- Identifying gaps in information collection
-- Adjusting search directions based on what's been discovered
-- Prioritizing new search avenues when current ones become less productive
-
-## 9. 📦 Installation
+## 8. 📦 Installation
 
 ### Requirements
 
@@ -565,16 +676,17 @@ Both agent modes implement periodic planning intervals, allowing agents to reass
   - `JINA_API_KEY` (for content processing via `read_url`, `embed_texts`, `rerank_texts`)
   - `WOLFRAM_ALPHA_APP_ID` (optional, for computational queries via `wolfram`)
   - `LITELLM_BASE_URL` (optional, if using a custom LiteLLM endpoint)
+  - etc. Other Agent Tools may require additional API keys.
 
-## 10. 🤝 Contributing
+## 9. 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## 11. 📄 License
+## 10. 📄 License
 
 This project is licensed under the MIT License
 
-## 12. 📝 Acknowledgements Open Source Projects
+## 11. 📝 Acknowledgements Open Source Projects
 
 Special thanks to the following open-source projects (as well as other equally important projects not listed), "May the Force be with you":
 
@@ -586,18 +698,7 @@ Special thanks to the following open-source projects (as well as other equally i
 - [Langchain](https://github.com/langchain-ai/langchain)
 - [DeepWiki MCP](https://docs.devin.ai/work-with-devin/deepwiki-mcp)
 
-## 13. Theoretical Foundations & References
-
-> - [ReAct: Synergizing Reasoning and Acting in Language Models](https://react-lm.github.io/) `arXiv:2210.03629v3`
-> - [Executable Code Actions Elicit Better LLM Agents](https://arxiv.org/html/2402.01030v4) `arXiv:2402.01030v4`
-> - [DynaSaur: Large Language Agents Beyond Predefined Actions](https://arxiv.org/html/2411.01747v1) `arXiv:2411.01747v1`
-> - [LLMCompiler: An LLM Compiler for Parallel Function Calling](https://arxiv.org/abs/2312.04511v3) `arXiv:2312.04511v3`
-> - [ReWOO: Decoupling Reasoning from Observations for Efficient Augmented Language Models](https://arxiv.org/abs/2305.18323) `arXiv:2305.18323v1`
-> - [smolagents.agents.CodeAgent](https://github.com/huggingface/smolagents/blob/7983378593da4b393a95335aad8431f6c9d2ac23/src/smolagents/agents.py)
-> - [Jina AI DeepResearch repository](https://github.com/jina-ai/node-DeepResearch)
-> - [A Practical Guide to Implementing DeepSearch/DeepResearch](https://jina.ai/news/a-practical-guide-to-implementing-deepsearch-deepresearch/)
-
-## 14. 👨‍💻 AI Coder Pair Programming & 🖖 VIBE Programming Best Practices
+## 12. 👨‍💻 AI Coder Pair Programming Assistance & 🖖 VIBE Best Practices Sharing for Programming
 
 The DeepSearchAgent project is designed with modern AI engineers and human engineers collaborating in software development and coding workflows in mind. We have integrated special repository workspace rule files (`.cursor/rules/*.mdc`) to facilitate AI-assisted development and ensure consistency within the codebase.
 
@@ -678,7 +779,7 @@ I need to add new configuration options for depth search Tokens budget & index d
 
 As the project evolves, we encourage contributors to update and expand these rules files. If you're adding a new major component or changing existing architecture, please update the relevant `.mdc` files to reflect these changes. This helps maintain the documentation as a living resource that accurately represents the current state of the codebase.
 
-## Project Structure
+## 13. Project Structure
 
 ```tree
 src/
@@ -720,18 +821,20 @@ src/
 │   │   │   └── test_simple_agent.py      # Agent integration example
 │   │   ├── __init__.py
 │   │   ├── endpoints.py      # WebSocket and REST endpoints
-│   │   ├── gradio_passthrough_processor.py  # Core pass-through logic
+│   │   ├── web_ui.py         # Core event processing and routing
+│   │   ├── ds_agent_message_processor.py  # Message processor wrapper
 │   │   ├── main.py           # Standalone API server
 │   │   ├── models.py         # Pydantic data models
 │   │   ├── openapi.yaml      # OpenAPI specification
 │   │   ├── README.md         # Comprehensive v2 documentation
+│   │   ├── STREAM_EVENTS.md  # Event flow documentation
 │   │   ├── session.py        # Session management
 │   │   └── WebAPIv2-GUI-Interface-API-Docs.md  # Frontend integration guide
 │   ├── __init__.py
 │   └── api.py                # Main API configuration
 ├── core/                     # Core system components
 │   ├── chunk/                # Text chunking components
-│   │   └── segmenter.py      # Jina AI Segmenter implementation
+│   │   └── segmenter.py      # Text Chunker
 │   ├── config/               # Configuration handling
 │   │   ├── __init__.py
 │   │   └── settings.py       # Settings management and configuration loading
@@ -739,15 +842,15 @@ src/
 │   │   ├── __init__.py
 │   │   ├── base_ranker.py    # Base ranking interface
 │   │   ├── chunker.py        # Text chunking utilities
-│   │   ├── jina_embedder.py  # Jina AI embedding implementation
-│   │   └── jina_reranker.py  # Jina AI reranking implementation
+│   │   ├── jina_embedder.py  # Jina AI Token Embedder
+│   │   └── jina_reranker.py  # Jina AI Reranker
 │   ├── scraping/             # Web content scraping (v0.3.1 refactored)
 │   │   ├── __init__.py
 │   │   ├── base.py           # Base scraper abstraction
 │   │   ├── result.py         # Scraping result data structures
 │   │   ├── scrape_url.py     # Main scraping orchestrator
-│   │   ├── scraper_firecrawl.py  # Firecrawl scraper implementation
-│   │   ├── scraper_jinareader.py # JinaReader scraper implementation
+│   │   ├── scraper_firecrawl.py  # Firecrawl Scraper
+│   │   ├── scraper_jinareader.py # JinaReader Scraper
 │   │   ├── scraper_xcom.py   # X.com (Twitter) specialized scraper
 │   │   └── utils.py          # Scraping utility functions
 │   ├── search_engines/       # Search engine integrations (v0.3.1 expanded)
@@ -756,50 +859,54 @@ src/
 │   │   │   └── search_token_counter.py  # Token counting utilities
 │   │   ├── __init__.py
 │   │   ├── base.py           # Base search client abstraction
-│   │   ├── search_exa.py     # Exa neural search implementation
-│   │   ├── search_hybrid.py  # Hybrid search aggregator
-│   │   ├── search_jina.py    # Jina AI search implementation
+│   │   ├── search_exa.py     # Exa Search
+│   │   ├── search_hybrid.py  # Hybrid Search Aggregator
+│   │   ├── search_jina.py    # Jina AI Search
 │   │   ├── search_serper.py  # Serper API (Google) search engine
 │   │   ├── search_xcom.py    # X.com search base
 │   │   └── search_xcom_sdk.py # X.com SDK implementation
 │   ├── github_toolkit/       # GitHub integration tools (v0.3.1)
 │   │   ├── __init__.py
-│   │   └── deepwiki.py       # DeepWiki MCP client wrapper
+│   │   └── deepwiki.py       # DeepWiki Remote MCP client wrapper
 │   ├── xcom_toolkit/         # X.com toolkit (v0.3.1)  
 │   │   ├── __init__.py
 │   │   └── xai_live_search.py # xAI Live Search client
 │   └── __init__.py
-├── tools/                    # Tool implementations (v0.3.1 expanded)
+├── tools/                    # Agent Tools Collection (v0.3.1 expanded)
 │   ├── __init__.py
 │   ├── chunk.py              # Text chunking tool
 │   ├── embed.py              # Text embedding tool
-│   ├── final_answer.py       # Final answer generation tool
+│   ├── final_answer.py       # Final answer formatter tool
 │   ├── github_qa.py          # GitHub repository Q&A tool (v0.3.1)
-│   ├── readurl.py            # Standard URL content reading tool
+│   ├── readurl.py            # Generic URL content reading tool
 │   ├── rerank.py             # Content reranking tool
-│   ├── search.py             # Multi-engine web search tool
+│   ├── search.py             # Multi-engine Hybrid web search tool
 │   ├── search_fast.py        # Fast search tool (v0.3.1)
 │   ├── search_helpers.py     # Search helper utilities (v0.3.1)
 │   ├── toolbox.py            # Tool management and registry system
-│   ├── wolfram.py            # Wolfram Alpha computational tool
+│   ├── wolfram.py            # Symbolic computational tool
 │   ├── xcom_qa.py            # X.com Deep Q&A tool (v0.3.1)
 │   └── xcom_readurl.py       # X.com (Twitter) URL reading tool
-├── cli.py                    # Command-line interface
-└── main.py                   # FastAPI application entry point
+├── cli.py                    # Command-line interface version
+└── main.py                   # FastAPI main entry
+
+frontend/                     # Next.js web frontend (v0.3.2)
+├── app/                      # Next.js App Router
+│   ├── api/v2/sessions/      # Frontend API routes
+│   ├── page.tsx              # Main entry page
+│   └── layout.tsx            # Root layout
+├── components/               # React components
+│   ├── agent-chat.tsx        # Main chat interface
+│   ├── action-thought-card.tsx  # Agent reasoning display
+│   ├── planning-card.tsx     # Planning step display
+│   ├── final-answer-display.tsx # Structured answers
+│   ├── code-editor.tsx       # Monaco editor wrapper
+│   ├── terminal.tsx          # XTerm.js terminal
+│   └── ui/                   # Radix UI components
+├── hooks/                    # React hooks
+│   ├── use-websocket.tsx     # WebSocket connection
+│   └── use-session.tsx       # Session management
+├── typings/                  # TypeScript types
+│   └── dsagent.ts            # DSAgentRunMessage types
+└── package.json              # Frontend dependencies
 ```
-
-### Key Directory Descriptions
-
-- **`agents/`**: Core agent implementations with ReAct, CodeAct, and Manager paradigms, including prompt templates and UI components
-- **`api/`**: FastAPI service infrastructure with versioned endpoints and health checks
-- **`core/`**: Fundamental system components including configuration, search engines, content processing, and scraping capabilities
-- **`tools/`**: Complete toolchain with unified toolbox management, supporting both traditional web search and X.com social media integration
-- **`src/` Root directory**: Application entry points for different interface modes (CLI, FastAPI, Web API v2)
-
-## Known Issues (v0.2.9.dev)
-
-1. **CLI Streaming Display**: There are known issues with streaming output rendering repeatedly in the terminal. A fix has been identified and will be applied in the next update.
-
-2. **Manager Agent Delegation**: Manager agent invocation for sub-agents may occasionally fail. Root cause analysis is ongoing to improve reliability.
-
-These issues are being actively addressed and do not affect the core functionality of the agents.

@@ -8,6 +8,8 @@ import { useAppContext } from "@/context/app-context";
 import { DSAgentRunMessage } from "@/types/api.types";
 import Markdown from "@/components/markdown";
 import FinalAnswer from "@/components/final-answer";
+import FinalAnswerDisplay from "@/components/final-answer-display";
+import ActionThoughtCard from "@/components/action-thought-card";
 import { 
   isThinkingMessage, 
   isFinalAnswer, 
@@ -111,6 +113,28 @@ function MessageItem({ message }: { message: DSAgentRunMessage }) {
   const toolName = getToolName(message.metadata);
   const finalAnswerContent = isFinal ? extractFinalAnswerContent(message.content) : null;
   
+  // Debug final answer rendering
+  if (isFinal) {
+    console.log("[AgentChat] Final answer detected:", {
+      has_structured_data: message.metadata?.has_structured_data,
+      answer_format: message.metadata?.answer_format,
+      content_empty: !message.content,
+      finalAnswerContent,
+      metadata: message.metadata
+    });
+  }
+  
+  // Debug action thought rendering
+  if (isActionThought) {
+    console.log("[AgentChat] Action thought detected:", {
+      message_type: message.metadata?.message_type,
+      thoughts_content: message.metadata?.thoughts_content,
+      content_length: message.content?.length,
+      step_number: message.step_number,
+      metadata: message.metadata
+    });
+  }
+  
   // Use metadata-based routing - trust the backend's component field
   const messageComponent = getMessageComponent(message.metadata);
   
@@ -123,6 +147,37 @@ function MessageItem({ message }: { message: DSAgentRunMessage }) {
   if (message.content.includes('Error in code parsing') || 
       message.content.includes('Executing parsed code')) {
     return null;
+  }
+  
+  // Handle planning header messages (badges)
+  if (message.metadata?.message_type === 'planning_header') {
+    const planningType = message.metadata.planning_type || 'initial';
+    const badgeText = planningType === 'initial' ? 'Initial Plan' : 'Updated Plan';
+    const badgeClass = planningType === 'initial' ? 'planning-badge-initial' : 'planning-badge-update';
+    
+    console.log('[AgentChat] Rendering planning badge:', {
+      planningType,
+      badgeText,
+      badgeClass,
+      metadata: message.metadata
+    });
+    
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-start gap-3"
+      >
+        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+          <Bot className="w-5 h-5 text-primary" />
+        </div>
+        <div className="flex-1">
+          <span className={`planning-badge ${badgeClass}`}>
+            {badgeText}
+          </span>
+        </div>
+      </motion.div>
+    );
   }
   
   // Handle empty planning messages with a fallback display
@@ -207,8 +262,28 @@ function MessageItem({ message }: { message: DSAgentRunMessage }) {
         )}
 
         {/* Message bubble */}
-        {isFinal && finalAnswerContent ? (
-          <FinalAnswer content={finalAnswerContent} />
+        {message.metadata?.message_type === 'action_thought' || isActionThought ? (
+          // Use ActionThoughtCard for action thoughts
+          <ActionThoughtCard
+            content={message.content || ""}
+            stepNumber={message.step_number}
+            metadata={message.metadata}
+            className="w-full"
+          />
+        ) : isFinal ? (
+          // Check if we have structured data in metadata
+          message.metadata?.has_structured_data ? (
+            <FinalAnswerDisplay 
+              content={message.content || ""} 
+              metadata={message.metadata}
+              className="w-full" 
+            />
+          ) : finalAnswerContent ? (
+            <FinalAnswer content={finalAnswerContent} />
+          ) : (
+            // Fallback for final answer with no content
+            <FinalAnswer content="Processing final answer..." />
+          )
         ) : (
           <div className={`inline-block max-w-[80%] ${
             isUser 

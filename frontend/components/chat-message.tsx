@@ -15,7 +15,11 @@ import Action from "@/components/action";
 import Markdown from "@/components/markdown";
 import QuestionInput from "@/components/question-input";
 import FinalAnswerDisplay from "@/components/final-answer-display";
+import PlanningCard from "@/components/planning-card";
+import ActionThoughtCard from "@/components/action-thought-card";
+import ToolCallBadge from "@/components/tool-call-badge";
 import { ActionStep, Message } from "@/typings/agent";
+import { DSAgentRunMessage } from "@/types/api.types";
 import { getFileIconAndColor } from "@/utils/file-utils";
 import { isFinalAnswer } from "@/utils/extractors";
 import { Button } from "./ui/button";
@@ -54,22 +58,181 @@ const ChatMessage = ({
   connectWebSocket,
   handleReviewSession,
 }: ChatMessageProps) => {
-  const { state, dispatch } = useAppContext();
+  const { state } = useAppContext();
   const [showQuestionInput, setShowQuestionInput] = useState(false);
   const [pendingFilesCount, setPendingFilesCount] = useState(0);
   const [userHasScrolledUp, setUserHasScrolledUp] = useState(false);
+  
+  // Helper function to render assistant message content
+  const renderAssistantMessage = (message: DSAgentRunMessage | Message) => {
+    // Ensure we're working with DSAgentRunMessage
+    const dsMessage = message as DSAgentRunMessage;
+    
+    // Safely access metadata with fallback
+    const metadata = dsMessage.metadata || {};
+    const messageType = metadata.message_type;
+    
+    // Comprehensive diagnostic logging
+    console.log("[renderAssistantMessage] Processing:", {
+      message_id: dsMessage.message_id,
+      hasMetadata: !!dsMessage.metadata,
+      messageType: messageType,
+      contentLength: message.content?.length || 0,
+      contentPreview: message.content?.substring(0, 50),
+      role: message.role
+    });
+    
+    // Additional check for action_thought
+    if (messageType === "action_thought" || message.content?.startsWith("Thought:")) {
+      console.log("[ACTION_THOUGHT DETECTED]", {
+        messageType,
+        contentStarts: message.content?.substring(0, 50),
+        willUseActionThoughtCard: true
+      });
+    }
+    if (messageType === "planning_header") {
+      console.log("[Planning Header Debug]", {
+        planning_type: metadata.planning_type,
+        content: message.content,
+        full_metadata: metadata
+      });
+      
+      const planningType = metadata.planning_type || "initial";
+      const badgeText = planningType === "initial" ? "Initial Plan" : "Updated Plan";
+      const badgeClass = planningType === "initial" ? "planning-badge-initial" : "planning-badge-update";
+      
+      console.log("[Planning Badge] Rendering with:", {
+        planningType,
+        badgeText,
+        badgeClass,
+        fullClassName: `planning-badge ${badgeClass}`
+      });
+      
+      return (
+        <div className="w-full">
+          <span className={`planning-badge ${badgeClass}`}>
+            {badgeText}
+          </span>
+          {message.content && (
+            <div className="mt-2">
+              <Markdown>{message.content}</Markdown>
+            </div>
+          )}
+        </div>
+      );
+    }
+    
+    // Final answer
+    if (isFinalAnswer(metadata, message.content)) {
+      console.log("[Chat Message] Final answer detected:", {
+        metadata: metadata,
+        content_preview: message.content?.substring(0, 100) + "...",
+        content_empty: !message.content || message.content === "",
+        has_structured_data: metadata?.has_structured_data,
+        answer_format: metadata?.answer_format,
+        answer_title: metadata?.answer_title,
+        answer_content_preview: metadata?.answer_content?.substring(0, 100) + "..."
+      });
+      console.log("[Chat Message] Rendering FinalAnswerDisplay component");
+      return <FinalAnswerDisplay 
+        content={message.content || ""} 
+        metadata={metadata}
+        className="w-full" 
+      />;
+    }
+    
+    // Planning content
+    if (messageType === "planning_content") {
+      return (
+        <PlanningCard
+          content={message.content || ""}
+          planningType={metadata.planning_type || "initial"}
+          stepNumber={dsMessage.step_number}
+          className="w-full"
+        />
+      );
+    }
+    
+    // Tool call badge
+    if (messageType === "tool_call") {
+      console.log("[Tool Call Badge]", {
+        tool_name: metadata.tool_name,
+        tool_id: metadata.tool_id,
+        args_summary: metadata.tool_args_summary
+      });
+      return (
+        <ToolCallBadge
+          toolName={metadata.tool_name || "unknown"}
+          toolId={metadata.tool_id}
+          argsSummary={metadata.tool_args_summary}
+          isPythonInterpreter={metadata.is_python_interpreter}
+          className="mb-2"
+        />
+      );
+    }
+    
+    // Action thought
+    if (messageType === "action_thought") {
+      console.log("[Action Thought Debug]", {
+        content_length: message.content?.length,
+        content_preview: message.content?.substring(0, 50) + "...",
+        metadata: metadata
+      });
+      return (
+        <ActionThoughtCard
+          content={message.content || ""}
+          stepNumber={dsMessage.step_number}
+          className="w-full"
+        />
+      );
+    }
+    
+    // Additional check for Thought: prefix
+    if (message.content?.startsWith("Thought:")) {
+      console.log("[Thought Message Fallback]", {
+        content_preview: message.content?.substring(0, 100) + "...",
+        metadata: metadata,
+        message_type: messageType
+      });
+      // Use ActionThoughtCard for these messages too
+      return (
+        <ActionThoughtCard
+          content={message.content || ""}
+          stepNumber={dsMessage.step_number}
+          className="w-full"
+        />
+      );
+    }
+    
+    // Additional check for final answer JSON structure
+    if (message.content && message.content.includes('"title"') && message.content.includes('"content"') && message.content.includes('"sources"')) {
+      console.log("[Final Answer JSON Fallback]", {
+        content_preview: message.content?.substring(0, 100) + "...",
+        metadata: metadata
+      });
+      // Force use of FinalAnswerDisplay for JSON that looks like final answer
+      return <FinalAnswerDisplay 
+        content={message.content || ""} 
+        metadata={metadata}
+        className="w-full" 
+      />;
+    }
+    
+    // Default markdown rendering
+    return <Markdown>{message.content}</Markdown>;
+  };
 
   const handleFilesChange = (count: number) => {
     setPendingFilesCount(count);
   };
 
   useEffect(() => {
-    if (isReplayMode && !state.isLoading && state.messages.length > 0) {
+    if (isReplayMode && !state.isGenerating && state.messages.length > 0) {
       // If we're in replay mode, loading is complete, and we have messages,
       // we can assume all events have been processed
       setShowQuestionInput(true);
     }
-  }, [isReplayMode, state.isLoading, state.messages.length]);
+  }, [isReplayMode, state.isGenerating, state.messages.length]);
 
   // Add scroll event listener to detect manual scrolling
   useEffect(() => {
@@ -115,12 +278,13 @@ const ChatMessage = ({
     const userMessages = allMessages.filter((msg) => msg.role === "user");
     return (
       userMessages.length > 0 &&
-      userMessages[userMessages.length - 1].message_id === message.message_id
+      userMessages[userMessages.length - 1].id === message.id
     );
   };
 
-  const handleSetEditingMessage = (message?: Message) => {
-    dispatch({ type: "SET_EDITING_MESSAGE", payload: message });
+  const handleSetEditingMessage = () => {
+    // Removed SET_EDITING_MESSAGE action as it's not in v2 API
+    // dispatch({ type: "SET_EDITING_MESSAGE", payload: message });
   };
 
   useEffect(() => {
@@ -146,14 +310,44 @@ const ChatMessage = ({
         {state.messages
           .filter((message) => {
             // Only show messages that are meant for chat or have no component specified
-            const component = message.metadata?.component;
+            const dsMsg = message as DSAgentRunMessage;
+            const component = dsMsg.metadata?.component;
             
-            // Debug logging
-            if (component && component !== "chat") {
-              console.log(`[ChatMessage] Filtering out message with component: ${component}`, {
-                message_id: message.message_id,
+            // Debug logging for planning messages
+            if (dsMsg.metadata?.message_type === "planning_header" || 
+                dsMsg.metadata?.message_type === "planning_content") {
+              console.log(`[Planning Message]`, {
+                message_type: dsMsg.metadata.message_type,
+                planning_type: dsMsg.metadata.planning_type,
                 content_preview: message.content?.substring(0, 50),
-                metadata: message.metadata
+                step_number: dsMsg.step_number,
+                full_metadata: dsMsg.metadata
+              });
+            }
+            
+            // Debug logging for thoughts
+            if (dsMsg.metadata?.message_type === "action_thought") {
+              console.log(`[Action Thought FILTER]`, {
+                message_id: dsMsg.message_id,
+                content: message.content,
+                content_length: message.content?.length,
+                metadata: dsMsg.metadata,
+                component: component,
+                willBeShown: !component || component === "chat"
+              });
+            }
+            
+            // Debug logging for final answers
+            if (dsMsg.metadata?.message_type === "final_answer" || dsMsg.metadata?.is_final_answer) {
+              console.log(`[Final Answer FILTER]`, {
+                message_id: dsMsg.message_id,
+                message_type: dsMsg.metadata?.message_type,
+                is_final_answer: dsMsg.metadata?.is_final_answer,
+                component: component,
+                content_empty: !message.content || message.content === "",
+                has_structured_data: dsMsg.metadata?.has_structured_data,
+                willBeShown: !component || component === "chat",
+                full_metadata: dsMsg.metadata
               });
             }
             
@@ -300,12 +494,34 @@ const ChatMessage = ({
               </div>
             )}
 
-            {message.content && (
+            {(() => {
+              const hasContent = !!message.content;
+              const isPlanningHeader = (message as DSAgentRunMessage).metadata?.message_type === "planning_header";
+              const isActionThought = (message as DSAgentRunMessage).metadata?.message_type === "action_thought";
+              const isFinalAnswerMessage = (message as DSAgentRunMessage).metadata?.message_type === "final_answer" || (message as DSAgentRunMessage).metadata?.is_final_answer;
+              const shouldRender = hasContent || isPlanningHeader || isActionThought || isFinalAnswerMessage;
+              
+              // Debug all assistant messages
+              if (message.role === "assistant") {
+                console.log("[RENDER CONDITION CHECK]", {
+                  message_id: (message as DSAgentRunMessage).message_id,
+                  message_type: (message as DSAgentRunMessage).metadata?.message_type,
+                  hasContent,
+                  isPlanningHeader,
+                  isActionThought,
+                  isFinalAnswerMessage,
+                  shouldRender,
+                  content: message.content?.substring(0, 50) || "EMPTY"
+                });
+              }
+              
+              return shouldRender;
+            })() && (
               <div
                 className={`inline-block text-left rounded-lg ${
                   message.role === "user"
                     ? "bg-[#35363a] p-3 max-w-[80%] text-white border border-[#3A3B3F] shadow-sm whitespace-pre-wrap"
-                    : "text-white"
+                    : "text-white w-full"
                 } ${
                   state.editingMessage?.message_id === message.message_id
                     ? "w-full max-w-none"
@@ -315,12 +531,8 @@ const ChatMessage = ({
                     ? "agent-thinking w-full"
                     : ""
                 } ${
-                  message.metadata?.message_type === "planning_content"
-                    ? "bg-blue-50/5 border-l-4 border-blue-500/30 pl-4 ml-2 w-full"
-                    : ""
-                } ${
                   message.metadata?.message_type === "planning_header"
-                    ? "font-semibold text-blue-400"
+                    ? "font-semibold text-blue-400 w-full"
                     : ""
                 }`}
               >
@@ -354,12 +566,7 @@ const ChatMessage = ({
                     )}
                   </div>
                 ) : (
-                  // Check if this is a final answer message
-                  isFinalAnswer(message.metadata, message.content) ? (
-                    <FinalAnswerDisplay content={message.content} className="w-full" />
-                  ) : (
-                    <Markdown>{message.content}</Markdown>
-                  )
+                  renderAssistantMessage(message)
                 )}
               </div>
             )}

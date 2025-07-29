@@ -1,0 +1,16 @@
+{
+  "name": "deepsearchagents-diagrams",
+  "version": "1.0.0",
+  "description": "Tools for generating DeepSearchAgents architecture diagrams",
+  "private": true,
+  "scripts": {
+    "generate": "mmdc -i architecture-diagram-v0.3.2.rc2.md -o architecture-diagram-v0.3.2.rc2.svg -c mermaid.config.json",
+    "generate:png": "mmdc -i architecture-diagram-v0.3.2.rc2.md -o architecture-diagram-v0.3.2.rc2.png -c mermaid.config.json",
+    "generate:all": "npm run generate && npm run generate:png",
+    "watch": "nodemon --watch architecture-diagram-v0.3.2.rc2.md --exec npm run generate:all"
+  },
+  "devDependencies": {
+    "@mermaid-js/mermaid-cli": "^11.6.0",
+    "nodemon": "^3.1.0"
+  }
+}

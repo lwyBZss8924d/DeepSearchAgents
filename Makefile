@@ -30,3 +30,15 @@ cli-react:
 cli-codact:
 	@echo "Starting DeepSearchAgent CLI (CodeAct mode)..."
 	uv run python -m src.cli --agent-type codact --no-interactive
+
+# Generate architecture diagrams
+.PHONY: diagrams
+diagrams:
+	@echo "Generating architecture diagrams..."
+	@cd docs/architecture-diagram && python generate_diagrams.py
+
+# Watch and regenerate diagrams on changes
+.PHONY: diagrams-watch
+diagrams-watch:
+	@echo "Watching for diagram changes..."
+	@cd docs/architecture-diagram && npm run watch

@@ -2,37 +2,80 @@
 
 import { useState, useEffect } from "react";
 import Markdown from "@/components/markdown";
-import { extractFinalAnswerContent, extractFinalAnswerMetadata } from "@/utils/extractors";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { CheckCircle2, Link2, FileText } from "lucide-react";
+import { CheckCircle2, Link2 } from "lucide-react";
 
 interface FinalAnswerDisplayProps {
   content: string;
+  metadata?: Record<string, unknown>;  // Metadata from backend with structured data
   className?: string;
 }
 
-export default function FinalAnswerDisplay({ content, className = "" }: FinalAnswerDisplayProps) {
+export default function FinalAnswerDisplay({ content, metadata, className = "" }: FinalAnswerDisplayProps) {
   const [title, setTitle] = useState<string>("Final Answer");
   const [answerContent, setAnswerContent] = useState<string>("");
   const [sources, setSources] = useState<string[]>([]);
   
   useEffect(() => {
-    // Extract structured content from the message
-    const extractedContent = extractFinalAnswerContent(content);
-    const metadata = extractFinalAnswerMetadata(content);
+    console.log("[FinalAnswerDisplay] Component mounted/updated");
+    console.log("[FinalAnswerDisplay] Props received:", {
+      content: content?.substring(0, 100) + "...",
+      contentLength: content?.length || 0,
+      contentEmpty: !content || content === "",
+      metadata,
+      hasStructuredData: metadata?.has_structured_data,
+      answerFormat: metadata?.answer_format,
+      metadataKeys: metadata ? Object.keys(metadata) : []
+    });
     
-    if (extractedContent) {
-      setAnswerContent(extractedContent);
-    } else {
-      // Fallback to raw content if extraction fails
-      setAnswerContent(content);
+    // First check if we have structured data in metadata
+    if (metadata?.has_structured_data && metadata?.answer_format === "json") {
+      // Use structured data directly from metadata
+      const newTitle = (metadata.answer_title as string) || "Final Answer";
+      const newContent = (metadata.answer_content as string) || content;
+      const newSources = (metadata.answer_sources as string[]) || [];
+      
+      setTitle(newTitle);
+      setAnswerContent(newContent);
+      setSources(newSources);
+      
+      console.log("[FinalAnswerDisplay] Using structured data from metadata");
+      console.log("[FinalAnswerDisplay] Set state values:", {
+        title: newTitle,
+        answerContent: newContent.substring(0, 100) + "...",
+        sourcesCount: newSources.length
+      });
+      return;
     }
     
-    if (metadata) {
-      if (metadata.title) setTitle(metadata.title);
-      if (metadata.sources) setSources(metadata.sources);
+    // If no structured metadata, try to parse content as JSON
+    if (content && content.trim().startsWith("{") && content.trim().endsWith("}")) {
+      try {
+        const parsed = JSON.parse(content);
+        if (parsed.title) setTitle(parsed.title);
+        if (parsed.content) setAnswerContent(parsed.content);
+        if (parsed.sources) setSources(parsed.sources);
+        console.log("[FinalAnswerDisplay] Parsed JSON content successfully");
+        return;
+      } catch {
+        console.log("[FinalAnswerDisplay] Failed to parse JSON");
+      }
     }
-  }, [content]);
+    
+    // Final fallback - use content as-is
+    // Remove any "Final answer:" prefix variations
+    let cleanedContent = content;
+    cleanedContent = cleanedContent.replace(/^\*?\*?Final answer:?\*?\*?:?\s*/i, '');
+    setAnswerContent(cleanedContent);
+  }, [content, metadata]);
+  
+  console.log("[FinalAnswerDisplay] Rendering with state:", {
+    title,
+    answerContentLength: answerContent.length,
+    answerContentPreview: answerContent.substring(0, 50) + "...",
+    sourcesCount: sources.length,
+    className
+  });
   
   return (
     <Card className={`bg-green-50/10 border-green-500/20 ${className}`}>

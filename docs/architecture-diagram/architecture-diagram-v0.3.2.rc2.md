@@ -2,7 +2,7 @@
 
 **Version:** `v0.3.2.rc2`
 
-**Update Date:** `2025-07-22`
+**Update Date:** `2025-07-29`
 
 ```mermaid
 ---
@@ -46,10 +46,33 @@ flowchart TB
         subgraph WebAPIv2System["Web API v2 System (v0.3.2)"]
             direction TB
             SessionManager["Session Manager"]
-            GradioPassthrough["Gradio Passthrough
+            WebUIProcessor["Web UI Processor
+(web_ui.py)"]
+            DSAgentProcessor["DSAgent Message
 Processor"]
-            StreamToGradio["stream_to_gradio
-(smolagents)"]
+            StreamAgentMessages["stream_agent_messages()
+(Event Processing)"]
+            subgraph EventTypes["Event Type Processing"]
+                direction LR
+                PlanningEvent[/"PlanningStep"/]
+                ActionEvent[/"ActionStep"/]
+                FinalAnswerEvent[/"FinalAnswerStep"/]
+                StreamDeltaEvent[/"ChatMessageStreamDelta"/]
+            end
+        end
+        subgraph MessageTypes["Frontend Message Types"]
+            direction TB
+            PlanningMsgs["planning_header
+planning_content
+planning_footer"]
+            ActionMsgs["action_header
+action_thought
+tool_call
+execution_logs"]
+            FinalAnswerMsg["final_answer
+(with structured data)"]
+            StreamingDeltas["streaming deltas
+(real-time updates)"]
         end
         subgraph Agents["Agent Logic"]
             direction LR
@@ -97,9 +120,10 @@ Environment (for CodeAct)")]
     CLI -- "User Query" --> CoreAgents
     FastAPI -- "API Request" --> CoreAgents
     WebAPIv2 -- "WebSocket" --> SessionManager
-    SessionManager -- "Creates Session" --> GradioPassthrough
-    GradioPassthrough -- "Uses" --> StreamToGradio
-    StreamToGradio -- "Agent Messages" --> CoreAgents
+    SessionManager -- "Creates Session" --> DSAgentProcessor
+    DSAgentProcessor -- "Uses" --> StreamAgentMessages
+    StreamAgentMessages -- "Processes Events" --> WebUIProcessor
+    WebUIProcessor -- "Agent Messages" --> CoreAgents
     MCPServer -- "Tool Call" --> CoreAgents
     CoreAgents -- "Select Mode: ReAct" --> ToolAgent
     CoreAgents -- "Select Mode: CodeAct" --> CodeAgent
@@ -154,12 +178,19 @@ Environment (for CodeAct)")]
     ToolAgent -- "Streaming Output" --> CLI
     CodeAgent -- "Streaming Output" --> CLI
     ManagerAgent -- "Streaming Output" --> CLI
-    ToolAgent -- "Streaming Output" --> GradioPassthrough
-    CodeAgent -- "Streaming Output" --> GradioPassthrough
-    ManagerAgent -- "Streaming Output" --> GradioPassthrough
-    GradioPassthrough -- "DSAgentRunMessage" --> WebAPIv2
+    ToolAgent -- "Agent Events" --> StreamAgentMessages
+    CodeAgent -- "Agent Events" --> StreamAgentMessages
+    ManagerAgent -- "Agent Events" --> StreamAgentMessages
+    DSAgentProcessor -- "DSAgentRunMessage" --> WebAPIv2
     CoreAgents -- "Response" --> Interfaces
     CoreAgents -- "Tool Result" --> MCPServer
+    
+    %% Event Type Processing
+    StreamAgentMessages --> EventTypes
+    PlanningEvent -.-> PlanningMsgs
+    ActionEvent -.-> ActionMsgs
+    FinalAnswerEvent -.-> FinalAnswerMsg
+    StreamDeltaEvent -.-> StreamingDeltas
 
     classDef default fill:#1a1a2e,stroke:#7700ff,stroke-width:2px,color:#00fff9
     classDef interface fill:#16213e,stroke:#ff00f7,stroke-width:3px,color:#00fff9
@@ -173,6 +204,8 @@ Environment (for CodeAct)")]
     classDef mcpserver fill:#16213e,stroke:#ff00f7,stroke-width:3px,color:#00fff9
     classDef searchengine fill:#0f0f1a,stroke:#ff00f7,stroke-width:2px,color:#00fff9
     classDef webapi fill:#16213e,stroke:#ff00f7,stroke-width:3px,color:#00fff9
+    classDef event fill:#1a1a2e,stroke:#00fff9,stroke-width:2px,color:#ff00f7
+    classDef message fill:#0f0f1a,stroke:#7700ff,stroke-width:2px,color:#00fff9
 
     CLI:::interface
     FastAPI:::interface
@@ -200,6 +233,15 @@ Environment (for CodeAct)")]
     ExternalAPIs:::external
     ConfigLoader:::config
     SessionManager:::webapi
-    GradioPassthrough:::webapi
-    StreamToGradio:::webapi
+    WebUIProcessor:::webapi
+    DSAgentProcessor:::webapi
+    StreamAgentMessages:::webapi
+    PlanningEvent:::event
+    ActionEvent:::event
+    FinalAnswerEvent:::event
+    StreamDeltaEvent:::event
+    PlanningMsgs:::message
+    ActionMsgs:::message
+    FinalAnswerMsg:::message
+    StreamingDeltas:::message
 ```
