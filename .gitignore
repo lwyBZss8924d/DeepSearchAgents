@@ -197,6 +197,7 @@ config.toml
 # Cursor specific files (often user-specific)
 .cursor/
 .claude/
+.gemini/
 # allow tracking specific Cursor rules files
 !.cursor/rules/
 !.cursor/rules/agent-architecture.mdc
