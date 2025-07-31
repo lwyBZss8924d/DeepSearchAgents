@@ -141,6 +141,48 @@ def _extract_code_from_content(content: str) -> Optional[str]:
     return None
 
 
+def _extract_tools_from_code(code: str) -> List[str]:
+    """
+    Extract tool names from Python code.
+
+    Args:
+        code: Python code to analyze.
+
+    Returns:
+        List of tool names found in the code.
+    """
+    if not code:
+        return []
+
+    # Known tool names from toolbox.py
+    known_tools = [
+        "search_links", "search_fast", "read_url", "github_repo_qa",
+        "xcom_deep_qa", "chunk_text", "embed_texts", "rerank_texts",
+        "wolfram", "academic_retrieval", "final_answer"
+    ]
+
+    tool_calls = []
+
+    # Check for tool calls using various patterns
+    for tool in known_tools:
+        # Pattern 1: Direct function call: tool_name(...)
+        pattern1 = rf'\b{tool}\s*\('
+        # Pattern 2: Variable assignment: var = tool_name(...)
+        pattern2 = rf'=\s*{tool}\s*\('
+        # Pattern 3: Method call: obj.tool_name(...)
+        pattern3 = rf'\.{tool}\s*\('
+        # Pattern 4: In list: [tool_name(...)]
+        pattern4 = rf'\[\s*{tool}\s*\('
+
+        if (re.search(pattern1, code) or re.search(pattern2, code) or
+                re.search(pattern3, code) or re.search(pattern4, code)):
+            if tool not in tool_calls:  # Avoid duplicates
+                tool_calls.append(tool)
+                logger.debug(f"Found tool in code: {tool}")
+
+    return tool_calls
+
+
 def process_planning_step(
     step_log: PlanningStep,
     step_number: int,
@@ -461,19 +503,46 @@ def process_action_step(
         first_tool_call = step_log.tool_calls[0]
         tool_name = first_tool_call.name
 
-        # Process arguments
-        args = first_tool_call.arguments
-        if isinstance(args, dict):
-            content = str(args.get("answer", str(args)))
+        # Process arguments and get code content
+        if tool_name == "python_interpreter" and hasattr(step_log, "code_action") and step_log.code_action:
+            # Use the more accurate code_action field for python_interpreter
+            content = step_log.code_action
+            code_only = content  # code_action is already clean code
+
+            # Extract tools from the code and generate additional badges
+            extracted_tools = _extract_tools_from_code(code_only)
+            for extracted_tool in extracted_tools:
+                yield DSAgentRunMessage(
+                    role=MessageRole.ASSISTANT,
+                    content="",  # Empty content, frontend renders badge
+                    metadata={
+                        "component": "chat",
+                        "message_type": "tool_call",
+                        "step_type": "action",
+                        "tool_name": extracted_tool,
+                        "tool_id": f"tool-{step_number}-extracted-{extracted_tool}",
+                        "tool_args_summary": "Called from Python code",
+                        "is_python_interpreter": False,
+                        "status": "done",
+                    },
+                    session_id=session_id,
+                    step_number=step_number,
+                )
         else:
-            content = str(args).strip()
+            # Fallback to original logic for non-python_interpreter tools
+            args = first_tool_call.arguments
+            if isinstance(args, dict):
+                content = str(args.get("answer", str(args)))
+            else:
+                content = str(args).strip()
 
         # Determine component based on tool
         if tool_name == "python_interpreter":
             # Format as code block
             content = _format_code_content(content)
-            # Extract just the code for the code editor
-            code_only = _extract_code_from_content(content)
+            # Extract just the code for the code editor (already have it from above)
+            if not (hasattr(step_log, "code_action") and step_log.code_action):
+                code_only = _extract_code_from_content(content)
 
             # Count code lines and check for imports
             code_lines = code_only.count('\n') + 1 if code_only else 0

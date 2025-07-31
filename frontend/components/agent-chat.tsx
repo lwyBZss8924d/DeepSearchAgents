@@ -10,6 +10,7 @@ import Markdown from "@/components/markdown";
 import FinalAnswer from "@/components/final-answer";
 import FinalAnswerDisplay from "@/components/final-answer-display";
 import ActionThoughtCard from "@/components/action-thought-card";
+import ToolCallBadge from "@/components/tool-call-badge";
 import { 
   isThinkingMessage, 
   isFinalAnswer, 
@@ -190,6 +191,24 @@ function MessageItem({ message }: { message: DSAgentRunMessage }) {
     };
   }
 
+  // Skip separator messages entirely - they just add visual clutter
+  if (message.metadata?.message_type === 'separator') {
+    console.log('[AgentChat] Filtering out separator message');
+    return null;
+  }
+
+  // Skip empty content messages (except planning_header and tool_call which have special handling)
+  if (!message.content?.trim() && 
+      message.metadata?.message_type !== 'planning_header' &&
+      message.metadata?.message_type !== 'tool_call' &&
+      !isFinal) {
+    console.log('[AgentChat] Filtering out empty message:', {
+      message_type: message.metadata?.message_type,
+      content: message.content
+    });
+    return null;
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -262,7 +281,16 @@ function MessageItem({ message }: { message: DSAgentRunMessage }) {
         )}
 
         {/* Message bubble */}
-        {message.metadata?.message_type === 'action_thought' || isActionThought ? (
+        {message.metadata?.message_type === 'tool_call' ? (
+          // Use ToolCallBadge for tool calls
+          <ToolCallBadge
+            toolName={message.metadata?.tool_name || "unknown"}
+            toolId={message.metadata?.tool_call_id}
+            argsSummary={message.content || ""}
+            isPythonInterpreter={message.metadata?.tool_name === 'python_interpreter'}
+            className="w-full"
+          />
+        ) : message.metadata?.message_type === 'action_thought' || isActionThought ? (
           // Use ActionThoughtCard for action thoughts
           <ActionThoughtCard
             content={message.content || ""}
