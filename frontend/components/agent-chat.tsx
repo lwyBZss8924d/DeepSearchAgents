@@ -8,9 +8,9 @@ import { useAppContext } from "@/context/app-context";
 import { DSAgentRunMessage } from "@/types/api.types";
 import Markdown from "@/components/markdown";
 import FinalAnswer from "@/components/final-answer";
-import FinalAnswerDisplay from "@/components/final-answer-display";
+import FinalAnswerDisplay from "@/components/final-answer-display-v2";
 import ActionThoughtCard from "@/components/action-thought-card";
-import ToolCallBadge from "@/components/tool-call-badge";
+import { DSAgentToolBadge } from "@/components/ds";
 import { 
   isThinkingMessage, 
   isFinalAnswer, 
@@ -282,12 +282,14 @@ function MessageItem({ message }: { message: DSAgentRunMessage }) {
 
         {/* Message bubble */}
         {message.metadata?.message_type === 'tool_call' ? (
-          // Use ToolCallBadge for tool calls
-          <ToolCallBadge
+          // Use DSAgentToolBadge for tool calls
+          <DSAgentToolBadge
             toolName={message.metadata?.tool_name || "unknown"}
-            toolId={message.metadata?.tool_call_id}
-            argsSummary={message.content || ""}
-            isPythonInterpreter={message.metadata?.tool_name === 'python_interpreter'}
+            status="active"
+            metadata={{
+              resultPreview: message.content || "",
+              toolId: message.metadata?.tool_call_id
+            }}
             className="w-full"
           />
         ) : message.metadata?.message_type === 'action_thought' || isActionThought ? (

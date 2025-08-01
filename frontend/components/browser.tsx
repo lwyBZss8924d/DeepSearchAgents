@@ -4,7 +4,7 @@
 import React from "react";
 import { Globe, ExternalLink, Info } from "lucide-react";
 import { useAppContext } from "@/context/app-context";
-import { Button } from "@/components/ui/button";
+import { DSButton } from "@/components/ds";
 
 interface BrowserProps {
   className?: string;
@@ -66,13 +66,13 @@ const Browser = React.memo(({ className }: BrowserProps) => {
                 >
                   {url}
                 </a>
-                <Button
+                <DSButton
                   variant="ghost"
                   size="sm"
                   onClick={() => window.open(url, "_blank")}
                 >
                   <ExternalLink className="h-4 w-4" />
-                </Button>
+                </DSButton>
               </div>
             ))}
           </div>

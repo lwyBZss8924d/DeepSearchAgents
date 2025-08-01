@@ -1,0 +1,58 @@
+/* Berkeley Mono Font Configuration */
+@layer ds.base {
+  /* Berkeley Mono Font Face Declarations */
+  @font-face {
+    font-family: 'Berkeley Mono';
+    src: local('Berkeley Mono Regular'),
+         local('BerkeleyMono-Regular'),
+         local('Berkeley Mono'),
+         /* Fallback to system fonts if Berkeley Mono not installed */
+         local('SF Mono'),
+         local('Monaco'),
+         local('Inconsolata'),
+         local('Fira Code'),
+         local('Consolas');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Berkeley Mono';
+    src: local('Berkeley Mono Bold'),
+         local('BerkeleyMono-Bold'),
+         local('Berkeley Mono Bold'),
+         /* Fallback to system fonts if Berkeley Mono not installed */
+         local('SF Mono Bold'),
+         local('Monaco Bold'),
+         local('Inconsolata Bold'),
+         local('Fira Code Bold'),
+         local('Consolas Bold');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Berkeley Mono';
+    src: local('Berkeley Mono Italic'),
+         local('BerkeleyMono-Italic'),
+         local('Berkeley Mono Italic'),
+         /* Fallback to system fonts if Berkeley Mono not installed */
+         local('SF Mono Italic'),
+         local('Monaco Italic'),
+         local('Inconsolata Italic'),
+         local('Fira Code Italic'),
+         local('Consolas Italic');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+  }
+
+  /* Berkeley Mono Font Variables */
+  :root {
+    --font-mono-berkeley: 'Berkeley Mono', 'SF Mono', 'Monaco', 
+                         'Inconsolata', 'Fira Code', 'Fira Mono',
+                         'Droid Sans Mono', 'Courier New', monospace;
+  }
+}

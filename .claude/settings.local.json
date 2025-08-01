@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
       "Bash(git pull:*)",
@@ -65,10 +66,17 @@
       "Bash(npm install:*)",
       "Bash(node:*)",
       "Bash(npm run dev:*)",
-      "Bash(npm cache clean:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run typecheck:*)",
       "Bash(npm run build:*)",
       "Bash(npx next:*)",
-      "Bash(unset:*)"
+      "Bash(unset:*)",
+      "Bash(playwright install:*)",
+      "Bash(tree:*)",
+      "Bash(npm uninstall:*)",
+      "WebFetch(domain:context7.com)",
+      "Bash(npm run lint:*)",
+      "WebFetch(domain:deepwiki.com)"
     ],
     "deny": []
   }

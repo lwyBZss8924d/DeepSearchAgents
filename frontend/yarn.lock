@@ -909,6 +909,11 @@
   resolved "https://registry.npmjs.org/@unrs/resolver-binding-darwin-arm64/-/resolver-binding-darwin-arm64-1.11.1.tgz"
   integrity sha512-gPVA1UjRu1Y/IsB/dQEsp2V1pm44Of6+LWvbLc9SDk1c2KhhDRDBUkQCYVWe6f26uJb3fOK8saWMgtX8IrMk3g==
 
+"@webtui/css@^0.1.4":
+  version "0.1.4"
+  resolved "https://registry.npmjs.org/@webtui/css/-/css-0.1.4.tgz"
+  integrity sha512-ahFXXvxSC4R/+eE1vCjJVyusJyufJgiKY0DbbX1WArzE/Ix5Wkchh9aKQXGr035a6JFCCb+oc7vzlIOcYJ019w==
+
 "@xmldom/xmldom@0.9.8":
   version "0.9.8"
   resolved "https://registry.npmjs.org/@xmldom/xmldom/-/xmldom-0.9.8.tgz"

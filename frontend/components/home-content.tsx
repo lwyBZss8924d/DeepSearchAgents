@@ -1,13 +1,14 @@
 "use client";
 
-import AgentLayout from "@/components/agent-layout";
-import DebugPanel from "@/components/debug-panel";
+import AgentLayoutV2 from "@/components/agent-layout-v2";
+// import DebugPanel from "@/components/debug-panel";
 
 export default function HomeContent() {
   return (
     <>
-      <AgentLayout />
-      <DebugPanel />
+      <AgentLayoutV2 />
+      {/* Debug panel disabled for production - uncomment for debugging */}
+      {/* <DebugPanel /> */}
     </>
   );
 }

@@ -1,7 +1,7 @@
 // Step navigation component for navigating between agent execution steps
 import React from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ChevronLeftIcon, ChevronRightIcon } from '@/components/terminal-icons';
+import { DSButton } from '@/components/ds';
 
 interface StepNavigatorProps {
   currentStep: number;
@@ -15,16 +15,16 @@ export function StepNavigator({ currentStep, maxStep, onStepChange }: StepNaviga
 
   return (
     <div className="flex items-center justify-between p-3 border-t bg-background">
-      <Button
+      <DSButton
         variant="ghost"
         size="sm"
         onClick={() => onStepChange(currentStep - 1)}
         disabled={!canGoPrevious}
         className="flex items-center gap-1"
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeftIcon className="h-4 w-4" />
         Previous
-      </Button>
+      </DSButton>
       
       <div className="flex items-center gap-2">
         <span className="text-sm text-muted-foreground">Step</span>
@@ -42,7 +42,7 @@ export function StepNavigator({ currentStep, maxStep, onStepChange }: StepNaviga
         <span className="text-sm text-muted-foreground">of {maxStep}</span>
       </div>
       
-      <Button
+      <DSButton
         variant="ghost"
         size="sm"
         onClick={() => onStepChange(currentStep + 1)}
@@ -50,8 +50,8 @@ export function StepNavigator({ currentStep, maxStep, onStepChange }: StepNaviga
         className="flex items-center gap-1"
       >
         Next
-        <ChevronRight className="h-4 w-4" />
-      </Button>
+        <ChevronRightIcon className="h-4 w-4" />
+      </DSButton>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { Terminal as XTerm } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { forwardRef, Ref, useEffect, useRef, useState } from "react";
 import "@xterm/xterm/css/xterm.css";
-import { Button } from '@/components/ui/button';
+import { DSButton } from '@/components/ds';
 import { Copy, Check, Trash2 } from 'lucide-react';
 import { useAppContext } from '@/context/app-context';
 import { extractExecutionLogs, isTerminalMessage } from '@/utils/extractors';
@@ -226,7 +226,7 @@ const Terminal = (
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <Button
+          <DSButton
             variant="ghost"
             size="sm"
             onClick={handleClear}
@@ -234,8 +234,8 @@ const Terminal = (
           >
             <Trash2 className="h-4 w-4" />
             Clear
-          </Button>
-          <Button
+          </DSButton>
+          <DSButton
             variant="ghost"
             size="sm"
             onClick={handleCopy}
@@ -252,7 +252,7 @@ const Terminal = (
                 Copy
               </>
             )}
-          </Button>
+          </DSButton>
         </div>
       </div>
       

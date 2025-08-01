@@ -12,18 +12,18 @@ import {
 import { useState, useEffect } from "react";
 
 import Action from "@/components/action";
-import Markdown from "@/components/markdown";
+import Markdown from "@/components/markdown-v2";
 import QuestionInput from "@/components/question-input";
-import FinalAnswerDisplay from "@/components/final-answer-display";
-import PlanningCard from "@/components/planning-card";
-import ActionThoughtCard from "@/components/action-thought-card";
-import ToolCallBadge from "@/components/tool-call-badge";
+import FinalAnswerDisplay from "@/components/final-answer-display-v2";
+import PlanningCard from "@/components/planning-card-v2";
+import ActionThoughtCard from "@/components/action-thought-card-v2";
+import { DSAgentToolBadge } from "@/components/ds";
 import { ActionStep, Message } from "@/typings/agent";
 import { DSAgentRunMessage } from "@/types/api.types";
 import { getFileIconAndColor } from "@/utils/file-utils";
 import { isFinalAnswer } from "@/utils/extractors";
-import { Button } from "./ui/button";
-import EditQuestion from "./edit-question";
+import { DSButton } from "@/components/ds";
+import EditQuestion from "./edit-question-v2";
 import { useAppContext } from "@/context/app-context";
 
 interface ChatMessageProps {
@@ -161,11 +161,13 @@ const ChatMessage = ({
         args_summary: metadata.tool_args_summary
       });
       return (
-        <ToolCallBadge
+        <DSAgentToolBadge
           toolName={metadata.tool_name || "unknown"}
-          toolId={metadata.tool_id}
-          argsSummary={metadata.tool_args_summary}
-          isPythonInterpreter={metadata.is_python_interpreter}
+          status="active"
+          metadata={{
+            resultPreview: metadata.tool_args_summary,
+            toolId: metadata.tool_id
+          }}
           className="mb-2"
         />
       );
@@ -550,7 +552,7 @@ const ChatMessage = ({
                         {isLatestUserMessage(message, state.messages) &&
                           !isReplayMode && (
                             <div className="absolute -bottom-[45px] -right-[20px] opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Button
+                              <DSButton
                                 variant="ghost"
                                 size="icon"
                                 className="text-xs cursor-pointer hover:!bg-transparent"
@@ -559,7 +561,7 @@ const ChatMessage = ({
                                 }}
                               >
                                 <Pencil className="size-3 mr-1" />
-                              </Button>
+                              </DSButton>
                             </div>
                           )}
                       </div>
@@ -640,14 +642,14 @@ const ChatMessage = ({
                       Allow II-Agent to review the results
                     </span>
                   </div>
-                  <Button
+                  <DSButton
                     variant="outline"
                     size="sm"
                     className="cursor-pointer text-neutral-900 bg-gradient-skyblue-lavender hover:text-neutral-950"
                     onClick={handleReviewSession}
                   >
                     Review
-                  </Button>
+                  </DSButton>
                 </div>
               </div>
             )}
@@ -695,13 +697,13 @@ const ChatMessage = ({
                 </span>
               </div>
               <div className="flex gap-2">
-                <Button
+                <DSButton
                   variant="outline"
                   className="cursor-pointer"
                   onClick={handleJumpToResult}
                 >
                   <SkipForward /> Skip to results
-                </Button>
+                </DSButton>
               </div>
             </div>
           </motion.div>

@@ -360,3 +360,80 @@ const DEBUG_PLANNING = true;
 2. **Handle Unknown Types**: Always provide fallback rendering for unknown message types
 3. **Debug Strategically**: Add targeted debug logs but clean up after feature completion
 4. **Test Both Agents**: Ensure features work with both ReAct and CodeAct agents
+
+## Git Workflow
+
+### Creating New Local Development Branches
+
+When creating new development branches, follow this workflow:
+
+#### Branch Naming Convention
+- Format: `v{version}-dev.{YYMMDD}.{task-description}`
+- Examples:
+  - `v0.3.3-dev.250730.debug-ui-empty-chatbox`
+  - `v0.3.3-dev.250731.ui-style-optimization`
+  - `v0.3.3-dev.250801.api-performance-improvement`
+
+#### Workflow Steps
+
+1. **Create Summary of Current Work**:
+   - Document all resolved issues/features with task IDs
+   - Format: `[RESOLVED] Task(N): [YYMMDD-N] Type: {description}`
+   - Example:
+     - `[RESOLVED] Task(1): [250730-1] Issues: Empty ChatBox UI`
+     - `[RESOLVED] Task(2): [250730-2] Features: Tool call badges`
+
+2. **Check Git Status & Stage Changes**:
+   ```bash
+   git status
+   git diff --cached  # Review staged changes
+   ```
+   - Ensure all major code modifications are staged
+   - Include relevant documentation and test files
+   - Use `git add -p` for selective staging if needed
+
+3. **Create Comprehensive Commit**:
+   - Follow Conventional Commits specification
+   - Include detailed commit message with:
+     - Summary of fixed issues
+     - Technical changes made
+     - Testing performed
+   - Add co-author attribution:
+     ```
+     🤖 Generated with [Claude Code](https://claude.ai/code)
+     
+     Co-Authored-By: Claude <noreply@anthropic.com>
+     ```
+
+4. **Create New Branch**:
+   ```bash
+   git checkout -b v{version}-dev.{YYMMDD}.{task-type}
+   ```
+   - Task types: features, debug, test, experiment, integration, pr, release
+   - Branch from current work to maintain continuity
+
+#### Example Workflow
+```bash
+# 1. Review and stage changes
+git status
+git add frontend/components/*.tsx
+git add src/api/v2/web_ui.py
+git add debug-archive/
+
+# 2. Create comprehensive commit
+git commit -m "fix(frontend): resolve empty chatbox and tool badges
+
+[RESOLVED] Task(1): [250730-1] Empty ChatBox UI
+[RESOLVED] Task(2): [250730-2] Tool call badges verification
+
+- Filter separator messages causing empty boxes
+- Verify tool extraction from CodeAct Python code
+- Add comprehensive test infrastructure
+
+🤖 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+# 3. Create new branch for next task
+git checkout -b v0.3.3-dev.250731.ui-style-optimization
+```

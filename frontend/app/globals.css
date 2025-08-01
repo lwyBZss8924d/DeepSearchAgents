@@ -1,10 +1,27 @@
+/* CSS Layer Architecture for WebTUI + DeepSearchAgents */
+@layer webtui.base, webtui.utils, webtui.components,
+       ds.base, ds.tokens, ds.components, ds.utilities, ds.overrides;
+
 /* Tailwind Base Imports */
 @import "tailwindcss";
 
+/* WebTUI CSS Library Imports */
+@import "@webtui/css/base.css" layer(webtui.base);
+@import "@webtui/css/utils/box.css" layer(webtui.utils);
+@import "@webtui/css/components/badge.css" layer(webtui.components);
+@import "@webtui/css/components/button.css" layer(webtui.components);
+@import "@webtui/css/components/input.css" layer(webtui.components);
+@import "@webtui/css/components/typography.css" layer(webtui.components);
+
 /* Design System Imports */
-@import "./styles/design-tokens.css";
-@import "./styles/animations.css";
-@import "./styles/utilities.css";
+@import "./styles/fonts.css" layer(ds.base);
+@import "./styles/design-tokens.css" layer(ds.tokens);
+@import "./styles/terminal-theme.css" layer(ds.tokens);
+@import "./styles/animations.css" layer(ds.components);
+@import "./styles/themes/index.css" layer(ds.tokens);
+@import "./styles/utilities.css" layer(ds.utilities);
+@import "./styles/compatibility-layer.css" layer(ds.overrides);
+@import "./styles/layout-fixes.css" layer(ds.overrides);
 
 /* Tailwind Plugins */
 @plugin "tailwindcss-animate";
@@ -110,4 +127,24 @@
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
   --radius-xl: var(--radius-xl);
+}
+
+/* DeepSearchAgents Base Layer */
+@layer ds.base {
+  :root {
+    /* Berkeley Mono Font Stack */
+    --ds-font-mono: 'Berkeley Mono', 'SF Mono', 'Monaco', 
+                    'Inconsolata', 'Fira Code', monospace;
+    
+    /* Map to WebTUI's system */
+    --webtui-font-family: var(--ds-font-mono);
+  }
+
+  /* Override body to use terminal font */
+  body {
+    font-family: var(--ds-font-mono);
+    font-size: 14px;
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+  }
 }

@@ -34,7 +34,7 @@ export default function RootLayout({
         />
         <link rel="manifest" href="/favicon/site.webmanifest" />
       </head>
-      <body className={`antialiased overflow-hidden`}>
+      <body className={`antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>

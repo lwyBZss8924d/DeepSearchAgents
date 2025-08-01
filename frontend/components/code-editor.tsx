@@ -4,7 +4,7 @@
 import { Editor } from '@monaco-editor/react';
 import { useEffect, useState } from 'react';
 import { Copy, Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { DSButton } from '@/components/ds';
 import { useAppContext } from '@/context/app-context';
 import { extractPythonCode, isCodeEditorMessage } from '@/utils/extractors';
 
@@ -90,7 +90,7 @@ export default function CodeEditor({ className }: CodeEditorProps) {
             {language}
           </span>
         </div>
-        <Button
+        <DSButton
           variant="ghost"
           size="sm"
           onClick={handleCopy}
@@ -107,7 +107,7 @@ export default function CodeEditor({ className }: CodeEditorProps) {
               Copy
             </>
           )}
-        </Button>
+        </DSButton>
       </div>
       
       {/* Monaco Editor - Read Only */}

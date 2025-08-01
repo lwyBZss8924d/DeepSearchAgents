@@ -1,0 +1,119 @@
+/* Nord Theme for DeepSearchAgents */
+@layer ds.tokens {
+  [data-theme="nord"],
+  .theme-nord {
+    /* Base colors - Polar Night */
+    --ds-terminal-bg: #2e3440;
+    --ds-terminal-fg: #eceff4;
+    --ds-terminal-bright: #e5e9f0;
+    --ds-terminal-dim: #d8dee9;
+    
+    /* Nord palette */
+    --ds-terminal-black: #3b4252;
+    --ds-terminal-red: #bf616a;
+    --ds-terminal-green: #a3be8c;
+    --ds-terminal-yellow: #ebcb8b;
+    --ds-terminal-blue: #81a1c1;
+    --ds-terminal-magenta: #b48ead;
+    --ds-terminal-cyan: #88c0d0;
+    --ds-terminal-white: #e5e9f0;
+    
+    /* Agent State Colors */
+    --ds-agent-planning: #81a1c1;
+    --ds-agent-thinking: #ebcb8b;
+    --ds-agent-coding: #a3be8c;
+    --ds-agent-running: #88c0d0;
+    --ds-agent-final: #a3be8c;
+    --ds-agent-error: #bf616a;
+    
+    /* UI Colors */
+    --ds-border-default: #434c5e;
+    --ds-border-muted: #3b4252;
+    --ds-border-active: #88c0d0;
+    --ds-bg-primary: #2e3440;
+    --ds-bg-elevated: #323845;
+    --ds-bg-code: #242933;
+    
+    /* Snow Storm */
+    --ds-snow-0: #d8dee9;
+    --ds-snow-1: #e5e9f0;
+    --ds-snow-2: #eceff4;
+    
+    /* Frost */
+    --ds-frost-0: #8fbcbb;
+    --ds-frost-1: #88c0d0;
+    --ds-frost-2: #81a1c1;
+    --ds-frost-3: #5e81ac;
+    
+    /* Aurora */
+    --ds-aurora-red: #bf616a;
+    --ds-aurora-orange: #d08770;
+    --ds-aurora-yellow: #ebcb8b;
+    --ds-aurora-green: #a3be8c;
+    --ds-aurora-purple: #b48ead;
+  }
+  
+  /* Theme-specific overrides */
+  [data-theme="nord"] {
+    /* Subtle shadows */
+    .ds-message-card {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .ds-message-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Code highlighting */
+    .ds-code-line-highlighted {
+      background: color-mix(in oklch, var(--ds-frost-3) 20%, transparent);
+    }
+    
+    /* Badge styling */
+    .ds-state-badge[data-state="planning"] {
+      background: color-mix(in oklch, var(--ds-frost-2) 20%, var(--ds-bg-primary));
+      color: var(--ds-frost-2);
+      border-color: var(--ds-frost-2);
+    }
+    
+    .ds-state-badge[data-state="thinking"] {
+      background: color-mix(in oklch, var(--ds-aurora-yellow) 20%, var(--ds-bg-primary));
+      color: var(--ds-aurora-yellow);
+      border-color: var(--ds-aurora-yellow);
+    }
+    
+    .ds-state-badge[data-state="final"] {
+      background: color-mix(in oklch, var(--ds-aurora-green) 20%, var(--ds-bg-primary));
+      color: var(--ds-aurora-green);
+      border-color: var(--ds-aurora-green);
+    }
+    
+    /* Cursor styling */
+    .ds-streaming-cursor {
+      background: var(--ds-frost-1);
+      box-shadow: 0 0 6px var(--ds-frost-1);
+    }
+    
+    /* Button effects */
+    .ds-code-action-btn:hover:not(:disabled) {
+      background: color-mix(in oklch, var(--ds-frost-3) 15%, transparent);
+      border-color: var(--ds-frost-3);
+      color: var(--ds-frost-1);
+    }
+    
+    /* Session state colors */
+    .ds-session-state-text {
+      color: var(--ds-snow-1);
+    }
+    
+    /* Terminal prompt */
+    .ds-terminal-prompt {
+      border-color: var(--ds-frost-3);
+    }
+    
+    .ds-terminal-prompt:focus-within {
+      border-color: var(--ds-frost-1);
+      box-shadow: 0 0 0 1px var(--ds-frost-1);
+    }
+  }
+}

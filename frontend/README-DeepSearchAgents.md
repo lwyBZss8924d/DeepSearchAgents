@@ -1,6 +1,6 @@
 # DeepSearchAgents Frontend - Technical Documentation
 
-This document provides comprehensive technical documentation for the DeepSearchAgents web frontend, including architecture details, message flow, and implementation insights gained from the v0.3.2.rc2 integration.
+This document provides comprehensive technical documentation for the DeepSearchAgents web frontend, including architecture details, message flow, and implementation insights gained from the v0.3.3.dev integration.
 
 ## Table of Contents
 

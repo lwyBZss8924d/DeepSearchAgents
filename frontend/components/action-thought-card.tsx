@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Brain, ChevronDown, ChevronUp, Terminal } from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon, TerminalIconComponent } from "@/components/terminal-icons";
 
 interface ActionThoughtCardProps {
   content: string;
@@ -30,13 +30,13 @@ export default function ActionThoughtCard({
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-2">
-          <Brain className="h-4 w-4 text-purple-500" />
+          <span className="text-purple-500 font-mono">[🤔]</span>
           <span className="text-sm font-medium text-purple-600">
             {stepNumber ? `Step ${stepNumber} Thinking` : 'Agent Thinking'}
           </span>
         </div>
         <button className="text-purple-500 hover:text-purple-600">
-          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          {isExpanded ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />}
         </button>
       </div>
       
@@ -45,7 +45,7 @@ export default function ActionThoughtCard({
           <div className="text-sm text-muted-foreground">
             <p className="whitespace-pre-wrap break-words flex items-center gap-1">
               {displayContent}
-              <Terminal className="h-4 w-4 inline-block" />
+              <TerminalIconComponent className="h-4 w-4 inline-block" />
               ]...
             </p>
           </div>

@@ -1,0 +1,111 @@
+/* Compatibility Layer for shadcn to WebTUI Migration */
+@layer ds.overrides {
+  /* Map shadcn button variants to WebTUI */
+  .btn-default {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+  }
+  
+  .btn-destructive {
+    @apply bg-destructive text-destructive-foreground hover:bg-destructive/90;
+  }
+  
+  .btn-outline {
+    @apply border border-input bg-background hover:bg-accent hover:text-accent-foreground;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+  }
+  
+  .btn-ghost {
+    @apply hover:bg-accent hover:text-accent-foreground;
+  }
+  
+  .btn-link {
+    @apply text-primary underline-offset-4 hover:underline;
+  }
+  
+  /* Map common shadcn patterns to WebTUI attributes */
+  .card {
+    box-: single;
+    padding: var(--ds-space-4);
+    background: var(--ds-bg-elevated);
+    border: 1px solid var(--ds-border-default);
+    border-radius: 0.5rem;
+  }
+  
+  .badge {
+    is-: badge;
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  /* Preserve existing component styles during migration */
+  .agent-message-card {
+    transition: all var(--ds-transition-base) ease;
+  }
+  
+  .tool-badge {
+    agent-badge-: tool;
+  }
+  
+  /* Terminal-style overrides for existing components */
+  .prose {
+    color: var(--ds-terminal-fg);
+    font-family: var(--ds-font-mono);
+  }
+  
+  .prose code {
+    background: var(--ds-bg-code);
+    color: var(--ds-terminal-bright);
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+  }
+  
+  .prose pre {
+    background: var(--ds-bg-code);
+    border: 1px solid var(--ds-border-default);
+    border-radius: 0.375rem;
+  }
+  
+  /* Smooth transition helpers */
+  .terminal-transition {
+    transition: all var(--ds-transition-base) ease;
+  }
+  
+  .terminal-hover:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+}
+
+/* Utility classes for gradual migration */
+@layer ds.utilities {
+  /* Terminal text colors */
+  .terminal-fg { color: var(--ds-terminal-fg); }
+  .terminal-bright { color: var(--ds-terminal-bright); }
+  .terminal-dim { color: var(--ds-terminal-dim); }
+  
+  /* Agent state colors */
+  .agent-planning { color: var(--ds-agent-planning); }
+  .agent-thinking { color: var(--ds-agent-thinking); }
+  .agent-coding { color: var(--ds-agent-coding); }
+  .agent-running { color: var(--ds-agent-running); }
+  .agent-final { color: var(--ds-agent-final); }
+  .agent-error { color: var(--ds-agent-error); }
+  
+  /* Terminal backgrounds */
+  .terminal-bg { background-color: var(--ds-terminal-bg); }
+  .terminal-bg-elevated { background-color: var(--ds-bg-elevated); }
+  .terminal-bg-code { background-color: var(--ds-bg-code); }
+  
+  /* Character-based spacing */
+  .space-1ch { margin: var(--ds-space-2); }
+  .space-2ch { margin: var(--ds-space-3); }
+  .space-3ch { margin: var(--ds-space-4); }
+  
+  /* Terminal box styles */
+  .terminal-box-single { box-: single; }
+  .terminal-box-double { box-: double; }
+  .terminal-box-rounded { box-: rounded; }
+}

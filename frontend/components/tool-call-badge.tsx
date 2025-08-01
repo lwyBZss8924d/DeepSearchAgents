@@ -1,6 +1,18 @@
 "use client";
 
-import { motion } from "framer-motion";
+/**
+ * @deprecated This component is deprecated. Please use DSAgentToolBadge from @/components/ds instead.
+ * This file now acts as a compatibility wrapper during the migration to WebTUI.
+ * 
+ * Migration guide:
+ * - Import: import { DSAgentToolBadge } from '@/components/ds'
+ * - Props: 
+ *   - argsSummary → metadata.resultPreview
+ *   - isPythonInterpreter → handled automatically via toolName
+ *   - toolId → not needed in new component
+ */
+
+import { DSAgentToolBadge } from "@/components/ds";
 import { 
   Wrench, 
   Code2, 
@@ -19,44 +31,43 @@ interface ToolCallBadgeProps {
   className?: string;
 }
 
-// Map tool names to icons
-const toolIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  python_interpreter: Code2,
-  search: Search,
-  readurl: Globe,
-  chunk: FileText,
-  embed: FileText,
-  rerank: FileText,
-  wolfram: Calculator,
-  final_answer: CheckCircle,
+// Map tool names to icons (maintained for backward compatibility)
+const toolIcons: Record<string, React.ReactNode> = {
+  python_interpreter: <Code2 className="w-4 h-4" />,
+  search: <Search className="w-4 h-4" />,
+  readurl: <Globe className="w-4 h-4" />,
+  chunk: <FileText className="w-4 h-4" />,
+  embed: <FileText className="w-4 h-4" />,
+  rerank: <FileText className="w-4 h-4" />,
+  wolfram: <Calculator className="w-4 h-4" />,
+  final_answer: <CheckCircle className="w-4 h-4" />,
 };
 
 export default function ToolCallBadge({
   toolName,
+  toolId,
   argsSummary,
-  isPythonInterpreter,
+  isPythonInterpreter, // eslint-disable-line @typescript-eslint/no-unused-vars
   className = ""
 }: ToolCallBadgeProps) {
-  const Icon = toolIcons[toolName] || Wrench;
+  // Map old props to new DS component props
+  const icon = toolIcons[toolName] || <Wrench className="w-4 h-4" />;
+  
+  const metadata = argsSummary ? {
+    resultPreview: argsSummary,
+    toolId: toolId
+  } : undefined;
+  
+  // Note: isPythonInterpreter is ignored in the new component
+  // The DS component handles tool-specific styling based on toolName
   
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.2 }}
-      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
-        isPythonInterpreter 
-          ? "bg-purple-100 text-purple-700 border border-purple-200" 
-          : "bg-blue-100 text-blue-700 border border-blue-200"
-      } ${className}`}
-    >
-      <Icon className="w-3 h-3" />
-      <span className="font-semibold">{toolName}</span>
-      {argsSummary && (
-        <span className="text-xs opacity-75 max-w-[200px] truncate">
-          ({argsSummary})
-        </span>
-      )}
-    </motion.div>
+    <DSAgentToolBadge
+      toolName={toolName}
+      icon={icon}
+      status="active"
+      metadata={metadata}
+      className={className}
+    />
   );
 }

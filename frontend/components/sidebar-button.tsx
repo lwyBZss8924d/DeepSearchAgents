@@ -9,7 +9,7 @@ import Cookies from "js-cookie";
 import dayjs from "dayjs";
 import { useSearchParams } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
+import { DSButton } from "@/components/ds";
 import { cn } from "@/lib/utils";
 import { Kumbh_Sans } from "next/font/google";
 
@@ -88,9 +88,9 @@ const SidebarButton = ({ className, workspaceInfo }: SidebarButtonProps) => {
 
   return (
     <>
-      <Button
+      <DSButton
         variant="ghost"
-        size="icon"
+        size="sm"
         onClick={toggleSidebar}
         className={cn(
           "fixed top-4 left-4 z-50 bg-[#1e1f23] border border-[#3A3B3F] hover:bg-[#2a2b30] p-2",
@@ -98,7 +98,7 @@ const SidebarButton = ({ className, workspaceInfo }: SidebarButtonProps) => {
         )}
       >
         <PanelLeft className="h-5 w-5 text-white" />
-      </Button>
+      </DSButton>
 
       <AnimatePresence>
         {isOpen && (

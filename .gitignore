@@ -92,6 +92,9 @@ ipython_config.py
 .history/
 *.vsix
 
+# Zed
+.zed/
+
 # Spyder
 .spyderproject
 .spyproject
@@ -109,6 +112,8 @@ ipython_config.py
 
 # Cursor
 .cursor/
+# CRUSH directory for agent tooling
+.crush/
 # Allow tracking specific Cursor rules files
 !.cursor/rules/
 !.cursor/rules/agent-architecture.mdc

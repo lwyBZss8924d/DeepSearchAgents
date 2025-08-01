@@ -3,8 +3,6 @@
 import { ActionStep, TOOL } from "@/typings/agent";
 import {
   AudioLines,
-  ChevronDown,
-  ChevronUp,
   Code,
   FileAudio,
   FileText,
@@ -28,6 +26,7 @@ import {
   Database,
   Key,
 } from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon } from "@/components/terminal-icons";
 import { useEffect, useMemo, useRef } from "react";
 
 interface ActionProps {
@@ -110,9 +109,9 @@ const Action = ({ workspaceInfo, type, value, onClick }: ActionProps) => {
       case TOOL.BROWSER_RESTART:
         return <RotateCcw className={className} />;
       case TOOL.BROWSER_SCROLL_DOWN:
-        return <ChevronDown className={className} />;
+        return <ChevronDownIcon className={className} />;
       case TOOL.BROWSER_SCROLL_UP:
-        return <ChevronUp className={className} />;
+        return <ChevronUpIcon className={className} />;
       case TOOL.BROWSER_CLICK:
         return <MousePointerClick className={className} />;
       case TOOL.BROWSER_ENTER_TEXT:
