@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Markdown from "@/components/markdown-v2";
+import Markdown from "@/components/markdown";
 import { 
   DSCard,
   DSCardHeader,

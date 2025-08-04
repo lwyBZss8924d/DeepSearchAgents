@@ -2,7 +2,7 @@
 
 import { AppProgressBar as ProgressBar } from "next-nprogress-bar";
 import "../app/github-markdown.css";
-import { ThemeProvider } from "@/components/theme-provider-v2";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (

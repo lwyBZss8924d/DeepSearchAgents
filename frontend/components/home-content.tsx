@@ -1,6 +1,6 @@
 "use client";
 
-import AgentLayoutV2 from "@/components/agent-layout-v2";
+import AgentLayoutV2 from "@/components/agent-layout";
 // import DebugPanel from "@/components/debug-panel";
 
 export default function HomeContent() {

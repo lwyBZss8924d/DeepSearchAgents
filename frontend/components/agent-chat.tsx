@@ -5,9 +5,9 @@ import { useEffect } from "react";
 import { useAppContext } from "@/context/app-context";
 import { DSAgentRunMessage } from "@/types/api.types";
 import { useAutoScroll, ScrollToBottomButton } from "@/hooks/use-auto-scroll";
-import Markdown from "@/components/markdown-v2";
+import Markdown from "@/components/markdown";
 import FinalAnswer from "@/components/final-answer";
-import FinalAnswerDisplay from "@/components/final-answer-display-v2";
+import FinalAnswerDisplay from "@/components/final-answer-display";
 import { cn } from "@/lib/utils";
 import { 
   DSAgentMessageCard,

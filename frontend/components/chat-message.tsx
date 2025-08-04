@@ -12,18 +12,18 @@ import {
 import { useState, useEffect } from "react";
 
 import Action from "@/components/action";
-import Markdown from "@/components/markdown-v2";
+import Markdown from "@/components/markdown";
 import QuestionInput from "@/components/question-input";
-import FinalAnswerDisplay from "@/components/final-answer-display-v2";
-import PlanningCard from "@/components/planning-card-v2";
-import ActionThoughtCard from "@/components/action-thought-card-v2";
+import FinalAnswerDisplay from "@/components/final-answer-display";
+import PlanningCard from "@/components/planning-card";
+import ActionThoughtCard from "@/components/action-thought-card";
 import { DSAgentToolBadge } from "@/components/ds";
 import { ActionStep, Message } from "@/typings/agent";
 import { DSAgentRunMessage } from "@/types/api.types";
 import { getFileIconAndColor } from "@/utils/file-utils";
 import { isFinalAnswer } from "@/utils/extractors";
 import { DSButton } from "@/components/ds";
-import EditQuestion from "./edit-question-v2";
+import EditQuestion from "./edit-question";
 import { useAppContext } from "@/context/app-context";
 
 interface ChatMessageProps {
