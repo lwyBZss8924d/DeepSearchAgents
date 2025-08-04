@@ -45,8 +45,7 @@ export const DSButton = forwardRef<HTMLButtonElement, DSButtonProps>(
       primary: cn(
         'bg-[var(--ds-terminal-fg)] text-[var(--ds-terminal-bg)]',
         'hover:bg-[var(--ds-terminal-bright)]',
-        'border border-[var(--ds-terminal-fg)]',
-        'active:transform active:translate-y-[1px]'
+        'border border-[var(--ds-terminal-fg)]'
       ),
       secondary: cn(
         'bg-transparent text-[var(--ds-terminal-fg)]',
@@ -125,8 +124,7 @@ export const DSButton = forwardRef<HTMLButtonElement, DSButtonProps>(
           'transition-all duration-200',
           'cursor-pointer',
           'focus:outline-none',
-          'focus:ring-2 focus:ring-[var(--ds-terminal-fg)] focus:ring-offset-2',
-          'focus:ring-offset-[var(--ds-terminal-bg)]',
+          'focus:border-[var(--ds-border-active)]',
           sizeClasses[size],
           variantClasses[variant],
           fullWidth && 'w-full',

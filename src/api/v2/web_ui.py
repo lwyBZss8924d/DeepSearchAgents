@@ -221,6 +221,8 @@ def process_planning_step(
         "planning_type": planning_type,
         "is_update_plan": not is_initial,
         "planning_step_number": step_number,
+        "agent_status": "initial_planning" if is_initial else "update_planning",
+        "is_active": is_streaming,
         "status": "done",
     }
 
@@ -263,6 +265,8 @@ def process_planning_step(
             "step_type": "planning",
             "planning_type": planning_type,
             "planning_step_number": step_number,
+            "agent_status": "initial_planning" if is_initial else "update_planning",
+            "is_active": False,
             "status": "done",
             "streaming": False,
             "thoughts_content": plan_content[:60],  # First 60 chars
@@ -307,6 +311,8 @@ def process_planning_step(
                     "message_type": "planning_content",
                     "step_type": "planning",
                     "planning_type": planning_type,
+                    "agent_status": "initial_planning" if is_initial else "update_planning",
+                    "is_active": False,
                     "status": "done",
                     "streaming": False,
                 },
@@ -328,6 +334,8 @@ def process_planning_step(
                     "message_type": "planning_content",
                     "step_type": "planning",
                     "planning_type": planning_type,
+                    "agent_status": "initial_planning" if is_initial else "update_planning",
+                    "is_active": True,
                     "status": "streaming",
                     "streaming": True,
                     "stream_id": stream_id,
@@ -419,7 +427,7 @@ def process_action_step(
 
     # Process and send thought/reasoning from the LLM - always send
     # Send raw model output, let frontend handle display
-    if getattr(step_log, "model_output", ""):
+    if getattr(step_log, "model_output", "") and not skip_model_outputs:
         model_output = _clean_model_output(step_log.model_output)
 
         # Log what we're processing
@@ -432,6 +440,8 @@ def process_action_step(
                 "component": "chat",
                 "message_type": "action_thought",
                 "step_type": "action",
+                "agent_status": "thinking",
+                "is_active": False,
                 "status": "done",
                 "is_raw_thought": True,  # Indicate raw content
                 "thoughts_content": model_output[:60],  # First 60 chars
@@ -452,6 +462,38 @@ def process_action_step(
                 session_id=session_id,
                 step_number=step_number,
             )
+    elif skip_model_outputs and getattr(step_log, "model_output", ""):
+        # In streaming mode - send initial empty message for action_thought
+        stream_id = f"msg-{step_number}-action_thought-stream"
+        logger.info(
+            f"BACKEND: Creating initial streaming message for action_thought "
+            f"with ID: {stream_id}, step: {step_number}"
+        )
+        
+        # Get first 60 chars for preview
+        model_output = _clean_model_output(step_log.model_output)
+        thoughts_preview = model_output[:60] if model_output else "Thinking..."
+        
+        yield DSAgentRunMessage(
+            role=MessageRole.ASSISTANT,
+            content="",  # Start with empty content
+            metadata={
+                "component": "chat",
+                "message_type": "action_thought",
+                "step_type": "action",
+                "agent_status": "thinking",
+                "is_active": True,
+                "status": "streaming",
+                "streaming": True,
+                "stream_id": stream_id,
+                "is_initial_stream": True,
+                "thoughts_content": thoughts_preview,  # Preview for UI
+                "is_raw_thought": True,
+            },
+            message_id=stream_id,
+            session_id=session_id,
+            step_number=step_number,
+        )
 
     # Tool calls
     if getattr(step_log, "tool_calls", []):
@@ -556,6 +598,8 @@ def process_action_step(
                     "message_type": "tool_invocation",
                     "tool_name": tool_name,
                     "step_type": "action",
+                    "agent_status": "coding",
+                    "is_active": False,
                     "title": f"🛠️ Used tool {tool_name}",
                     "status": "done",
                     "code": code_only,  # Just the code for the editor
@@ -576,6 +620,8 @@ def process_action_step(
                     "message_type": "tool_invocation",
                     "tool_name": tool_name,
                     "step_type": "action",
+                    "agent_status": "actions_running",
+                    "is_active": False,
                     "title": f"🛠️ Used tool {tool_name}",
                     "status": "done",
                 },
@@ -603,6 +649,8 @@ def process_action_step(
             "message_type": "execution_logs",
             "tool_name": tool_name,
             "step_type": "action",
+            "agent_status": "actions_running",
+            "is_active": False,
             "title": "📝 Execution Logs",
             "status": "done",
             "output_lines": output_lines,
@@ -835,6 +883,8 @@ def process_final_answer_step(
             "component": "chat",
             "message_type": "final_answer",
             "step_type": "final_answer",
+            "agent_status": "writing",
+            "is_active": False,
             "status": "done",
             "is_final_answer": True,
             **metadata_extra,
@@ -1001,6 +1051,24 @@ async def stream_agent_messages(
                         f"step={current_streaming_step}"
                     )
 
+                    # Determine agent status based on phase and type
+                    # More accurate status mapping
+                    if current_phase == "planning":
+                        # Check if this is initial or update planning
+                        agent_status = "initial_planning" if current_step == 0 else "update_planning"
+                    elif current_streaming_type == "action_thought":
+                        agent_status = "thinking"
+                    elif current_streaming_type == "tool_invocation":
+                        # Could be coding or other actions
+                        agent_status = "actions_running"
+                    else:
+                        agent_status = "working"
+
+                    logger.info(
+                        f"Streaming delta status: phase={current_phase}, "
+                        f"type={current_streaming_type}, status={agent_status}"
+                    )
+
                     # Yield DSAgentRunMessage with streaming metadata
                     yield DSAgentRunMessage(
                         role=MessageRole.ASSISTANT,
@@ -1011,6 +1079,8 @@ async def stream_agent_messages(
                             "step_type": (
                                 "planning" if current_phase == "planning" else "action"
                             ),
+                            "agent_status": agent_status,
+                            "is_active": True,
                             "status": "streaming",
                             "streaming": True,
                             "is_delta": True,  # Key indicator for frontend
@@ -1126,6 +1196,24 @@ async def stream_agent_messages(
                         f"step={current_streaming_step}"
                     )
 
+                    # Determine agent status based on phase and type
+                    # More accurate status mapping
+                    if current_phase == "planning":
+                        # Check if this is initial or update planning
+                        agent_status = "initial_planning" if current_step == 0 else "update_planning"
+                    elif current_streaming_type == "action_thought":
+                        agent_status = "thinking"
+                    elif current_streaming_type == "tool_invocation":
+                        # Could be coding or other actions
+                        agent_status = "actions_running"
+                    else:
+                        agent_status = "working"
+
+                    logger.info(
+                        f"Streaming delta status: phase={current_phase}, "
+                        f"type={current_streaming_type}, status={agent_status}"
+                    )
+
                     # Yield DSAgentRunMessage with streaming metadata
                     yield DSAgentRunMessage(
                         role=MessageRole.ASSISTANT,
@@ -1136,6 +1224,8 @@ async def stream_agent_messages(
                             "step_type": (
                                 "planning" if current_phase == "planning" else "action"
                             ),
+                            "agent_status": agent_status,
+                            "is_active": True,
                             "status": "streaming",
                             "streaming": True,
                             "is_delta": True,  # Key indicator for frontend

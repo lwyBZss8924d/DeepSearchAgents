@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
+    "@stagewise-plugins/react": "^0.6.2",
+    "@stagewise/toolbar-next": "^0.6.2",
     "@webtui/css": "^0.1.4",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/addon-search": "^0.15.0",

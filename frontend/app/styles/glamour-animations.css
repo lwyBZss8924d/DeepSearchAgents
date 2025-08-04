@@ -1,0 +1,272 @@
+/* Glamorous Animation System for DeepSearchAgents */
+@layer glamour.animations {
+  /* Gradient Color Cycling */
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes gradient-pulse {
+    0%, 100% { 
+      background-size: 100% 100%;
+      filter: brightness(1);
+    }
+    50% { 
+      background-size: 110% 110%;
+      filter: brightness(1.2);
+    }
+  }
+
+  /* Glow Effects */
+  @keyframes glow-pulse {
+    0%, 100% { 
+      box-shadow: 0 0 5px rgba(0, 255, 65, 0.5),
+                  0 0 10px rgba(0, 255, 65, 0.3),
+                  0 0 15px rgba(0, 255, 65, 0.1);
+    }
+    50% { 
+      box-shadow: 0 0 10px rgba(0, 255, 65, 0.8),
+                  0 0 20px rgba(0, 255, 65, 0.5),
+                  0 0 30px rgba(0, 255, 65, 0.3);
+    }
+  }
+
+  @keyframes text-glow {
+    0%, 100% { text-shadow: 0 0 10px currentColor; }
+    50% { text-shadow: 0 0 20px currentColor, 0 0 30px currentColor; }
+  }
+
+  /* Character Cycling for Loading States */
+  @keyframes char-cycle {
+    0% { content: "◐"; }
+    25% { content: "◓"; }
+    50% { content: "◑"; }
+    75% { content: "◒"; }
+    100% { content: "◐"; }
+  }
+
+  @keyframes matrix-rain {
+    0% { 
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { 
+      transform: translateY(100vh);
+      opacity: 0;
+    }
+  }
+
+  /* Border Animations */
+  @keyframes border-dance {
+    0%, 100% { 
+      border-color: var(--ds-agent-planning);
+      border-width: 3px;
+    }
+    25% { 
+      border-color: var(--ds-agent-thinking);
+      border-width: 4px;
+    }
+    50% { 
+      border-color: var(--ds-agent-coding);
+      border-width: 3px;
+    }
+    75% { 
+      border-color: var(--ds-agent-running);
+      border-width: 4px;
+    }
+  }
+
+  /* Morphing Animations */
+  @keyframes morph {
+    0%, 100% { border-radius: 0.5rem; }
+    25% { border-radius: 1rem 0.5rem 1rem 0.5rem; }
+    50% { border-radius: 0.5rem 1rem 0.5rem 1rem; }
+    75% { border-radius: 1rem 0.5rem 1rem 0.5rem; }
+  }
+
+  /* Ripple Effect */
+  @keyframes ripple {
+    0% {
+      transform: scale(0);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+
+  /* Typewriter with Cursor */
+  @keyframes typewriter {
+    from { width: 0; }
+    to { width: 100%; }
+  }
+
+  @keyframes blink-cursor {
+    0%, 49% { border-right-color: currentColor; }
+    50%, 100% { border-right-color: transparent; }
+  }
+
+  /* Spring Physics Animation */
+  @keyframes spring-in {
+    0% { 
+      transform: scale(0) rotate(180deg);
+      opacity: 0;
+    }
+    50% { 
+      transform: scale(1.2) rotate(-20deg);
+    }
+    75% { 
+      transform: scale(0.9) rotate(10deg);
+    }
+    100% { 
+      transform: scale(1) rotate(0deg);
+      opacity: 1;
+    }
+  }
+
+  /* Particle Effects */
+  @keyframes particle-float {
+    0% {
+      transform: translateY(0) translateX(0) scale(0);
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+      transform: translateY(-10px) translateX(10px) scale(1);
+    }
+    100% {
+      transform: translateY(-100px) translateX(50px) scale(0);
+      opacity: 0;
+    }
+  }
+
+  /* Neon Flicker */
+  @keyframes neon-flicker {
+    0%, 100% { opacity: 1; }
+    41.99% { opacity: 1; }
+    42% { opacity: 0; }
+    43% { opacity: 0; }
+    43.01% { opacity: 1; }
+    47.99% { opacity: 1; }
+    48% { opacity: 0; }
+    49% { opacity: 1; }
+  }
+
+  /* Wave Animation */
+  @keyframes wave {
+    0%, 100% { transform: translateY(0); }
+    25% { transform: translateY(-5px); }
+    75% { transform: translateY(5px); }
+  }
+
+  /* Glamorous Utility Classes */
+  .glamour-gradient {
+    background: linear-gradient(
+      135deg,
+      var(--ds-agent-planning) 0%,
+      var(--ds-agent-coding) 50%,
+      var(--ds-agent-running) 100%
+    );
+    background-size: 200% 200%;
+    animation: gradient-shift 3s ease infinite;
+  }
+
+  .glamour-gradient-text {
+    background: linear-gradient(
+      135deg,
+      var(--ds-agent-planning) 0%,
+      var(--ds-agent-coding) 50%,
+      var(--ds-agent-running) 100%
+    );
+    background-size: 200% 200%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient-shift 3s ease infinite;
+  }
+
+  .glamour-glow {
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+
+  .glamour-text-glow {
+    animation: text-glow 2s ease-in-out infinite;
+  }
+
+  .glamour-border-dance {
+    animation: border-dance 4s ease-in-out infinite;
+  }
+
+  .glamour-morph {
+    animation: morph 4s ease-in-out infinite;
+  }
+
+  .glamour-spring {
+    animation: spring-in 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .glamour-typewriter {
+    overflow: hidden;
+    white-space: nowrap;
+    border-right: 2px solid;
+    animation: 
+      typewriter 2s steps(20) 1s forwards,
+      blink-cursor 1s step-end infinite;
+  }
+
+  /* State-specific Animations */
+  .planning-glow {
+    box-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
+    animation: glow-pulse 2s ease-in-out infinite;
+  }
+
+  .coding-glow {
+    box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+    animation: glow-pulse 1.5s ease-in-out infinite;
+  }
+
+  .running-glow {
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+    animation: glow-pulse 1s ease-in-out infinite;
+  }
+
+  /* Hover Effects */
+  .glamour-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glamour-hover:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 30px rgba(0, 255, 65, 0.3);
+  }
+
+  /* Particle Container */
+  .particle-container {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--ds-agent-coding);
+    border-radius: 50%;
+    animation: particle-float 3s ease-out infinite;
+  }
+
+  /* Performance optimizations */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

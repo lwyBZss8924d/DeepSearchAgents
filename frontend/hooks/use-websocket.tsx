@@ -3,6 +3,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useAppContext } from '@/context/app-context';
 import { DSAgentRunMessage, WebSocketMessage } from '@/types/api.types';
 import { toast } from 'sonner';
+import { mapBackendToFrontendStatus, statusConfig, DetailedAgentStatus } from '@/types/agent-status.types';
 
 // Enable debug logging for planning messages
 const DEBUG_PLANNING = true;
@@ -160,6 +161,10 @@ export function useWebSocket(sessionId: string | null) {
               console.log(`🎯 Initial streaming message: ${messageId}`);
             }
             
+            // Process message for UI updates IMMEDIATELY
+            // This ensures status is updated as soon as streaming starts
+            processAgentMessage(data as DSAgentRunMessage, dispatch, state);
+            
             streamingMessagesRef.current.set(messageId, data as DSAgentRunMessage);
             
             // Add to messages array
@@ -170,12 +175,13 @@ export function useWebSocket(sessionId: string | null) {
               dispatch({ type: 'SET_CURRENT_STEP', payload: stepNumber });
             }
             
-            // Process message for UI updates
-            processAgentMessage(data as DSAgentRunMessage, dispatch);
-            
           } else if (isDelta && messageId) {
             // This is a streaming update - find and update existing message by message_id
             let foundMessage = false;
+            
+            // CRITICAL: Process delta message for status updates
+            // This ensures the title bar updates in real-time during streaming
+            processAgentMessage(data as DSAgentRunMessage, dispatch, state);
             
             if (DEBUG_PLANNING) {
               console.log(`🔍 Delta update for message: ${messageId}`);
@@ -241,6 +247,10 @@ export function useWebSocket(sessionId: string | null) {
             // This is a complete message
             console.log(`Complete message for step ${stepNumber}, metadata:`, data.metadata);
             
+            // Process message for UI updates FIRST (before any other handling)
+            // This ensures status updates happen immediately
+            processAgentMessage(data as DSAgentRunMessage, dispatch, state);
+            
             // Check if this completes a streaming message
             if (data.metadata?.stream_id) {
               // This message completes a streaming message
@@ -254,9 +264,6 @@ export function useWebSocket(sessionId: string | null) {
                 if (DEBUG_PLANNING) {
                   console.log(`✅ Replaced streaming message ${data.metadata.stream_id} with complete message`);
                 }
-                
-                // Process message for UI updates
-                processAgentMessage(data, dispatch);
                 return;
               } else {
                 // If we didn't find it in streamingMessagesRef, it might already be in messages
@@ -300,9 +307,6 @@ export function useWebSocket(sessionId: string | null) {
             }
             
             dispatch({ type: 'ADD_MESSAGE', payload: data as DSAgentRunMessage });
-            
-            // Process message for UI updates immediately
-            processAgentMessage(data as DSAgentRunMessage, dispatch);
           }
         } else {
           console.warn('Unexpected message format:', data);
@@ -364,6 +368,10 @@ export function useWebSocket(sessionId: string | null) {
       dispatch({ type: 'SET_GENERATING', payload: true });
       dispatch({ type: 'SET_COMPLETED', payload: false });
       dispatch({ type: 'SET_CURRENT_STEP', payload: 0 });
+      
+      // Start the timer when user sends a query
+      console.log('[Timer] Query sent - starting agent timer');
+      dispatch({ type: 'SET_AGENT_START_TIME', payload: Date.now() });
     } else {
       toast.error('Not connected. Please wait...');
     }
@@ -414,7 +422,8 @@ export function useWebSocket(sessionId: string | null) {
 // Process DSAgentRunMessage for UI updates
 function processAgentMessage(
   message: DSAgentRunMessage, 
-  dispatch: any
+  dispatch: any,
+  state: any
 ) {
   console.log('Processing agent message:', {
     role: message.role,
@@ -435,6 +444,9 @@ function processAgentMessage(
     dispatch({ type: 'SET_GENERATING', payload: false });
     dispatch({ type: 'SET_COMPLETED', payload: true });
   }
+  
+  // Update agent task status based on metadata
+  updateAgentTaskStatus(message, dispatch, state);
   
   // Update current step if provided
   if (message.step_number !== undefined && message.step_number !== null) {
@@ -515,5 +527,84 @@ function processAgentMessage(
     console.log('Final answer detected in metadata');
     dispatch({ type: 'SET_GENERATING', payload: false });
     dispatch({ type: 'SET_COMPLETED', payload: true });
+  }
+}
+
+// Update agent task status based on message metadata
+function updateAgentTaskStatus(
+  message: DSAgentRunMessage,
+  dispatch: any,
+  state: any
+) {
+  const { metadata } = message;
+  
+  // Update streaming status
+  if (metadata?.streaming !== undefined) {
+    dispatch({ type: 'SET_IS_STREAMING', payload: metadata.streaming });
+  }
+  
+  // Use the sophisticated status mapping with isGenerating and current status
+  const currentStatus = state.currentAgentStatus as DetailedAgentStatus;
+  const detailedStatus = mapBackendToFrontendStatus(
+    metadata || {}, 
+    state.isGenerating,
+    currentStatus
+  );
+  const isStreaming = metadata?.streaming === true || metadata?.is_active === true;
+  
+  // Only update status if it's actually changing or meaningful
+  if (detailedStatus !== currentStatus) {
+    console.log(`[Status Update] Status changing: ${currentStatus} → ${detailedStatus}`);
+    
+    // CRITICAL: Update current agent status immediately
+    // This is the single source of truth for all status displays
+    dispatch({ 
+      type: 'SET_CURRENT_AGENT_STATUS', 
+      payload: detailedStatus
+    });
+  } else {
+    console.log(`[Status Update] Preserving current status: ${currentStatus} (message type: ${metadata?.message_type})`);
+  }
+  
+  // Map detailed status to agent task state
+  const stateMapping: Record<string, string> = {
+    'standby': '',
+    'initial_planning': 'planning',
+    'update_planning': 'planning',
+    'thinking': 'thinking',
+    'coding': 'coding',
+    'actions_running': 'running',
+    'writing': 'final',
+    'working': 'working',
+    'loading': 'working',
+    'error': 'error'
+  };
+  
+  const agentTaskState = stateMapping[detailedStatus];
+  
+  // Always update state when we have a valid status
+  if (detailedStatus !== 'standby') {
+    const statusText = statusConfig[detailedStatus]?.text || detailedStatus;
+    console.log(`[Status Update] Setting agent state: ${agentTaskState}, status: ${statusText}`);
+    dispatch({ type: 'SET_AGENT_TASK_STATE', payload: agentTaskState || 'working' });
+    dispatch({ type: 'SET_AGENT_TASK_STATUS', payload: statusText });
+  }
+  
+  // Clear status only when agent is truly complete (not just individual step done)
+  // Check for final answer or explicit completion, AND that we're not still generating
+  if ((metadata?.is_final_answer || metadata?.status === 'complete') && !state.isGenerating) {
+    dispatch({ type: 'SET_AGENT_TASK_STATE', payload: null });
+    dispatch({ type: 'SET_AGENT_TASK_STATUS', payload: '' });
+    dispatch({ type: 'SET_IS_STREAMING', payload: false });
+    dispatch({ 
+      type: 'SET_CURRENT_AGENT_STATUS', 
+      payload: 'standby'
+    });
+    // Clear agent start time when returning to standby
+    console.log('[Timer] Agent stopped - clearing start time');
+    dispatch({ 
+      type: 'SET_AGENT_START_TIME', 
+      payload: null
+    });
   }
 }

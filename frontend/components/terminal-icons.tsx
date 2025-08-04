@@ -55,7 +55,7 @@ const iconMap: Record<IconName, string> = {
   plus: '+',
   minus: '-',
   copy: '⧉',
-  clear: '⌫',
+  clear: '×',
   play: '▶',
   stop: '■',
 };
@@ -145,3 +145,36 @@ export const ChevronLeftIcon = (props: Omit<TerminalIconProps, 'name'>) =>
 
 export const ChevronRightIcon = (props: Omit<TerminalIconProps, 'name'>) => 
   <TerminalIcon name="chevron-right" {...props} />;
+
+export const ClearIcon = (props: Omit<TerminalIconProps, 'name'>) => 
+  <TerminalIcon name="clear" {...props} />;
+
+export const CopyIcon = (props: Omit<TerminalIconProps, 'name'>) => 
+  <TerminalIcon name="copy" {...props} />;
+
+export const CheckIcon = (props: Omit<TerminalIconProps, 'name'>) => 
+  <TerminalIcon name="check" {...props} />;
+
+// Terminal System Icon - SVG based
+interface TerminalSystemIconProps {
+  size?: number;
+  className?: string;
+}
+
+export function TerminalSystemIcon({ 
+  size = 16, 
+  className 
+}: TerminalSystemIconProps) {
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      width={size} 
+      height={size} 
+      viewBox="0 0 24 24" 
+      className={cn('inline-block', className)}
+      fill="currentColor"
+    >
+      <path d="M23 2H1v16h22zm-9.414 10.5l2.5-2.5l-2.5-2.5L15 6.086L18.914 10L15 13.914zM9 13.914L5.086 10L9 6.086L10.414 7.5l-2.5 2.5l2.5 2.5zM21 20H3v2h18z" />
+    </svg>
+  );
+}

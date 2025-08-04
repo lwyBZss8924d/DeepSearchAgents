@@ -76,7 +76,8 @@
       "Bash(npm uninstall:*)",
       "WebFetch(domain:context7.com)",
       "Bash(npm run lint:*)",
-      "WebFetch(domain:deepwiki.com)"
+      "WebFetch(domain:deepwiki.com)",
+      "Bash(open:*)"
     ],
     "deny": []
   }

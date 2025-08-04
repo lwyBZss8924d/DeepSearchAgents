@@ -3,12 +3,16 @@
 import React from 'react'
 import { cn } from '@/lib/utils'
 import { DSThemeSwitcherCompact } from './DSThemeSwitcher'
+import { DSAgentTUILogoInline } from './DSAgentTUILogo'
+import { TerminalSystemIcon } from '../terminal-icons'
 
 interface DSAgentTerminalContainerProps {
   children: React.ReactNode
   title?: string
   showHeader?: boolean
   className?: string
+  headerContent?: React.ReactNode
+  headerRightContent?: React.ReactNode
 }
 
 /**
@@ -19,9 +23,11 @@ interface DSAgentTerminalContainerProps {
  */
 export function DSAgentTerminalContainer({ 
   children,
-  title = 'DeepSearchAgents Terminal',
+  title = 'HAL-9000™ Terminal',
   showHeader = true,
-  className 
+  className,
+  headerContent,
+  headerRightContent
 }: DSAgentTerminalContainerProps) {
   return (
     <div
@@ -36,12 +42,27 @@ export function DSAgentTerminalContainer({
           className="ds-terminal-header"
           box-="double-horizontal"
         >
-          <div className="ds-terminal-title">
-            <span className="ds-terminal-title-icon">▣</span>
-            <span className="ds-terminal-title-text">{title}</span>
+          <div className="ds-terminal-header-left flex items-center gap-2">
+            <span className="ds-terminal-title-text text-sm opacity-60">{title}</span>
+            <TerminalSystemIcon size={16} className="text-[var(--ds-terminal-dim)] opacity-60" />
+            {headerContent && (
+              <>
+                <span className="text-[var(--ds-terminal-dim)] opacity-60 mx-2">|</span>
+                {headerContent}
+              </>
+            )}
           </div>
-          <div className="ds-terminal-controls">
-            <DSThemeSwitcherCompact className="mr-2" />
+          <div className="ds-terminal-header-right flex items-center gap-2">
+            <DSAgentTUILogoInline />
+            {headerRightContent && (
+              <>
+                <span className="text-[var(--ds-terminal-dim)] opacity-60 mx-2">|</span>
+                {headerRightContent}
+              </>
+            )}
+            <div className="ds-terminal-controls">
+              <DSThemeSwitcherCompact className="mr-2" />
+            </div>
           </div>
         </div>
       )}

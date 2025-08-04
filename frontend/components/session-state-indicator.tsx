@@ -5,55 +5,34 @@ import { cn } from "@/lib/utils";
 
 export default function SessionStateIndicator() {
   const { state } = useAppContext();
-  const { isConnected, isGenerating, isCompleted, sessionId } = state;
+  const { isConnected, sessionId } = state;
 
+  // Simplified state - show connection status with session ID
   const getStateInfo = () => {
     if (!isConnected) {
       return {
-        status: 'offline',
-        text: 'OFFLINE',
-        color: 'var(--ds-terminal-red)',
         icon: '◉',
-        pulse: false
+        color: 'var(--ds-terminal-red)',
+        text: 'Disconnected',
+        showId: false
       };
     }
 
     if (!sessionId) {
       return {
-        status: 'initializing',
-        text: 'INIT...',
-        color: 'var(--ds-terminal-yellow)',
         icon: '◎',
-        pulse: true
+        color: 'var(--ds-terminal-yellow)',
+        text: 'Connecting',
+        showId: false
       };
     }
 
-    if (isGenerating) {
-      return {
-        status: 'processing',
-        text: 'PROCESSING',
-        color: 'var(--ds-terminal-cyan)',
-        icon: '◉',
-        pulse: true
-      };
-    }
-
-    if (isCompleted) {
-      return {
-        status: 'complete',
-        text: 'COMPLETE',
-        color: 'var(--ds-terminal-green)',
-        icon: '✓',
-        pulse: false
-      };
-    }
-
+    // Connected with session - show as Connected with ID
     return {
-      status: 'ready',
-      text: 'READY',
-      color: 'var(--ds-terminal-green)',
       icon: '◉',
-      pulse: false
+      color: 'var(--ds-terminal-green)',
+      text: 'Connected',
+      showId: true
     };
   };
 
@@ -62,10 +41,7 @@ export default function SessionStateIndicator() {
   return (
     <div className="ds-session-state">
       <span 
-        className={cn(
-          "ds-session-state-icon",
-          stateInfo.pulse && "ds-session-state-pulse"
-        )}
+        className="ds-session-state-icon"
         style={{ color: stateInfo.color }}
       >
         {stateInfo.icon}
@@ -76,7 +52,7 @@ export default function SessionStateIndicator() {
       >
         {stateInfo.text}
       </span>
-      {sessionId && (
+      {stateInfo.showId && sessionId && (
         <span className="ds-session-state-id">
           [{sessionId.slice(0, 8)}]
         </span>

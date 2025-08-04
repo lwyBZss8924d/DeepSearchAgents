@@ -70,9 +70,17 @@ export default function CodeEditor({ className }: CodeEditorProps) {
   if (!code && !isStreaming) {
     return (
       <DSAgentMessageCard type="system" state="idle" className={className}>
-        <div className="ds-code-editor-empty">
-          <span className="ds-empty-icon">[ ]</span>
-          <span className="ds-empty-text">Waiting for code execution...</span>
+        <div className="ds-code-editor-empty neovim-style">
+          <pre className="font-mono text-sm leading-relaxed">{`~
+~
+~
+~     No code to display
+~
+~
+~`}</pre>
+          <div className="mt-4 text-xs text-[var(--ds-terminal-dim)] font-mono">
+            -- NORMAL --
+          </div>
         </div>
       </DSAgentMessageCard>
     );
@@ -95,7 +103,8 @@ export default function CodeEditor({ className }: CodeEditorProps) {
         <DSAgentStateBadge 
           state="coding"
           text={isStreaming ? "Writing code..." : "Code"}
-          showSpinner={isStreaming}
+          showSpinner={false}
+          isAnimated={false}
         />
       </div>
       
@@ -118,6 +127,7 @@ export default function CodeEditor({ className }: CodeEditorProps) {
           <DSAgentStateBadge
             state={executionResult.error ? "error" : "final"}
             text={executionResult.error ? "Execution failed" : "Execution completed"}
+            isAnimated={false}
           />
         </div>
       )}

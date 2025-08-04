@@ -4,13 +4,14 @@ import React from 'react'
 import { cn } from '@/lib/utils'
 import { DSAgentASCIISpinner } from './DSAgentASCIISpinner'
 
-export type AgentState = 'planning' | 'thinking' | 'coding' | 'running' | 'final' | 'error'
+export type AgentState = 'planning' | 'thinking' | 'coding' | 'running' | 'final' | 'working' | 'error'
 
 interface DSAgentStateBadgeProps {
   state: AgentState
   text?: string
   showIcon?: boolean
   showSpinner?: boolean
+  isAnimated?: boolean  // Controls whether animations are active
   className?: string
 }
 
@@ -21,6 +22,7 @@ const stateIcons: Record<AgentState, string> = {
   coding: '▶',
   running: '■',
   final: '✓',
+  working: '◊',
   error: '✗'
 }
 
@@ -31,6 +33,7 @@ const stateTexts: Record<AgentState, string> = {
   coding: 'Coding...',
   running: 'Actions Running...',
   final: 'Writing...',
+  working: 'Working...',
   error: 'Error'
 }
 
@@ -45,19 +48,31 @@ export function DSAgentStateBadge({
   text,
   showIcon = true,
   showSpinner = false,
+  isAnimated,
   className 
 }: DSAgentStateBadgeProps) {
   const displayText = text || stateTexts[state]
-  const shouldShowSpinner = showSpinner || ['planning', 'thinking', 'coding', 'running'].includes(state)
+  
+  // Determine if we should show spinner
+  // If isAnimated is explicitly set, use it
+  // Otherwise, check showSpinner or default behavior for certain states
+  const shouldShowSpinner = isAnimated !== undefined 
+    ? isAnimated && showSpinner !== false
+    : showSpinner || ['planning', 'thinking', 'coding', 'running', 'working'].includes(state)
+  
+  // Show static icon when not animated or when spinner is disabled
+  const shouldShowStaticIcon = showIcon && !shouldShowSpinner
   
   return (
     <span
       is-="badge"
       agent-badge-="state"
       agent-state-={state}
+      agent-animated-={isAnimated ? "true" : "false"}
       className={cn(
         'ds-state-badge',
         `agent-${state}`,
+        isAnimated && 'ds-state-animated',
         className
       )}
     >
@@ -69,7 +84,7 @@ export function DSAgentStateBadge({
           aria-label={`${displayText} spinner`}
         />
       )}
-      {showIcon && (
+      {shouldShowStaticIcon && (
         <span className="ds-state-icon" aria-hidden="true">
           {stateIcons[state]}
         </span>

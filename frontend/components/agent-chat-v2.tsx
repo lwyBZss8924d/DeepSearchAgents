@@ -14,8 +14,10 @@ import {
   DSAgentStateBadge,
   DSAgentToolBadge,
   DSAgentStreamingText,
+  DSAgentTUILogo,
   type AgentState
 } from "@/components/ds";
+import { mapBackendToFrontendStatus, getStatusDisplay } from '@/types/agent-status.types';
 import { 
   isThinkingMessage, 
   isFinalAnswer, 
@@ -95,28 +97,8 @@ export default function AgentChat({ className }: AgentChatProps) {
       >
         {/* Welcome ASCII art when no messages */}
         {messages.length === 0 && (
-          <div className="ds-welcome-ascii">
-            <pre>{`
-    ____                 ____                      __  
-   / __ \\___  ___  ____ / __/___  ____ ___________/ /_ 
-  / / / / _ \\/ _ \\/ __ \\\\__ \\/ _ \\/ __ \`/ ___/ ___/ __ \\
- / /_/ /  __/  __/ /_/ /__/ /  __/ /_/ / /  / /__/ / / /
-/_____/\\___/\\___/ .___/____/\\___/\\__,_/_/   \\___/_/ /_/ 
-               /_/                                       
-       ___                    __      
-      /   | ____ ____  ____  / /______
-     / /| |/ __ \`/ _ \\/ __ \\/ __/ ___/
-    / ___ / /_/ /  __/ / / / /_(__  ) 
-   /_/  |_\\__, /\\___/_/ /_/\\__/____/  
-         /____/                       
-
-╔═══════════════════════════════════════════════════════╗
-║          Welcome to DeepSearchAgents Terminal         ║
-║                                                       ║
-║  ▶ Type your query below to start searching          ║
-║  ▶ Agent will process your request step by step      ║
-║  ▶ Real-time streaming shows agent's thinking        ║
-╚═══════════════════════════════════════════════════════╝`}</pre>
+          <div className="ds-welcome-container flex flex-col items-center justify-center min-h-[400px] space-y-4">
+            <DSAgentTUILogo variant="default" animate={true} />
           </div>
         )}
         
@@ -155,6 +137,7 @@ export default function AgentChat({ className }: AgentChatProps) {
                 state="thinking" 
                 text="Agent is processing..."
                 showSpinner={true}
+                isAnimated={false}
               />
             </div>
           </DSAgentMessageCard>
@@ -177,6 +160,7 @@ function MessageItem({ message }: { message: DSAgentRunMessage }) {
   const isActionThought = isActionStepThought(message.metadata, message.content);
   const isFinal = isFinalAnswer(message.metadata, message.content);
   const isStreaming = message.metadata?.streaming === true;
+  const isActive = message.metadata?.is_active === true;
   const toolName = getToolName(message.metadata);
   const finalAnswerContent = isFinal ? extractFinalAnswerContent(message.content) : null;
   
@@ -192,12 +176,14 @@ function MessageItem({ message }: { message: DSAgentRunMessage }) {
   }
   
   // Debug action thought rendering
-  if (isActionThought) {
+  if (isActionThought || message.metadata?.message_type === 'action_thought') {
     console.log("[AgentChat] Action thought detected:", {
       message_type: message.metadata?.message_type,
       thoughts_content: message.metadata?.thoughts_content,
       content_length: message.content?.length,
       step_number: message.step_number,
+      streaming: isStreaming,
+      is_initial_stream: message.metadata?.is_initial_stream,
       metadata: message.metadata
     });
   }
@@ -220,10 +206,13 @@ function MessageItem({ message }: { message: DSAgentRunMessage }) {
   if (message.metadata?.message_type === 'planning_header') {
     const planningType = message.metadata.planning_type || 'initial';
     const badgeText = planningType === 'initial' ? 'Initial Plan' : 'Updated Plan';
+    const headerStatus = message.metadata.agent_status || (planningType === 'initial' ? 'initial_planning' : 'update_planning');
+    const headerConfig = getStatusDisplay(headerStatus, false); // Headers are not animated
     
     console.log('[AgentChat] Rendering planning badge:', {
       planningType,
       badgeText,
+      headerStatus,
       metadata: message.metadata
     });
     
@@ -231,9 +220,10 @@ function MessageItem({ message }: { message: DSAgentRunMessage }) {
       <DSAgentMessageCard type="planning" state="idle">
         <div className="ds-planning-header">
           <DSAgentStateBadge 
-            state="planning" 
+            state={headerConfig.agentState} 
             text={badgeText}
             showIcon={true}
+            isAnimated={false}
           />
         </div>
       </DSAgentMessageCard>
@@ -256,14 +246,17 @@ function MessageItem({ message }: { message: DSAgentRunMessage }) {
     return null;
   }
 
-  // Skip empty content messages (except planning_header and tool_call which have special handling)
+  // Skip empty content messages (except planning_header, tool_call, action_thought, and streaming messages)
   if (!message.content?.trim() && 
       message.metadata?.message_type !== 'planning_header' &&
       message.metadata?.message_type !== 'tool_call' &&
-      !isFinal) {
+      message.metadata?.message_type !== 'action_thought' &&
+      !isFinal &&
+      !isStreaming) {
     console.log('[AgentChat] Filtering out empty message:', {
       message_type: message.metadata?.message_type,
-      content: message.content
+      content: message.content,
+      streaming: isStreaming
     });
     return null;
   }
@@ -273,22 +266,26 @@ function MessageItem({ message }: { message: DSAgentRunMessage }) {
   let cardState: 'idle' | 'active' | 'streaming' = 'idle';
   let agentState: AgentState | undefined;
 
+  // Get detailed status from backend metadata
+  const detailedStatus = message.metadata ? mapBackendToFrontendStatus(message.metadata) : 'standby';
+  const statusConfig = getStatusDisplay(detailedStatus, isStreaming || isActive);
+
   if (isUser) {
     cardType = 'user';
   } else if (isFinal) {
     cardType = 'final';
-    agentState = 'final';
+    agentState = statusConfig.agentState;
   } else if (isPlanning) {
     cardType = 'planning';
-    agentState = 'planning';
+    agentState = statusConfig.agentState;
   } else if (isActionThought) {
     cardType = 'action';
-    agentState = 'thinking';
+    agentState = statusConfig.agentState;
   }
 
   if (isStreaming) {
     cardState = 'streaming';
-  } else if (isThinking || isPlanning) {
+  } else if (isThinking || isPlanning || isActive) {
     cardState = 'active';
   }
 
@@ -300,9 +297,14 @@ function MessageItem({ message }: { message: DSAgentRunMessage }) {
           {isUser ? '$ user>' : '▶ agent>'}
         </span>
         
-        {/* State badges */}
+        {/* State badges with dynamic animations */}
         {agentState && !isUser && (
-          <DSAgentStateBadge state={agentState} />
+          <DSAgentStateBadge 
+            state={agentState} 
+            text={statusConfig.text}
+            isAnimated={false}
+            showSpinner={false}
+          />
         )}
         
         {/* Tool badge */}
@@ -339,9 +341,14 @@ function MessageItem({ message }: { message: DSAgentRunMessage }) {
           />
         ) : message.metadata?.message_type === 'action_thought' || isActionThought ? (
           // Action thought with truncated display
+          // Show immediately even with empty content during streaming
           <div className="ds-action-thought">
             <DSAgentStreamingText
-              text={`Thinking🤔...${message.metadata?.thoughts_content || message.content.substring(0, 60)}...and Action Running[⚡]...`}
+              text={
+                isStreaming && !message.content 
+                  ? "Thinking🤔...Processing...and Action Running[⚡]..." 
+                  : `Thinking🤔...${message.metadata?.thoughts_content || (message.content ? message.content.substring(0, 60) : "Processing")}...and Action Running[⚡]...`
+              }
               isStreaming={isStreaming}
               showCursor={isStreaming}
             />

@@ -6,7 +6,7 @@ import { FitAddon } from "@xterm/addon-fit";
 import { forwardRef, Ref, useEffect, useRef, useState } from "react";
 import "@xterm/xterm/css/xterm.css";
 import { DSButton } from '@/components/ds';
-import { Copy, Check, Trash2 } from 'lucide-react';
+// Terminal-style ASCII icons instead of lucide-react
 import { useAppContext } from '@/context/app-context';
 import { extractExecutionLogs, isTerminalMessage } from '@/utils/extractors';
 
@@ -33,7 +33,7 @@ const Terminal = (
       cursorBlink: false,  // No cursor for read-only
       disableStdin: true,  // Disable input
       fontSize: 14,
-      fontFamily: 'Fira Code, Menlo, Monaco, "Courier New", monospace',
+      fontFamily: 'var(--ds-font-mono)',
       theme: {
         background: "#0c0c0c",
         foreground: "#cccccc",
@@ -232,7 +232,7 @@ const Terminal = (
             onClick={handleClear}
             className="flex items-center gap-2"
           >
-            <Trash2 className="h-4 w-4" />
+            <span className="font-mono">[×]</span>
             Clear
           </DSButton>
           <DSButton
@@ -243,12 +243,12 @@ const Terminal = (
           >
             {copied ? (
               <>
-                <Check className="h-4 w-4" />
+                <span className="font-mono">[✓]</span>
                 Copied!
               </>
             ) : (
               <>
-                <Copy className="h-4 w-4" />
+                <span className="font-mono">[⧉]</span>
                 Copy
               </>
             )}

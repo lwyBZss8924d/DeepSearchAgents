@@ -176,6 +176,75 @@ export const matrixTheme: DSTheme = {
   }
 };
 
+// Synthwave Theme
+export const synthwaveTheme: DSTheme = {
+  id: 'synthwave',
+  name: 'Synthwave',
+  description: 'Retro 80s neon aesthetic with vibrant gradients',
+  colors: {
+    terminalBg: '#0f0e17',
+    terminalFg: '#ff006e',
+    terminalBright: '#ff4098',
+    terminalDim: '#cc0055',
+    borderDefault: '#ff006e',
+    borderActive: '#00ffff',
+    bgElevated: '#1a1625',
+    bgCode: '#160f22',
+    agentPlanning: '#3a86ff',
+    agentThinking: '#ffaa00',
+    agentCoding: '#00ff88',
+    agentRunning: '#00ffff',
+    agentFinal: '#ff00ff',
+    agentError: '#ff006e'
+  }
+};
+
+// Cyberpunk Theme
+export const cyberpunkTheme: DSTheme = {
+  id: 'cyberpunk',
+  name: 'Cyberpunk',
+  description: 'Futuristic theme with glitch effects and bold contrasts',
+  colors: {
+    terminalBg: '#000814',
+    terminalFg: '#ffd60a',
+    terminalBright: '#ffee32',
+    terminalDim: '#fcbf49',
+    borderDefault: '#ffd60a',
+    borderActive: '#06ffa5',
+    bgElevated: '#001d3d',
+    bgCode: '#000814',
+    agentPlanning: '#00b4d8',
+    agentThinking: '#ffd60a',
+    agentCoding: '#06ffa5',
+    agentRunning: '#00b4d8',
+    agentFinal: '#06ffa5',
+    agentError: '#ff1053'
+  }
+};
+
+// Miami Theme
+export const miamiTheme: DSTheme = {
+  id: 'miami',
+  name: 'Miami Vice',
+  description: 'Sunset-inspired colors with tropical vibes',
+  colors: {
+    terminalBg: '#1a0033',
+    terminalFg: '#f72585',
+    terminalBright: '#ff006e',
+    terminalDim: '#c9184a',
+    borderDefault: '#f72585',
+    borderActive: '#06ffa5',
+    bgElevated: '#240046',
+    bgCode: '#10002b',
+    agentPlanning: '#7209b7',
+    agentThinking: '#ffb700',
+    agentCoding: '#06ffa5',
+    agentRunning: '#4cc9f0',
+    agentFinal: '#06ffa5',
+    agentError: '#f72585'
+  }
+};
+
 // Theme collection
 export const themes: Record<string, DSTheme> = {
   classic: classicTheme,
@@ -183,7 +252,10 @@ export const themes: Record<string, DSTheme> = {
   nord: nordTheme,
   'solarized-dark': solarizedDarkTheme,
   'high-contrast': highContrastTheme,
-  matrix: matrixTheme
+  matrix: matrixTheme,
+  synthwave: synthwaveTheme,
+  cyberpunk: cyberpunkTheme,
+  miami: miamiTheme
 };
 
 // Get theme by ID with fallback to classic

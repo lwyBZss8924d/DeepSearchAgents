@@ -24,6 +24,17 @@ interface AppState {
   
   // Current input
   currentQuestion: string;
+  
+  // Agent task status
+  agentTaskStatus: string;
+  agentTaskState: 'planning' | 'thinking' | 'coding' | 'running' | 'final' | 'working' | null;
+  isStreaming: boolean;
+  
+  // Current agent status - single source of truth
+  currentAgentStatus: string; // 'standby' | 'initial_planning' | 'update_planning' | 'thinking' | 'coding' | 'actions_running' | 'writing' | 'working'
+  
+  // Agent timing
+  agentStartTime: number | null; // Timestamp when agent started running
 }
 
 // Define action types - simplified for v2 API
@@ -41,7 +52,12 @@ export type AppAction =
   | { type: 'SET_COMPLETED'; payload: boolean }
   | { type: 'SET_CURRENT_QUESTION'; payload: string }
   | { type: 'CLEAR_MESSAGES' }
-  | { type: 'RESET_STATE' };
+  | { type: 'RESET_STATE' }
+  | { type: 'SET_AGENT_TASK_STATUS'; payload: string }
+  | { type: 'SET_AGENT_TASK_STATE'; payload: 'planning' | 'thinking' | 'coding' | 'running' | 'final' | 'working' | null }
+  | { type: 'SET_IS_STREAMING'; payload: boolean }
+  | { type: 'SET_CURRENT_AGENT_STATUS'; payload: string }
+  | { type: 'SET_AGENT_START_TIME'; payload: number | null };
 
 // Initial state
 const initialState: AppState = {
@@ -55,6 +71,11 @@ const initialState: AppState = {
   isGenerating: false,
   isCompleted: false,
   currentQuestion: '',
+  agentTaskStatus: '',
+  agentTaskState: null,
+  isStreaming: false,
+  currentAgentStatus: 'standby',
+  agentStartTime: null,
 };
 
 // Create the context
@@ -179,6 +200,27 @@ function appReducer(state: AppState, action: AppAction): AppState {
       
     case 'RESET_STATE':
       return initialState;
+      
+    case 'SET_AGENT_TASK_STATUS':
+      return { ...state, agentTaskStatus: action.payload };
+      
+    case 'SET_AGENT_TASK_STATE':
+      return { ...state, agentTaskState: action.payload };
+      
+    case 'SET_IS_STREAMING':
+      return { ...state, isStreaming: action.payload };
+      
+    case 'SET_CURRENT_AGENT_STATUS':
+      return { 
+        ...state, 
+        currentAgentStatus: action.payload
+      };
+      
+    case 'SET_AGENT_START_TIME':
+      return { 
+        ...state, 
+        agentStartTime: action.payload
+      };
       
     default:
       return state;

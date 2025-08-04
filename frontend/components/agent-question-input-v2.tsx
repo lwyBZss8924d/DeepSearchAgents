@@ -2,6 +2,7 @@
 
 import { useState, useRef, KeyboardEvent } from "react";
 import { SendIcon, LoaderIcon } from "@/components/terminal-icons";
+import { cn } from "@/lib/utils";
 import { 
   DSTextarea,
   DSButton,
@@ -45,31 +46,17 @@ export default function AgentQuestionInputV2({
 
   return (
     <div className="p-4">
-      <div className="flex gap-2 items-end">
-        <div className="flex-1">
-          <DSTextarea
-            ref={textareaRef}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            disabled={!sessionId || isRunning}
-            minRows={1}
-            maxRows={5}
-            className="resize-none"
-          />
-        </div>
-        <DSButton
-          onClick={handleSubmit}
-          disabled={isDisabled}
-          variant="primary"
-          size="md"
-          icon={isRunning ? <LoaderIcon size={16} /> : <SendIcon size={16} />}
-          aria-label={isRunning ? "Processing..." : "Send message"}
-        >
-          {isRunning ? "Processing" : "Send"}
-        </DSButton>
-      </div>
+      <DSTextarea
+        ref={textareaRef}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={placeholder}
+        disabled={!sessionId || isRunning}
+        minRows={1}
+        maxRows={5}
+        className="resize-none w-full"
+      />
       
       {/* Terminal-style status line */}
       <div className="mt-2 text-xs font-mono text-[var(--ds-terminal-dim)]">

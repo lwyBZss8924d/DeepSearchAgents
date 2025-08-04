@@ -24,6 +24,14 @@ export { DSAgentASCIISpinner } from './DSAgentASCIISpinner'
 
 export { DSAgentBootSequence } from './DSAgentBootSequence'
 
+export { DSAgentGlamorousLogo, DSAgentGlamorousLogoCompact } from './DSAgentGlamorousLogo'
+
+export { 
+  default as DSAgentTUILogo,
+  DSAgentTUILogoInline,
+  DSAgentTUILogoLoading
+} from './DSAgentTUILogo'
+
 export { DSAgentStateTransition, DSAgentTypewriter } from './DSAgentStateTransition'
 
 export { 

@@ -45,6 +45,7 @@ export default function ActionThoughtCard({
           state="thinking" 
           text={stepNumber ? `Step ${stepNumber} Thinking` : 'Agent Thinking'}
           showSpinner={isStreaming}
+          isAnimated={false}
         />
         <button 
           className="ds-expand-toggle"

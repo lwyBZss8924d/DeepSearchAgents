@@ -334,6 +334,8 @@
     font-weight: 500;
     border-radius: 0.25rem;
     transition: all var(--ds-transition-fast) ease;
+    background-color: transparent !important;
+    border: none;
   }
   
   .ds-state-icon {
@@ -629,9 +631,26 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--ds-space-2) var(--ds-space-3);
+    padding: 0.75rem 1rem;
     background: var(--ds-bg-elevated);
     border-bottom: 1px solid var(--ds-border-default);
+  }
+  
+  .ds-terminal-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-left: 1rem !important;
+  }
+  
+  .ds-terminal-title-text {
+    margin-left: 0;
+  }
+  
+  .ds-terminal-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
   
   .ds-terminal-title {
@@ -1271,6 +1290,11 @@
     .ds-state-icon {
       text-shadow: 0 0 5px var(--ds-terminal-fg);
     }
+  }
+  
+  /* Force left padding for terminal header */
+  .ds-terminal-header-left > .ds-terminal-title-text:first-child {
+    margin-left: 0 !important;
   }
   
   /* DS Code Editor Styles */

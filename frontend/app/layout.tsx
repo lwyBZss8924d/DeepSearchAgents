@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "@/providers";
+import { StagewiseToolbar } from "@stagewise/toolbar-next";
+import ReactPlugin from "@stagewise-plugins/react";
 
 export const metadata: Metadata = {
-  title: "DeepSearchAgents",
+  title: "DeepResearch CodeAct Agent",
   description: "Intelligent agent system combining ReAct and CodeAct for deep web search and reasoning.",
 };
 
@@ -36,6 +38,7 @@ export default function RootLayout({
       </head>
       <body className={`antialiased`}>
         <Providers>{children}</Providers>
+        <StagewiseToolbar config={{ plugins: [ReactPlugin] }} />
       </body>
     </html>
   );

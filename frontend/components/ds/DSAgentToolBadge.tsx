@@ -67,6 +67,24 @@ export function DSAgentToolBadge({
     error: '✗'
   }
   
+  // Determine glamour effects based on status
+  const glamourClasses = cn({
+    // Active tools get animated glow
+    'glamour-glow glamour-hover': status === 'active',
+    'coding-glow': status === 'active' && toolName === 'python_interpreter',
+    'planning-glow': status === 'active' && (toolName === 'search' || toolName === 'search_web'),
+    'running-glow': status === 'active' && toolName === 'wolfram',
+    
+    // Completed tools get subtle gradient
+    'glamour-gradient-text': status === 'completed',
+    
+    // Error state gets attention
+    'glamour-text-glow': status === 'error',
+    
+    // Spring animation on mount
+    'glamour-spring': true
+  })
+  
   return (
     <div className="ds-tool-badge-container">
       <button
@@ -77,11 +95,21 @@ export function DSAgentToolBadge({
         className={cn(
           'ds-tool-badge',
           isClickable && 'ds-tool-badge-clickable',
+          'particle-container',
+          glamourClasses,
           className
         )}
         type="button"
         disabled={!isClickable}
       >
+        {/* Add animated particles for active status */}
+        {status === 'active' && (
+          <>
+            <div className="particle" style={{ left: '20%', animationDelay: '0s' }} />
+            <div className="particle" style={{ left: '80%', animationDelay: '0.3s' }} />
+          </>
+        )}
+        
         {status !== 'pending' && (
           <span className="ds-tool-status-icon" aria-hidden="true">
             {statusIcon[status]}

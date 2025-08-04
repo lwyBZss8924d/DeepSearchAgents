@@ -38,6 +38,8 @@
     is-: badge;
     font-size: 0.875rem;
     padding: 0.25rem 0.5rem;
+    background-color: transparent !important;
+    border: none;
   }
   
   /* Preserve existing component styles during migration */

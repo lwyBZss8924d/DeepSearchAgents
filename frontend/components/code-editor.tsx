@@ -122,7 +122,7 @@ export default function CodeEditor({ className }: CodeEditorProps) {
             lineNumbers: 'on',
             automaticLayout: true,
             fontSize: 14,
-            fontFamily: 'Fira Code, Menlo, Monaco, "Courier New", monospace',
+            fontFamily: 'var(--ds-font-mono)',
             fontLigatures: true,
             // Remove editing features
             quickSuggestions: false,

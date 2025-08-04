@@ -66,10 +66,10 @@ export function DSAgentCodeBlock({
   }
   
   return (
-    <div className={cn('ds-code-block-container', className)}>
+    <div className={cn('ds-code-block-container neovim-style', className)}>
       {/* Header */}
       <div className="ds-code-header">
-        <span className="ds-code-language">```{language}</span>
+        <span className="ds-code-language text-[var(--ds-terminal-dim)]">{language}</span>
         <div className="ds-code-actions">
           <button
             onClick={handleCopy}
@@ -77,7 +77,7 @@ export function DSAgentCodeBlock({
             data-copied={isCopied}
             aria-label="Copy code"
           >
-            {isCopied ? '[Copied]' : '[Copy]'}
+            {isCopied ? '[✓]' : '[⧉]'}
           </button>
           {executable && onExecute && (
             <button
@@ -86,7 +86,7 @@ export function DSAgentCodeBlock({
               disabled={isExecuting}
               aria-label="Run code"
             >
-              {isExecuting ? '[Running...]' : '[Run]'}
+              {isExecuting ? '[◐]' : '[▶]'}
             </button>
           )}
         </div>
@@ -153,6 +153,12 @@ export function DSAgentCodeBlock({
           )}
         </div>
       )}
+      
+      {/* Neovim-style status bar */}
+      <div className="neovim-status-bar">
+        <span>{language} | {lines.length} lines</span>
+        <span>-- {streaming ? 'INSERT' : 'NORMAL'} --</span>
+      </div>
     </div>
   )
 }

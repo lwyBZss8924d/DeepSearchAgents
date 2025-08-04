@@ -41,6 +41,7 @@ export default function PlanningCard({
           state="planning"
           text={isInitial ? "Initial Plan" : "Updated Plan"}
           showIcon={true}
+          isAnimated={false}
         />
         {stepNumber && (
           <span className="ds-planning-step">

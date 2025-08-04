@@ -1,5 +1,6 @@
 /* CSS Layer Architecture for WebTUI + DeepSearchAgents */
 @layer webtui.base, webtui.utils, webtui.components,
+       glamour.base, glamour.animations, glamour.effects,
        ds.base, ds.tokens, ds.components, ds.utilities, ds.overrides;
 
 /* Tailwind Base Imports */
@@ -18,8 +19,12 @@
 @import "./styles/design-tokens.css" layer(ds.tokens);
 @import "./styles/terminal-theme.css" layer(ds.tokens);
 @import "./styles/animations.css" layer(ds.components);
+@import "./styles/glamour-animations.css" layer(glamour.animations);
+@import "./styles/tui-logo.css" layer(ds.components);
+@import "./styles/neovim-editor.css" layer(ds.components);
 @import "./styles/themes/index.css" layer(ds.tokens);
 @import "./styles/utilities.css" layer(ds.utilities);
+@import "./styles/agent-status.css" layer(ds.components);
 @import "./styles/compatibility-layer.css" layer(ds.overrides);
 @import "./styles/layout-fixes.css" layer(ds.overrides);
 
@@ -132,12 +137,17 @@
 /* DeepSearchAgents Base Layer */
 @layer ds.base {
   :root {
-    /* Berkeley Mono Font Stack */
-    --ds-font-mono: 'Berkeley Mono', 'SF Mono', 'Monaco', 
+    /* TX-02-Trial as primary, Berkeley Mono as fallback */
+    --ds-font-mono: 'TX-02-Trial', 'Berkeley Mono', 'SF Mono', 'Monaco', 
                     'Inconsolata', 'Fira Code', monospace;
     
     /* Map to WebTUI's system */
     --webtui-font-family: var(--ds-font-mono);
+    
+    /* Remove conflicting variables by mapping them */
+    --font-mono: var(--ds-font-mono);
+    --font-mono-stack: var(--ds-font-mono);
+    --font-mono-berkeley: var(--ds-font-mono);
   }
 
   /* Override body to use terminal font */
@@ -146,5 +156,10 @@
     font-size: 14px;
     line-height: 1.6;
     letter-spacing: 0.02em;
+  }
+  
+  /* Global font-mono class override */
+  .font-mono {
+    font-family: var(--ds-font-mono) !important;
   }
 }

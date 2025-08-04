@@ -21,11 +21,14 @@ interface DSAgentASCIISpinnerProps {
 
 // Map agent states to spinner types
 const stateSpinnerMap: Record<string, keyof typeof asciiSpinners> = {
-  planning: 'dots',
-  thinking: 'pulse',
-  coding: 'terminal',
-  running: 'arrows',
-  loading: 'classic',
+  planning: 'blueprint',
+  thinking: 'thought',
+  coding: 'compilation',
+  running: 'gears',
+  final: 'typewriter',
+  working: 'wheel',
+  error: 'box',
+  loading: 'divining',
   default: 'classic'
 };
 

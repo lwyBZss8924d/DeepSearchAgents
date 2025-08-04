@@ -13,8 +13,8 @@ import CodeEditor from "@/components/code-editor-wrapper";
 import Terminal from "@/components/terminal-wrapper";
 import Browser from "@/components/browser";
 import { StepNavigator } from "@/components/step-navigator";
-import ConnectionStatus from "@/components/connection-status";
 import SessionStateIndicator from "@/components/session-state-indicator";
+import AgentRunningStatus from "@/components/agent-running-status";
 // Removed toast import - using console.error for now
 import { 
   DSAgentTerminalContainer,
@@ -110,24 +110,28 @@ export default function AgentLayoutV2() {
     }
   };
 
+  // Header content with agent status in fixed container on left, connection status on right
+  const headerContent = (
+    <>
+      <div className="ds-agent-status-container">
+        <AgentRunningStatus />
+      </div>
+    </>
+  );
+  
+  // Right side header content - only session indicator now shows connection + ID
+  const headerRightContent = (
+    <>
+      <SessionStateIndicator />
+    </>
+  );
+
   return (
     <DSAgentTerminalContainer
-      title="DeepSearchAgents v0.3.3"
       className="h-screen flex flex-col"
+      headerContent={headerContent}
+      headerRightContent={headerRightContent}
     >
-      {/* Header with connection status */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--ds-border-default)]">
-        <div className="flex items-center gap-4">
-          <span className="text-[var(--ds-terminal-bright)] font-mono text-sm">
-            Agent: {state.agentType}
-          </span>
-          <ConnectionStatus />
-          <SessionStateIndicator />
-        </div>
-        <div className="flex items-center gap-2 text-[var(--ds-terminal-dim)] text-xs">
-          <span>Code is Action!</span>
-        </div>
-      </div>
 
       {/* Main content area - Split Layout */}
       <div className="flex-1 flex overflow-hidden">

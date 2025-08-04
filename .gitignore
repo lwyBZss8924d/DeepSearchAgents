@@ -256,6 +256,9 @@ test_*.log
 *.screenshot.png
 debug-*.png
 
+# Frontend - Temporary test scripts
+frontend/.temporary-test-script/
+
 ############################
 # Other Files
 ############################

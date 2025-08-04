@@ -6,36 +6,6 @@
 
 **WORK TASK OBJECTIVES:** "web-ui-style-optimization"
 
-**TASK1 LIST:** (DeepSearchAgents Web UI Optimization for Design Plan)
-
-### Design Phase (COMPLETED)
-
-1. [✅] Sub-Task(1.1) UI "Design Language" - [DSAgents-UI-DesignLanguage-Solution.md](./DSAgents-UI-DesignLanguage-Solution.md)
-2. [✅] Sub-Task(1.2) UI "Design system" Specification - [DSAgents-UI-DesignSystem-Specification.md](./DSAgents-UI-DesignSystem-Specification.md)
-3. [✅] Sub-Task(1.3) "Design Language"&"Design system" plan for UI Design Implementation Tech Stack - [DSAgents-UI-Implementation-Plan.md](./DSAgents-UI-Implementation-Plan.md)
-
-### Implementation Phase (IN PROGRESS)
-
-4. [🔄] Sub-Task(1.4) WebTUI Foundation Setup
-   - [ ] Install WebTUI CSS library
-   - [ ] Configure CSS layers
-   - [ ] Set up Berkeley Mono font
-   - [ ] Create base terminal theme
-   - [ ] Build compatibility layer
-
-5. [PENDING] Sub-Task(1.5) Component Migration
-   - [ ] Create DS component wrappers
-   - [ ] Migrate agent-chat.tsx to WebTUI
-   - [ ] Update planning-card.tsx
-   - [ ] Update action-thought-card.tsx
-   - [ ] Update tool-call-badge.tsx
-   - [ ] Implement terminal-style code blocks
-
-6. [PENDING] Sub-Task(1.6) Advanced Features
-   - [ ] Enhance streaming system
-   - [ ] Add ASCII animations
-   - [ ] Implement theme switching
-   - [ ] Complete migration and remove shadcn
 
 ### Task Plan Details and Design Solution Document:
 
