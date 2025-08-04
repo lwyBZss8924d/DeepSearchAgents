@@ -16,7 +16,7 @@ interface DSAgentRandomMatrixProps {
  */
 export function DSAgentRandomMatrix({ isActive, className }: DSAgentRandomMatrixProps) {
   const [currentFrame, setCurrentFrame] = useState('...............');
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number>(0);
   const lastUpdateRef = useRef<number>(0);
   
   useEffect(() => {

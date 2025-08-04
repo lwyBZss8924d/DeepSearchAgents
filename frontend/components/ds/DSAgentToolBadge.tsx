@@ -135,19 +135,19 @@ export function DSAgentToolBadge({
           {(metadata.duration as number | undefined) && (
             <div className="ds-tool-metadata-item">
               <span className="ds-tool-metadata-label">Duration:</span>
-              <span className="ds-tool-metadata-value">{metadata.duration}s</span>
+              <span className="ds-tool-metadata-value">{String(metadata.duration)}s</span>
             </div>
           )}
           {(metadata.tokenCount as number | undefined) && (
             <div className="ds-tool-metadata-item">
               <span className="ds-tool-metadata-label">Tokens:</span>
-              <span className="ds-tool-metadata-value">{metadata.tokenCount}</span>
+              <span className="ds-tool-metadata-value">{String(metadata.tokenCount)}</span>
             </div>
           )}
           {(metadata.resultPreview as string | undefined) && (
             <div className="ds-tool-metadata-item">
               <span className="ds-tool-metadata-label">Results:</span>
-              <span className="ds-tool-metadata-value">{metadata.resultPreview}</span>
+              <span className="ds-tool-metadata-value">{String(metadata.resultPreview)}</span>
             </div>
           )}
         </div>

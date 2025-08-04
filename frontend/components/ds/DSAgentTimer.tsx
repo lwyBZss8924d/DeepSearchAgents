@@ -15,7 +15,7 @@ interface DSAgentTimerProps {
  */
 export function DSAgentTimer({ className }: DSAgentTimerProps) {
   const { state } = useAppContext();
-  const { agentStartTime, currentAgentStatus } = state;
+  const { agentStartTime } = state;
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   
   useEffect(() => {

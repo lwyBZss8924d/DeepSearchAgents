@@ -193,10 +193,15 @@ const Terminal = (
     
     try {
       // Get all terminal content
-      const content = termRef.current.buffer.active
-        .getLines(0, termRef.current.buffer.active.length - 1)
-        .map(line => line.translateToString())
-        .join('\n');
+      const buffer = termRef.current.buffer.active;
+      const lines = [];
+      for (let i = 0; i < buffer.length; i++) {
+        const line = buffer.getLine(i);
+        if (line) {
+          lines.push(line.translateToString());
+        }
+      }
+      const content = lines.join('\n');
       
       await navigator.clipboard.writeText(content);
       setCopied(true);

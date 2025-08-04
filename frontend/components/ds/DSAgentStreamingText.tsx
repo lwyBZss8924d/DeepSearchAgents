@@ -53,7 +53,7 @@ export function DSAgentStreamingText({
   const [displayText, setDisplayText] = useState('')
   const [currentPosition, setCurrentPosition] = useState(0)
   const [isComplete, setIsComplete] = useState(false)
-  const animationFrameRef = useRef<number>()
+  const animationFrameRef = useRef<number>(0)
   const lastUpdateRef = useRef<number>(0)
   
   // Get streaming configuration

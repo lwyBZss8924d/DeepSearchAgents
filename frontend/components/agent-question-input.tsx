@@ -1,11 +1,8 @@
 "use client";
 
 import { useState, useRef, KeyboardEvent } from "react";
-import { SendIcon, LoaderIcon } from "@/components/terminal-icons";
-import { cn } from "@/lib/utils";
 import { 
   DSTextarea,
-  DSButton,
   DSTerminalPrompt 
 } from "@/components/ds";
 
@@ -42,7 +39,7 @@ export default function AgentQuestionInputV2({
     }
   };
 
-  const isDisabled = !sessionId || isRunning || !query.trim();
+  // const isDisabled = !sessionId || isRunning || !query.trim();
 
   return (
     <div className="p-4">

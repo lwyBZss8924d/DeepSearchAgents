@@ -102,7 +102,7 @@ export default function FinalAnswerDisplayV2({ content, metadata, className = ""
         title={title}
         className={className}
       >
-        <Markdown content={answerContent} />
+        <Markdown>{answerContent}</Markdown>
         {renderSources()}
       </DSTerminalCard>
     );
@@ -122,7 +122,7 @@ export default function FinalAnswerDisplayV2({ content, metadata, className = ""
       </DSCardHeader>
       
       <DSCardContent>
-        <Markdown content={answerContent} />
+        <Markdown>{answerContent}</Markdown>
       </DSCardContent>
       
       {renderSources()}

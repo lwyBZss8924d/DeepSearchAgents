@@ -99,14 +99,14 @@ export default function AgentLayoutV2() {
 
     // Clear messages when starting a new query
     dispatch({ type: 'CLEAR_MESSAGES' });
-    dispatch({ type: 'SET_IS_RUNNING', payload: true });
+    dispatch({ type: 'SET_GENERATING', payload: true });
 
     try {
       await sendQuery(query);
     } catch (error) {
       console.error('Failed to send query:', error);
       console.error('Failed to send query');
-      dispatch({ type: 'SET_IS_RUNNING', payload: false });
+      dispatch({ type: 'SET_GENERATING', payload: false });
     }
   };
 
@@ -143,7 +143,7 @@ export default function AgentLayoutV2() {
           <div className="border-t border-[var(--ds-border-default)]">
             <AgentQuestionInput
               onSubmit={handleSendQuery}
-              isRunning={state.isRunning}
+              isRunning={state.isGenerating}
               sessionId={sessionId}
             />
           </div>

@@ -54,7 +54,7 @@ export function DSAgentASCIISpinner({
   const animSpeed = speed || defaultSpeed;
   
   const [currentFrame, setCurrentFrame] = useState(0);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number>(0);
   const lastUpdateRef = useRef<number>(0);
   
   useEffect(() => {

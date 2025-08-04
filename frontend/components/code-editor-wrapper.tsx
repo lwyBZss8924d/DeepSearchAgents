@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
 
 // Dynamically import CodeEditor with SSR disabled
 const CodeEditor = dynamic(() => import('./code-editor'), {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
-import { AgentEvent, Message, IEvent } from "@/typings/agent";
+import { AgentEvent, IEvent } from "@/typings/agent";
+import { DSAgentRunMessage } from "@/types/api.types";
 import { useAppContext } from "@/context/app-context";
 
 export function useSessionManager({
@@ -52,18 +53,18 @@ export function useSessionManager({
 
       const data = await response.json();
       const workspace = data.events?.[0]?.workspace_dir;
-      dispatch({ type: "SET_WORKSPACE_INFO", payload: workspace });
+      // Legacy action - removed in v2 API\n      // dispatch({ type: "SET_WORKSPACE_INFO", payload: workspace });
 
       if (data.events && Array.isArray(data.events)) {
         // Store events data for potential immediate processing
         eventsDataRef.current = { events: data.events, workspace };
 
         // Process events to reconstruct the conversation
-        const reconstructedMessages: Message[] = [];
+        const reconstructedMessages: DSAgentRunMessage[] = [];
 
         // Function to process events with delay
         const processEventsWithDelay = async () => {
-          dispatch({ type: "SET_LOADING", payload: true });
+          dispatch({ type: "SET_GENERATING", payload: true });
           for (let i = 0; i < data.events.length; i++) {
             const event = data.events[i];
             if (delayTimeRef.current > 0) {
@@ -78,7 +79,7 @@ export function useSessionManager({
               delayTimeRef.current === 0
             );
           }
-          dispatch({ type: "SET_LOADING", payload: false });
+          dispatch({ type: "SET_GENERATING", payload: false });
         };
 
         // Start processing events with delay
@@ -95,7 +96,7 @@ export function useSessionManager({
           (e: IEvent) => e.event_type === AgentEvent.WORKSPACE_INFO
         );
         if (workspaceEvent && workspaceEvent.event_payload.path) {
-          dispatch({ type: "SET_WORKSPACE_INFO", payload: workspace });
+          // Legacy action - removed in v2 API\n      // dispatch({ type: "SET_WORKSPACE_INFO", payload: workspace });
         }
       }
     } catch (error) {

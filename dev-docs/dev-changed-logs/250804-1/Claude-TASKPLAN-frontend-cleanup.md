@@ -90,63 +90,63 @@ These components are still actively used:
 ### Phase 1: Remove Obsolete Components
 
 #### Sub-Task 1.1: Remove V1 Components (9 files)
-- [ ] Remove `agent-chat.tsx`
-- [ ] Remove `agent-layout.tsx`
-- [ ] Remove `agent-question-input.tsx`
-- [ ] Remove `code-editor.tsx`
-- [ ] Remove `action-thought-card.tsx`
-- [ ] Remove `planning-card.tsx`
-- [ ] Remove `final-answer-display.tsx`
-- [ ] Remove `theme-provider.tsx`
-- [ ] Remove `edit-question.tsx`
+- Remove `agent-chat.tsx`
+- Remove `agent-layout.tsx`
+- Remove `agent-question-input.tsx`
+- Remove `code-editor.tsx`
+- Remove `action-thought-card.tsx`
+- Remove `planning-card.tsx`
+- Remove `final-answer-display.tsx`
+- Remove `theme-provider.tsx`
+- Remove `edit-question.tsx`
 
 #### Sub-Task 1.2: Remove Demo Components (3 files + 1 directory)
-- [ ] Remove `terminal-ui-demo.tsx`
-- [ ] Remove `terminal-agent-chat.tsx`
-- [ ] Remove `markdown.tsx` (after terminal-agent-chat removal)
-- [ ] Remove `debug-panel.tsx`
-- [ ] Remove `app/terminal-demo/` directory
+- Remove `terminal-ui-demo.tsx`
+- Remove `terminal-agent-chat.tsx`
+- Remove `markdown.tsx` (after terminal-agent-chat removal)
+- Remove `debug-panel.tsx`
+- Remove `app/terminal-demo/` directory
 
 #### Sub-Task 1.3: Remove Unused Terminal Components (1 directory)
-- [ ] Remove entire `frontend/components/terminal/` directory
+- Remove entire `frontend/components/terminal/` directory
 
 #### Sub-Task 1.4: Remove Obsolete Styles
-- [ ] Remove `app/styles/webtui-integration.css`
+- Remove `app/styles/webtui-integration.css`
 
 ### Phase 2: Rename V2 Components to Production Names
 
 #### Sub-Task 2.1: Rename Component Files (10 files)
-- [ ] Rename `agent-chat-v2.tsx` � `agent-chat.tsx`
-- [ ] Rename `agent-layout-v2.tsx` � `agent-layout.tsx`
-- [ ] Rename `agent-question-input-v2.tsx` � `agent-question-input.tsx`
-- [ ] Rename `code-editor-v2.tsx` � `code-editor.tsx`
-- [ ] Rename `action-thought-card-v2.tsx` � `action-thought-card.tsx`
-- [ ] Rename `planning-card-v2.tsx` � `planning-card.tsx`
-- [ ] Rename `final-answer-display-v2.tsx` � `final-answer-display.tsx`
-- [ ] Rename `markdown-v2.tsx` � `markdown.tsx`
-- [ ] Rename `theme-provider-v2.tsx` � `theme-provider.tsx`
-- [ ] Rename `edit-question-v2.tsx` � `edit-question.tsx`
+- Rename `agent-chat-v2.tsx` � `agent-chat.tsx`
+- Rename `agent-layout-v2.tsx` � `agent-layout.tsx`
+- Rename `agent-question-input-v2.tsx` � `agent-question-input.tsx`
+- Rename `code-editor-v2.tsx` � `code-editor.tsx`
+- Rename `action-thought-card-v2.tsx` � `action-thought-card.tsx`
+- Rename `planning-card-v2.tsx` � `planning-card.tsx`
+- Rename `final-answer-display-v2.tsx` � `final-answer-display.tsx`
+- Rename `markdown-v2.tsx` � `markdown.tsx`
+- Rename `theme-provider-v2.tsx` � `theme-provider.tsx`
+- Rename `edit-question-v2.tsx` � `edit-question.tsx`
 
 ### Phase 3: Update Import Statements
 
 #### Sub-Task 3.1: Update Component Imports
-- [ ] Update imports in `home-content.tsx`
-- [ ] Update imports in renamed `agent-layout.tsx`
-- [ ] Update imports in renamed `agent-chat.tsx`
-- [ ] Update imports in `code-editor-wrapper.tsx`
-- [ ] **Update import in `providers/index.tsx` (theme-provider-v2)**
-- [ ] Update imports in any other files with v2 imports
+- Update imports in `home-content.tsx`
+- Update imports in renamed `agent-layout.tsx`
+- Update imports in renamed `agent-chat.tsx`
+- Update imports in `code-editor-wrapper.tsx`
+- **Update import in `providers/index.tsx` (theme-provider-v2)**
+- Update imports in any other files with v2 imports
 
 ### Phase 4: Final Cleanup
 
 #### Sub-Task 4.1: Verify and Test
-- [ ] Run build to ensure no broken imports
-- [ ] Test UI functionality
-- [ ] Verify all DS components work correctly
+- Run build to ensure no broken imports
+- Test UI functionality
+- Verify all DS components work correctly
 
 #### Sub-Task 4.2: Documentation Updates
-- [ ] Update any documentation referencing old components
-- [ ] Clean up commented code in `home-content.tsx`
+- Update any documentation referencing old components
+- Clean up commented code in `home-content.tsx`
 
 ## 4. Execution Order
 
