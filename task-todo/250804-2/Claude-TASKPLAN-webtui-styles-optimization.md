@@ -236,4 +236,153 @@ styles/components/
 
 **Status Update**: Goal 1 (Bug Fixes) has been successfully completed through iterative debugging. The implementation required deeper investigation than initially planned, revealing complex CSS cascade and component state interactions. All bugs are now fixed and verified by the user.
 
-**Ready for Goal 2**: The optimization phases (1-6) are ready to be executed to reduce CSS bundle size, improve performance, and enhance the WebTUI design system.
+**Goal 1 Additional Feature**: Thought message display increased from 60 to 120 characters with ellipsis, completed on 2025-08-07.
+
+---
+
+## Goal 2: WebTUI Page with Functional Grouping Web-Terminal Sub-Console Container
+
+### Requirements Overview
+
+WebTUI serves as the overall framework for the web interface, managing various status information elements and layout control of the "HAL-9000™ CONSOLE" console. It embeds three `xterm` web terminal wrappers running different functional real CLI client program submodules, displayed in real-time through web terminals within nested WebTUI pages.
+
+### Architecture Components
+
+#### HAL-9000™ CONSOLE Framework
+The WebTUI-style DSCA Web page serves as the frontend display brand for the "HAL-9000™ CONSOLE" product. Similar to cloud service web consoles (AWS Management Console, Google Cloud Console), it includes embedded web terminals capable of running diverse feature software.
+
+#### Three Sub-Console Modules
+
+1. **DSCA [chat-subconsole]** `xterm` web terminal wrapper
+   - *REAL* DSCA-Chat-CLI-client using React Ink
+   - "DSCA User&AgentRun Chat Messages Real TUI-CLI interface Client"
+   - **Maximum Reuse Strategy**: Reuse ALL existing chat components (95% reuse)
+
+2. **DSCA [codeaction-'viewer' subconsole]** `xterm` web terminal wrapper
+   - *REAL* `nvim` for agent code viewing
+   - Agent Run ActionStep LLM output code_action in python_executor sandbox
+   - Code streaming display in REAL nvim client
+   - Theme synchronization with WebTUI
+
+3. **DSCA [codeaction-sandbox 'top'-subconsole]** `xterm` web terminal wrapper
+   - *REAL* PyExecutor-sandbox-logger using React Ink
+   - Beautiful terminal logger 'top' CLI for event stream display
+   - Cyberpunk-style telemetry visualization
+
+### Implementation Strategy: Maximum Component Reuse
+
+#### React Ink Bridge Architecture
+Create a thin bridge layer that allows existing WebTUI components to render in terminal:
+
+```
+frontend/
+├── cli-clients/
+│   ├── chat-cli/
+│   │   ├── index.tsx                 # Main Ink app entry
+│   │   ├── InkComponentBridge.tsx    # Bridges WebTUI → Ink
+│   │   ├── InkRenderer.tsx           # Renders WebTUI components
+│   │   └── themes/
+│   │       └── WebTUIThemeAdapter.ts # Theme synchronization
+│   ├── nvim-viewer/
+│   │   ├── config/
+│   │   └── themes/
+│   └── sandbox-logger/
+│       ├── index.tsx
+│       └── components/
+```
+
+#### Components to Reuse (100% preservation)
+- `AgentChat` - Main chat interface logic
+- `ActionThoughtCard` - 120-char truncated thoughts (newly updated)
+- `PlanningCard` - Planning messages with badges
+- `FinalAnswerDisplay` - Terminal-style final answers
+- `DSAgentMessageCard` - Message container styling
+- `DSAgentToolBadge` - Tool execution badges (glamour removed)
+- `DSAgentStateBadge` - Agent state indicators
+- `DSAgentStreamingText` - Streaming text display
+- `Markdown` - Markdown rendering logic
+- All WebSocket hooks and session management
+- All message extractors and utilities
+- Complete theme system
+
+#### New Components (5% new code)
+- `InkComponentBridge` - Converts WebTUI components to Ink
+- `StyleAdapter` - Maps CSS classes to terminal styles
+- `TerminalSpawner` - Manages xterm process spawning
+- `ThemeSynchronizer` - Syncs themes across terminals
+
+### Technical Stack
+
+#### Existing Dependencies (Keep All)
+- `@xterm/xterm` - Terminal emulator
+- `@webtui/css` - WebTUI CSS library
+- All current React and Next.js dependencies
+
+#### New Dependencies
+```json
+{
+  "ink": "^5.0.0",
+  "ink-ui": "^3.0.0",
+  "ink-markdown": "^2.0.0",
+  "node-pty": "^1.0.0",
+  "@xterm/addon-attach": "^0.11.0"
+}
+```
+
+### Framework References
+
+#### TUI/CLI Frameworks
+- **Go `bubbletea`**: Used by charmbracelet/crush, opencode-ai/opencode
+- **React `ink`**: Used by anthropics/claude-code, google-gemini/gemini-cli
+- **WebTUI CSS**: Terminal-style CSS library for web interfaces
+
+### Implementation Phases
+
+#### Phase 1: Infrastructure Setup (2 hours)
+- Create cli-clients directory structure
+- Install React Ink dependencies
+- Setup terminal spawning infrastructure
+- Configure WebTUI CSS integration
+
+#### Phase 2: Chat Sub-Console (3 hours)
+- Build InkComponentBridge
+- Integrate ALL existing chat components
+- Connect to existing WebSocket
+- Implement theme synchronization
+
+#### Phase 3: Code Viewer Sub-Console (2 hours)
+- Setup nvim with Python syntax
+- Create code streaming pipeline
+- Implement step navigation
+- Synchronize nvim colorscheme
+
+#### Phase 4: Sandbox Logger Sub-Console (2 hours)
+- Build React Ink logger
+- Create cyberpunk telemetry display
+- Connect to execution events
+- Implement smooth scrolling
+
+#### Phase 5: HAL-9000™ Integration (1 hour)
+- Update DSAgentTerminalContainer
+- Add console branding
+- Implement terminal management
+- Create unified controls
+
+### Success Metrics
+
+1. **Component Reuse**: ≥95% of existing components preserved
+2. **Functionality**: All Goal 1 fixes maintained
+3. **Performance**: Three terminals running smoothly
+4. **Theming**: Synchronized across all sub-consoles
+5. **User Experience**: Seamless WebTUI terminal aesthetic
+
+### Risk Mitigation
+
+- Keep all existing components unchanged
+- Feature flag for gradual rollout
+- Maintain backward compatibility
+- Easy rollback mechanism
+
+---
+
+**Ready for Goal 2**: Implementation plan established with maximum component reuse strategy. All existing WebTUI components will be preserved and enhanced with terminal capabilities.

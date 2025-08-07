@@ -7,15 +7,15 @@
 **Branch**: `v0.3.3-dev.250804.webtui-styles-optimization`  
 **Base Branch**: `v0.3.3-dev.250804.frontend-cleanup`  
 **Reference Branch**: `v0.3.3-dev.250730.debug-ui-empty-chatbox`  
-**Last Updated**: 2025-08-05 00:15
+**Last Updated**: 2025-08-07 (Goal 1 Complete, Goal 2 Planned)
 
 ## Task Progress Tracker
 
-### Overall Progress: 50% 🟦🟦🟦🟦🟦⬜⬜⬜⬜⬜
+### Overall Progress: 55% 🟦🟦🟦🟦🟦🟦⬜⬜⬜⬜
 
 **Two Goals**:
-- Goal 1: Bug Fixes (100% Complete ✓ - Priority 1)
-- Goal 2: Style Optimization (0% - Ready to start)
+- Goal 1: Bug Fixes & Thought Display (100% Complete ✓✓✓ - Priority 1)
+- Goal 2: WebTUI Terminal Sub-Console Architecture (0% - Ready to start)
 
 - [x] Task initiation
 - [x] Branch creation
@@ -117,18 +117,19 @@
 
 ## Key Objectives
 
-### Goal 1 - Bug Fixes (Priority 1) ✓ COMPLETE
-1. **Fix Truncated Content**: Show only 60-char content ✓
+### Goal 1 - Bug Fixes & Features (Priority 1) ✓✓✓ COMPLETE
+1. **Fix Truncated Content**: Show only truncated content ✓
 2. **Fix Markdown Rendering**: Terminal-style markdown ✓
 3. **Remove Excessive Animations**: Minimal effects only ✓
 4. **Clean Tool Badges**: Remove glamour effects ✓
+5. **Increase Thought Display**: 120 characters with ellipsis ✓ (Added 2025-08-07)
 
-### Goal 2 - Optimization
-1. **Reduce CSS Bundle Size**: Target 30-50% reduction ⏳
-2. **Improve Performance**: Fix global transitions ⏳
-3. **Enhance Consistency**: Use design tokens ⏳
-4. **Complete DS Components**: Style temporary components ⏳
-5. **Documentation**: Comprehensive style docs ⏳
+### Goal 2 - WebTUI Terminal Sub-Console Architecture
+1. **Chat Sub-Console**: React Ink CLI with 95% component reuse ⏳
+2. **Code Viewer Sub-Console**: Real nvim integration ⏳
+3. **Sandbox Logger Sub-Console**: React Ink telemetry display ⏳
+4. **HAL-9000™ Console**: Unified terminal framework ⏳
+5. **Theme Synchronization**: Across all sub-consoles ⏳
 
 ## Execution Log
 
@@ -275,3 +276,93 @@ Build successful. Ready to proceed with optimization phases (Goal 2).
 9. ✓ Removed ASCII borders (╔══╗ and ╚══╝) from final answer card
 
 All WebTUI style bugs have been fixed. Build successful.
+
+### 2025-08-07
+
+- **10:00** - Received request to increase thought message display to 120 characters
+- **10:05** - Analyzed current implementation in three files:
+  - `action-thought-card.tsx` - Frontend truncation at 60 chars
+  - `use-websocket.tsx` - No modification needed
+  - `web_ui.py` - Backend sending 60 chars in thoughts_content
+- **10:10** - Created implementation plan for 120-char display with ellipsis
+- **10:15** - Updated backend `web_ui.py`:
+  - Modified 3 locations from [:60] to [:120]
+  - Added ellipsis logic when content exceeds 120 chars
+- **10:20** - Updated frontend `action-thought-card.tsx`:
+  - Changed substring from (0, 60) to (0, 120)
+  - Implemented ellipsis handling for truncated content
+- **10:25** - Build successful, all changes tested
+- **10:30** - Committed Goal 1 completion with thought display feature
+
+## Goal 2: WebTUI Terminal Sub-Console Architecture
+
+### Planning Summary (2025-08-07)
+
+Goal 2 transforms the WebTUI into a HAL-9000™ CONSOLE framework with three xterm-based sub-consoles running real CLI clients:
+
+1. **Chat Sub-Console**: React Ink CLI reusing 95% of existing components
+2. **Code Viewer Sub-Console**: Real nvim for code display
+3. **Sandbox Logger Sub-Console**: React Ink telemetry logger
+
+### Implementation Strategy
+
+**Maximum Component Reuse (95%)**:
+- Keep ALL existing chat components unchanged
+- Create thin InkComponentBridge layer
+- Preserve WebSocket, themes, and utilities
+- Add only essential bridging code (~400 lines)
+
+### Goal 2 Sub-Tasks
+
+#### Phase 1: Infrastructure Setup
+- [ ] Create cli-clients directory structure
+- [ ] Install React Ink dependencies
+- [ ] Setup terminal spawning with node-pty
+- [ ] Configure xterm attach addon
+
+#### Phase 2: Chat Sub-Console
+- [ ] Build InkComponentBridge for component conversion
+- [ ] Create StyleAdapter for CSS-to-terminal mapping
+- [ ] Integrate existing AgentChat component
+- [ ] Connect to existing WebSocket infrastructure
+
+#### Phase 3: Code Viewer Sub-Console
+- [ ] Setup nvim with Python syntax highlighting
+- [ ] Create code streaming pipeline
+- [ ] Implement step navigation
+- [ ] Synchronize nvim colorscheme with WebTUI
+
+#### Phase 4: Sandbox Logger Sub-Console
+- [ ] Build React Ink logger components
+- [ ] Create cyberpunk telemetry display
+- [ ] Connect to execution event stream
+- [ ] Implement smooth scrolling
+
+#### Phase 5: HAL-9000™ Integration
+- [ ] Update DSAgentTerminalContainer with branding
+- [ ] Implement terminal management controls
+- [ ] Create unified theme synchronization
+- [ ] Add terminal switching shortcuts
+
+### Technical Requirements
+
+**New Dependencies**:
+- ink: ^5.0.0
+- ink-ui: ^3.0.0
+- ink-markdown: ^2.0.0
+- node-pty: ^1.0.0
+- @xterm/addon-attach: ^0.11.0
+
+**Components to Preserve**:
+- All DS components (100% reuse)
+- All card components (100% reuse)
+- All hooks and utilities (100% reuse)
+- WebTUI CSS library (100% reuse)
+
+### Success Criteria
+
+1. Three functional xterm terminals running real CLI clients
+2. All Goal 1 fixes and features maintained
+3. 95% or higher component reuse rate
+4. Synchronized theming across all terminals
+5. Smooth performance with multiple terminals
