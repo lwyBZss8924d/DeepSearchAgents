@@ -46,12 +46,6 @@ export default function SessionStateIndicator() {
       >
         {stateInfo.icon}
       </span>
-      <span 
-        className="ds-session-state-text"
-        style={{ color: stateInfo.color }}
-      >
-        {stateInfo.text}
-      </span>
       {stateInfo.showId && sessionId && (
         <span className="ds-session-state-id">
           [{sessionId.slice(0, 8)}]

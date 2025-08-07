@@ -87,18 +87,9 @@
   border: none;
 }
 
-/* Animated state styling */
+/* Animated state styling - removed breathing effect for CLI conformity */
 .ds-state-badge.ds-state-animated {
-  animation: status-pulse 2s ease-in-out infinite;
-}
-
-@keyframes status-pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
+  /* No animation - CLI style should be static */
 }
 
 /* ASCII spinner container */

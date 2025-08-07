@@ -21,6 +21,15 @@
     --ds-agent-final: #3fb950;
     --ds-agent-error: #f85149;
     
+    /* Tool Category Colors */
+    --ds-tool-code: var(--ds-agent-coding);      /* Green for code/programming */
+    --ds-tool-search: var(--ds-terminal-cyan);   /* Cyan for search/web */
+    --ds-tool-data: var(--ds-terminal-magenta);  /* Magenta for data processing */
+    --ds-tool-external: var(--ds-terminal-blue); /* Blue for external APIs */
+    --ds-tool-research: var(--ds-terminal-yellow); /* Yellow for research */
+    --ds-tool-final: var(--ds-agent-final);      /* Green for final answer */
+    --ds-tool-default: var(--ds-terminal-dim);   /* Dim for unknown tools */
+    
     /* Spacing Scale (character-based) */
     --ds-space-1: 0.5ch;
     --ds-space-2: 1ch;
@@ -360,6 +369,162 @@
     cursor: default;
   }
   
+  /* Hide pseudo-elements on tool badges to prevent strikethrough overlay */
+  [is-="badge"][agent-badge-="tool"]::before,
+  [is-="badge"][agent-badge-="tool"]::after {
+    display: none !important;
+    content: none !important;
+  }
+  
+  /* Ensure no text decoration on tool badge text */
+  .ds-tool-badge-text {
+    text-decoration: none !important;
+  }
+  
+  /* Override any button pseudo-elements for tool badges */
+  button.ds-tool-badge::before,
+  button.ds-tool-badge::after,
+  .ds-tool-badge::before,
+  .ds-tool-badge::after {
+    display: none !important;
+    content: none !important;
+  }
+  
+  /* Ensure tool badge has no overlays */
+  .ds-tool-badge {
+    position: relative !important;
+    z-index: 1 !important;
+  }
+  
+  /* Remove any potential border or line effects */
+  .ds-tool-badge,
+  .ds-tool-badge * {
+    border-top: none !important;
+    border-bottom: none !important;
+    text-decoration: none !important;
+    text-decoration-line: none !important;
+  }
+  
+  /* Badge Element Colors - Individual symbol and text coloring */
+  .ds-badge-trigram {
+    color: var(--ds-terminal-yellow);
+    font-weight: 600;
+  }
+  
+  .ds-badge-planning-symbol {
+    color: var(--ds-agent-planning);
+    font-weight: 600;
+    font-size: 1.1em;
+  }
+  
+  .ds-badge-code-symbol {
+    color: var(--ds-agent-coding);
+    font-weight: 600;
+  }
+  
+  .ds-badge-command-symbol {
+    color: var(--ds-terminal-cyan);
+    font-weight: 600;
+  }
+  
+  .ds-badge-final-symbol {
+    color: var(--ds-agent-final);
+    font-weight: 700;
+    font-size: 1.1em;
+  }
+  
+  /* Tool name colors by category */
+  .ds-badge-tool-name[data-category="code"] {
+    color: var(--ds-tool-code);
+  }
+  
+  .ds-badge-tool-name[data-category="search"] {
+    color: var(--ds-tool-search);
+  }
+  
+  .ds-badge-tool-name[data-category="data"] {
+    color: var(--ds-tool-data);
+  }
+  
+  .ds-badge-tool-name[data-category="external"] {
+    color: var(--ds-tool-external);
+  }
+  
+  .ds-badge-tool-name[data-category="research"] {
+    color: var(--ds-tool-research);
+  }
+  
+  .ds-badge-tool-name[data-category="final"] {
+    color: var(--ds-tool-final);
+    font-weight: 600;
+  }
+  
+  .ds-badge-tool-name[data-category="default"] {
+    color: var(--ds-tool-default);
+  }
+  
+  /* Tool Badge Container Theming - subtle backgrounds */
+  [agent-badge-="tool"][data-tool-category="code"] {
+    border-color: var(--ds-border-default);
+    background: color-mix(in oklch, var(--ds-tool-code) 5%, var(--ds-terminal-bg));
+  }
+  
+  [agent-badge-="tool"][data-tool-category="search"] {
+    border-color: var(--ds-border-default);
+    background: color-mix(in oklch, var(--ds-tool-search) 5%, var(--ds-terminal-bg));
+  }
+  
+  [agent-badge-="tool"][data-tool-category="data"] {
+    border-color: var(--ds-border-default);
+    background: color-mix(in oklch, var(--ds-tool-data) 5%, var(--ds-terminal-bg));
+  }
+  
+  [agent-badge-="tool"][data-tool-category="external"] {
+    border-color: var(--ds-border-default);
+    background: color-mix(in oklch, var(--ds-tool-external) 5%, var(--ds-terminal-bg));
+  }
+  
+  [agent-badge-="tool"][data-tool-category="research"] {
+    border-color: var(--ds-border-default);
+    background: color-mix(in oklch, var(--ds-tool-research) 5%, var(--ds-terminal-bg));
+  }
+  
+  [agent-badge-="tool"][data-tool-category="final"] {
+    border-color: var(--ds-border-default);
+    background: color-mix(in oklch, var(--ds-tool-final) 8%, var(--ds-terminal-bg));
+  }
+  
+  /* Hover effects for tool categories */
+  [agent-badge-="tool"][data-tool-category="code"]:hover:not(:disabled) {
+    background: color-mix(in oklch, var(--ds-tool-code) 20%, var(--ds-terminal-bg));
+    box-shadow: 0 0 10px color-mix(in oklch, var(--ds-tool-code) 40%, transparent);
+  }
+  
+  [agent-badge-="tool"][data-tool-category="search"]:hover:not(:disabled) {
+    background: color-mix(in oklch, var(--ds-tool-search) 20%, var(--ds-terminal-bg));
+    box-shadow: 0 0 10px color-mix(in oklch, var(--ds-tool-search) 40%, transparent);
+  }
+  
+  [agent-badge-="tool"][data-tool-category="data"]:hover:not(:disabled) {
+    background: color-mix(in oklch, var(--ds-tool-data) 20%, var(--ds-terminal-bg));
+    box-shadow: 0 0 10px color-mix(in oklch, var(--ds-tool-data) 40%, transparent);
+  }
+  
+  [agent-badge-="tool"][data-tool-category="external"]:hover:not(:disabled) {
+    background: color-mix(in oklch, var(--ds-tool-external) 20%, var(--ds-terminal-bg));
+    box-shadow: 0 0 10px color-mix(in oklch, var(--ds-tool-external) 40%, transparent);
+  }
+  
+  [agent-badge-="tool"][data-tool-category="research"]:hover:not(:disabled) {
+    background: color-mix(in oklch, var(--ds-tool-research) 20%, var(--ds-terminal-bg));
+    box-shadow: 0 0 10px color-mix(in oklch, var(--ds-tool-research) 40%, transparent);
+  }
+  
+  [agent-badge-="tool"][data-tool-category="final"]:hover:not(:disabled) {
+    background: color-mix(in oklch, var(--ds-tool-final) 25%, var(--ds-terminal-bg));
+    box-shadow: 0 0 15px color-mix(in oklch, var(--ds-tool-final) 50%, transparent);
+  }
+  
   .ds-tool-badge-clickable {
     cursor: pointer;
   }
@@ -457,6 +622,8 @@
   .ds-code-content {
     background: var(--ds-bg-code);
     overflow-x: auto;
+    overflow-y: auto;
+    max-height: 400px;
   }
   
   .ds-code-pre {
@@ -906,6 +1073,8 @@
     align-items: center;
     gap: var(--ds-space-2);
     margin-bottom: var(--ds-space-2);
+    width: 100%;
+    position: relative;
   }
   
   .ds-message-role {
@@ -925,7 +1094,10 @@
   }
   
   .ds-message-timestamp {
-    margin-left: auto;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
     font-size: 0.75rem;
     color: var(--ds-terminal-dimmed);
     font-family: var(--ds-font-mono);
@@ -961,12 +1133,6 @@
     margin-left: 0;
   }
   
-  .ds-message-timestamp {
-    margin-top: var(--ds-space-2);
-    color: var(--ds-terminal-dim);
-    font-size: 0.75rem;
-    text-align: right;
-  }
   
   .ds-loading-indicator {
     display: flex;
@@ -1324,7 +1490,9 @@
   }
   
   .ds-code-editor-content {
-    margin: var(--ds-space-2) 0;
+    margin: 0;
+    height: 100%;
+    min-height: 300px;
   }
   
   .ds-code-editor-block {
@@ -1335,5 +1503,10 @@
     margin-top: var(--ds-space-3);
     padding-top: var(--ds-space-2);
     border-top: 1px solid var(--ds-border-default);
+  }
+  
+  /* Normal blinking cursor for textarea */
+  .ds-textarea:focus {
+    caret-color: var(--ds-terminal-fg);
   }
 }

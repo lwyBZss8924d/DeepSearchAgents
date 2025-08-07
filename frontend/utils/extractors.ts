@@ -102,7 +102,26 @@ export function hasCodeBlock(content: string): boolean {
 export function getToolName(metadata: Record<string, any>): string | null {
   // First check metadata.tool_name field (preferred)
   if (metadata?.tool_name) {
-    return metadata.tool_name;
+    let toolName = metadata.tool_name;
+    
+    // Clean the tool name if it contains strikethrough marks or icons
+    if (toolName.includes('~~')) {
+      // Extract the actual tool name from patterns like "~~✓~~ ~~💻~~python_interpreter~~"
+      const parts = toolName.split('~~').filter((p: string) => p.trim());
+      // Find the part that looks like a tool name (contains letters/underscores)
+      toolName = parts.find((p: string) => /^[a-z_]+$/i.test(p.trim())) || 
+                 parts[parts.length - 1] || 
+                 toolName;
+    }
+    
+    // Remove any remaining formatting and icons
+    toolName = toolName.replace(/~~/g, ''); // Remove strikethrough marks
+    toolName = toolName.replace(/[✓⚡✗×○◉●]/g, ''); // Remove status icons
+    toolName = toolName.replace(/[💻📝🔍📄✂️🔢📊🧮🔧🌐]/g, ''); // Remove emoji
+    toolName = toolName.replace(/[▶◆◎▼■▓◈↕∑⊙×◊●]/g, ''); // Remove ASCII icons
+    toolName = toolName.trim();
+    
+    return toolName;
   }
   
   // Fallback to parsing from title

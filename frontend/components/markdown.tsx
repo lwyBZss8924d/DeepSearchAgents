@@ -25,7 +25,7 @@ export default function Markdown({ children, className = "" }: MarkdownProps) {
   return (
     <div className={`markdown-body ${className}`}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkMath]}
+        remarkPlugins={[[remarkGfm, {singleTilde: false, strikethrough: false}], remarkMath]}
         rehypePlugins={[rehypeRaw, rehypeMathJax, rehypeKatex]}
         components={{
           // Terminal-style links
@@ -96,29 +96,29 @@ export default function Markdown({ children, className = "" }: MarkdownProps) {
           // Terminal-style headings
           h1: ({ children, ...props }) => (
             <h1 className="ds-markdown-h1" {...props}>
-              # {children}
+              {children}
             </h1>
           ),
           h2: ({ children, ...props }) => (
             <h2 className="ds-markdown-h2" {...props}>
-              ## {children}
+              {children}
             </h2>
           ),
           h3: ({ children, ...props }) => (
             <h3 className="ds-markdown-h3" {...props}>
-              ### {children}
+              {children}
             </h3>
           ),
           
           // Terminal-style emphasis
           em: ({ children, ...props }) => (
             <em className="ds-markdown-emphasis" {...props}>
-              _{children}_
+              {children}
             </em>
           ),
           strong: ({ children, ...props }) => (
             <strong className="ds-markdown-strong" {...props}>
-              *{children}*
+              {children}
             </strong>
           ),
         }}

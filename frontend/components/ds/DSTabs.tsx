@@ -210,7 +210,7 @@ export function DSTabsContent({
       hidden={!isSelected}
       className={cn(
         'ds-tab-content',
-        'mt-4',
+        'mt-1',
         'font-mono',
         'text-[var(--ds-terminal-fg)]',
         'focus:outline-none',

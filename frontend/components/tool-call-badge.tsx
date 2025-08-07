@@ -13,15 +13,6 @@
  */
 
 import { DSAgentToolBadge } from "@/components/ds";
-import { 
-  Wrench, 
-  Code2, 
-  Search, 
-  FileText, 
-  Globe,
-  Calculator,
-  CheckCircle 
-} from "lucide-react";
 
 interface ToolCallBadgeProps {
   toolName: string;
@@ -31,18 +22,6 @@ interface ToolCallBadgeProps {
   className?: string;
 }
 
-// Map tool names to icons (maintained for backward compatibility)
-const toolIcons: Record<string, React.ReactNode> = {
-  python_interpreter: <Code2 className="w-4 h-4" />,
-  search: <Search className="w-4 h-4" />,
-  readurl: <Globe className="w-4 h-4" />,
-  chunk: <FileText className="w-4 h-4" />,
-  embed: <FileText className="w-4 h-4" />,
-  rerank: <FileText className="w-4 h-4" />,
-  wolfram: <Calculator className="w-4 h-4" />,
-  final_answer: <CheckCircle className="w-4 h-4" />,
-};
-
 export default function ToolCallBadge({
   toolName,
   toolId,
@@ -51,8 +30,6 @@ export default function ToolCallBadge({
   className = ""
 }: ToolCallBadgeProps) {
   // Map old props to new DS component props
-  const icon = toolIcons[toolName] || <Wrench className="w-4 h-4" />;
-  
   const metadata = argsSummary ? {
     resultPreview: argsSummary,
     toolId: toolId
@@ -64,7 +41,6 @@ export default function ToolCallBadge({
   return (
     <DSAgentToolBadge
       toolName={toolName}
-      icon={icon}
       status="active"
       metadata={metadata}
       className={className}

@@ -211,54 +211,26 @@ const Terminal = (
     }
   };
 
-  const handleClear = () => {
-    if (!termRef.current) return;
-    termRef.current.clear();
-    termRef.current.writeln('\x1b[36m> Terminal Cleared\x1b[0m');
-    termRef.current.writeln('');
-  };
-
   return (
     <div className={`flex flex-col h-full w-full ${className}`}>
-      {/* Header with controls */}
-      <div className="flex items-center justify-between p-3 border-b bg-background">
+      {/* Compact header with controls */}
+      <div className="flex items-center justify-between px-2 py-1 border-b border-[var(--ds-border-default)] bg-[var(--ds-bg-elevated)] h-8">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">
-            Terminal
-          </span>
-          <span className="text-sm text-muted-foreground">
-            Execution Logs - All Steps
+          <span className="text-[var(--ds-terminal-dim)] text-xs">֎</span>
+          <span className="text-xs font-mono text-[var(--ds-terminal-fg)]">
+            ACTIONS RESULTS
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <DSButton
-            variant="ghost"
-            size="sm"
-            onClick={handleClear}
-            className="flex items-center gap-2"
-          >
-            <span className="font-mono">[×]</span>
-            Clear
-          </DSButton>
-          <DSButton
-            variant="ghost"
-            size="sm"
-            onClick={handleCopy}
-            className="flex items-center gap-2"
-          >
-            {copied ? (
-              <>
-                <span className="font-mono">[✓]</span>
-                Copied!
-              </>
-            ) : (
-              <>
-                <span className="font-mono">[⧉]</span>
-                Copy
-              </>
-            )}
-          </DSButton>
-        </div>
+        <DSButton
+          variant="ghost"
+          size="sm"
+          onClick={handleCopy}
+          className="p-0.5 text-xs"
+        >
+          <span className="font-mono">
+            {copied ? '[✓]' : '[⧉]'}
+          </span>
+        </DSButton>
       </div>
       
       {/* Terminal container */}

@@ -5,33 +5,80 @@ import { cn } from '@/lib/utils'
 
 interface DSAgentToolBadgeProps {
   toolName: string
-  icon?: string | React.ReactNode
   status?: 'pending' | 'active' | 'completed' | 'error'
   expandable?: boolean
   onClick?: () => void
   metadata?: Record<string, unknown>
   className?: string
+  stepNumber?: number  // For Bagua trigram mapping
+  isCodeAction?: boolean  // Whether this is a code action
 }
 
-// Default tool icons
-const toolIcons: Record<string, string> = {
-  // Original names from tool-call-badge.tsx
-  python_interpreter: '💻',
-  search: '🔍',
-  readurl: '📄',
-  chunk: '✂️',
-  embed: '🔢',
-  rerank: '📊',
-  wolfram: '🧮',
-  final_answer: '📝',
-  // Alternative names
-  search_web: '🔍',
-  read_url: '📄',
-  chunk_text: '✂️',
-  embed_text: '🔢',
-  wolfram_alpha: '🧮',
-  default: '🔧'
+// Tool display name mappings for WebTUI (updated specifications)
+const toolDisplayNames: Record<string, string> = {
+  python_interpreter: 'Code Actions',
+  final_answer: 'Final Answer',
+  search: 'WebSearch',
+  search_links: 'WebSearch',
+  search_fast: 'Quick-WebSearch',
+  search_web: 'WebSearch',
+  readurl: 'Read-WebPage',
+  read_url: 'Read-WebPage',
+  chunk: 'Chunk-InContext',
+  chunk_text: 'Chunk-InContext',
+  embed: 'Embeddings',
+  embed_text: 'Embeddings',
+  embed_texts: 'Embeddings',
+  rerank: 'Reranker',
+  rerank_texts: 'Reranker',
+  wolfram: 'Wolfram',
+  wolfram_alpha: 'Wolfram',
+  github_repo_qa: 'Github',
+  xcom_deep_qa: 'x.com',
+  academic_retrieval: 'Academic-Research',
+  default: 'Tools'
 }
+
+// Tool category mappings for color theming
+const toolCategories: Record<string, string> = {
+  // Code/Programming Tools
+  python_interpreter: 'code',
+  
+  // Search/Web Tools
+  search: 'search',
+  search_links: 'search',
+  search_fast: 'search',
+  search_web: 'search',
+  readurl: 'search',
+  read_url: 'search',
+  
+  // Data Processing Tools
+  chunk: 'data',
+  chunk_text: 'data',
+  embed: 'data',
+  embed_text: 'data',
+  embed_texts: 'data',
+  rerank: 'data',
+  rerank_texts: 'data',
+  
+  // External APIs
+  wolfram: 'external',
+  wolfram_alpha: 'external',
+  github_repo_qa: 'external',
+  xcom_deep_qa: 'external',
+  
+  // Research Tools
+  academic_retrieval: 'research',
+  
+  // Final Answer
+  final_answer: 'final',
+  
+  // Default
+  default: 'default'
+}
+
+// Import Bagua utilities
+import { getBaguaTrigram, AGENT_SYMBOLS } from '@/utils/bagua-symbols'
 
 /**
  * DSAgentToolBadge - WebTUI-based tool execution badge
@@ -41,16 +88,141 @@ const toolIcons: Record<string, string> = {
  */
 export function DSAgentToolBadge({ 
   toolName,
-  icon,
   status = 'pending',
   expandable = false,
   onClick,
   metadata,
-  className 
+  className,
+  stepNumber,
+  isCodeAction = false
 }: DSAgentToolBadgeProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   
-  const displayIcon = icon || toolIcons[toolName] || toolIcons.default
+  // Debug logging
+  if (typeof window !== 'undefined' && toolName.includes('~~')) {
+    console.log('[DSAgentToolBadge] Raw toolName with strikethrough:', toolName);
+  }
+  
+  // Clean and transform the tool name
+  // The backend is sending something like "~~✓~~ ~~💻~~python_interpreter~~"
+  // We need to extract just the actual tool name
+  
+  // Extract the actual tool name from potential patterns:
+  // Pattern 1: "~~icon~~ ~~icon~~tool_name~~" 
+  // Pattern 2: "icon tool_name"
+  // Pattern 3: "tool_name"
+  
+  let cleaned = toolName;
+  
+  // If it contains ~~, extract the last part between ~~ marks or after them
+  if (cleaned.includes('~~')) {
+    // Split by ~~ and get the last non-empty part that looks like a tool name
+    const parts = cleaned.split('~~').filter(p => p.trim());
+    // The actual tool name is usually the last part that contains letters/underscores
+    cleaned = parts.find(p => /^[a-z_]+$/i.test(p.trim())) || parts[parts.length - 1] || toolName;
+  }
+  
+  // Remove any remaining formatting and icons
+  cleaned = cleaned.replace(/~~/g, ''); // Remove any remaining strikethrough marks
+  cleaned = cleaned.replace(/[✓⚡✗×○]/g, ''); // Remove status icons (removed ◉●)
+  cleaned = cleaned.replace(/[💻📝🔍📄✂️🔢📊🧮🔧🌐]/g, ''); // Remove emoji
+  cleaned = cleaned.replace(/[▶◆◎▼■▓◈↕∑⊙×◊]/g, ''); // Remove ASCII icons (removed ●)
+  cleaned = cleaned.trim();
+  
+  const cleanedName = cleaned.toLowerCase()
+  
+  // Get display name
+  const displayName = toolDisplayNames[cleanedName] || 
+                     cleanedName.charAt(0).toUpperCase() + cleanedName.slice(1).replace(/_/g, '-')
+  
+  // Get tool category for color theming
+  const toolCategory = toolCategories[cleanedName] || 'default'
+  
+  // Determine if this is a Python code action
+  const isPythonInterpreter = cleanedName === 'python_interpreter'
+  const isPythonAction = isPythonInterpreter || isCodeAction
+  
+  // Build the badge display content with colored spans
+  let badgeContent: React.ReactNode
+  if (cleanedName === 'final_answer') {
+    // Final answer with Mahjong Green Dragon
+    if (stepNumber) {
+      const trigram = getBaguaTrigram(stepNumber)
+      badgeContent = (
+        <>
+          <span className="ds-badge-trigram">{trigram}</span>
+          {' '}
+          <span className="ds-badge-final-symbol">{AGENT_SYMBOLS.FINAL_ANSWER}</span>
+          {' '}
+          <span className="ds-badge-tool-name" data-category={toolCategory}>({displayName})</span>
+        </>
+      )
+    } else {
+      badgeContent = (
+        <>
+          <span className="ds-badge-final-symbol">{AGENT_SYMBOLS.FINAL_ANSWER}</span>
+          {' '}
+          <span className="ds-badge-tool-name" data-category={toolCategory}>({displayName})</span>
+        </>
+      )
+    }
+  } else if (stepNumber) {
+    // Action step with Bagua trigram
+    const trigram = getBaguaTrigram(stepNumber)
+    if (isPythonInterpreter) {
+      // Python interpreter itself - no command symbol
+      badgeContent = (
+        <>
+          <span className="ds-badge-trigram">{trigram}</span>
+          {' '}
+          <span className="ds-badge-code-symbol">{AGENT_SYMBOLS.CODE_ACTION}</span>
+          {' '}
+          <span className="ds-badge-tool-name" data-category={toolCategory}>({displayName})</span>
+        </>
+      )
+    } else if (isPythonAction) {
+      // Other tools called from Python code
+      badgeContent = (
+        <>
+          <span className="ds-badge-trigram">{trigram}</span>
+          {' '}
+          <span className="ds-badge-code-symbol">{AGENT_SYMBOLS.CODE_ACTION}</span>
+          {' '}
+          <span className="ds-badge-command-symbol">{AGENT_SYMBOLS.COMMAND}</span>
+          <span className="ds-badge-tool-name" data-category={toolCategory}>({displayName})</span>
+        </>
+      )
+    } else {
+      // Regular tool calls
+      badgeContent = (
+        <>
+          <span className="ds-badge-trigram">{trigram}</span>
+          {' '}
+          <span className="ds-badge-command-symbol">{AGENT_SYMBOLS.COMMAND}</span>
+          <span className="ds-badge-tool-name" data-category={toolCategory}>({displayName})</span>
+        </>
+      )
+    }
+  } else {
+    // Default format for tools without step number
+    if (isPythonInterpreter) {
+      badgeContent = (
+        <>
+          <span className="ds-badge-code-symbol">{AGENT_SYMBOLS.CODE_ACTION}</span>
+          {' '}
+          <span className="ds-badge-tool-name" data-category={toolCategory}>({displayName})</span>
+        </>
+      )
+    } else {
+      badgeContent = (
+        <>
+          <span className="ds-badge-command-symbol">{AGENT_SYMBOLS.COMMAND}</span>
+          <span className="ds-badge-tool-name" data-category={toolCategory}>({displayName})</span>
+        </>
+      )
+    }
+  }
+  
   const isClickable = expandable || onClick
   
   const handleClick = () => {
@@ -61,28 +233,19 @@ export function DSAgentToolBadge({
   }
   
   const statusIcon = {
-    pending: '',
-    active: '⚡',
-    completed: '✓',
-    error: '✗'
+    pending: '○',  // Empty circle
+    active: '',    // No icon for active (removed ◉)
+    completed: '', // No icon for completed (removed ●)
+    error: '×'     // X mark
   }
   
-  // Determine glamour effects based on status
-  const glamourClasses = cn({
-    // Active tools get animated glow
-    'glamour-glow glamour-hover': status === 'active',
-    'coding-glow': status === 'active' && toolName === 'python_interpreter',
-    'planning-glow': status === 'active' && (toolName === 'search' || toolName === 'search_web'),
-    'running-glow': status === 'active' && toolName === 'wolfram',
-    
-    // Completed tools get subtle gradient
-    'glamour-gradient-text': status === 'completed',
-    
-    // Error state gets attention
-    'glamour-text-glow': status === 'error',
-    
-    // Spring animation on mount
-    'glamour-spring': true
+  // Minimal styling without glamour effects
+  const statusClasses = cn({
+    // Simple status-based classes without animations
+    'ds-tool-badge-active': status === 'active',
+    'ds-tool-badge-completed': status === 'completed',
+    'ds-tool-badge-error': status === 'error',
+    'ds-tool-badge-pending': status === 'pending'
   })
   
   return (
@@ -91,34 +254,24 @@ export function DSAgentToolBadge({
         is-="badge"
         agent-badge-="tool"
         tool-status-={status}
+        data-tool-category={toolCategory}
         onClick={isClickable ? handleClick : undefined}
         className={cn(
           'ds-tool-badge',
           isClickable && 'ds-tool-badge-clickable',
-          'particle-container',
-          glamourClasses,
+          statusClasses,
           className
         )}
         type="button"
         disabled={!isClickable}
       >
-        {/* Add animated particles for active status */}
-        {status === 'active' && (
-          <>
-            <div className="particle" style={{ left: '20%', animationDelay: '0s' }} />
-            <div className="particle" style={{ left: '80%', animationDelay: '0.3s' }} />
-          </>
-        )}
         
-        {status !== 'pending' && (
+        {statusIcon[status] && (
           <span className="ds-tool-status-icon" aria-hidden="true">
             {statusIcon[status]}
           </span>
         )}
-        <span className="ds-tool-icon" aria-hidden="true">
-          {displayIcon}
-        </span>
-        <span className="ds-tool-name">{toolName}</span>
+        <span className="ds-tool-badge-text">{badgeContent}</span>
         {expandable && (
           <span className="ds-tool-expand-icon" aria-hidden="true">
             {isExpanded ? '▼' : '▶'}

@@ -30,25 +30,11 @@ export function DSAgentMessageCard({
   className,
   ...props 
 }: DSAgentMessageCardProps) {
-  // Determine glamour effects based on type and state
-  const glamourClasses = cn({
-    // Planning cards get gradient border animation
-    'glamour-gradient planning-glow': type === 'planning' && state === 'active',
-    'glamour-border-dance': type === 'planning' && state === 'streaming',
-    
-    // Action cards get coding glow
-    'coding-glow glamour-hover': type === 'action' && state === 'active',
-    'glamour-morph': type === 'action' && state === 'streaming',
-    
-    // Final answers get special treatment
-    'glamour-gradient glamour-glow': type === 'final',
-    'glamour-spring': type === 'final' && state === 'idle',
-    
-    // User messages get subtle hover effect
-    'glamour-hover': type === 'user',
-    
-    // System messages get running glow when active
-    'running-glow': type === 'system' && state === 'active'
+  // Simple state-based classes without glamour effects
+  const stateClasses = cn({
+    'ds-card-active': state === 'active',
+    'ds-card-streaming': state === 'streaming',
+    'ds-card-idle': state === 'idle'
   });
 
   return (
@@ -59,28 +45,11 @@ export function DSAgentMessageCard({
       className={cn(
         'ds-message-card',
         'terminal-transition',
-        'particle-container',
-        glamourClasses,
+        stateClasses,
         className
       )}
       {...props}
     >
-      {/* Add gradient overlay for certain types */}
-      {(type === 'planning' || type === 'final') && state === 'active' && (
-        <div className="absolute inset-0 opacity-10 glamour-gradient pointer-events-none" />
-      )}
-      
-      {/* Add particles for final answers */}
-      {type === 'final' && (
-        <>
-          <div className="particle" style={{ left: '10%', animationDelay: '0s' }} />
-          <div className="particle" style={{ left: '30%', animationDelay: '0.5s' }} />
-          <div className="particle" style={{ left: '50%', animationDelay: '1s' }} />
-          <div className="particle" style={{ left: '70%', animationDelay: '1.5s' }} />
-          <div className="particle" style={{ left: '90%', animationDelay: '2s' }} />
-        </>
-      )}
-      
       {children}
     </div>
   )

@@ -173,40 +173,33 @@ export function DSCardFooter({
   );
 }
 
-// Composite card with ASCII border decoration
+// Composite card with optional ASCII border decoration
 export function DSTerminalCard({
   title,
   children,
   className,
-  showControls = true
+  showBorders = false
 }: {
   title?: string;
   children: React.ReactNode;
   className?: string;
-  showControls?: boolean;
+  showBorders?: boolean;
 }) {
   return (
     <div className={cn('ds-terminal-card', className)}>
-      {/* ASCII Border Top */}
-      <div className="ds-terminal-border-top text-[var(--ds-terminal-dim)] text-xs font-mono">
-        ╔══════════════════════════════════════════════════════════════╗
-      </div>
+      {/* ASCII Border Top - only show if explicitly requested */}
+      {showBorders && (
+        <div className="ds-terminal-border-top text-[var(--ds-terminal-dim)] text-xs font-mono">
+          ╔══════════════════════════════════════════════════════════════╗
+        </div>
+      )}
       
       {/* Terminal Header */}
-      {(title || showControls) && (
+      {title && (
         <div className="ds-terminal-header flex items-center justify-between px-4 py-2 bg-[var(--ds-bg-elevated)]">
-          {title && (
-            <span className="text-[var(--ds-terminal-bright)] font-mono font-bold">
-              {title}
-            </span>
-          )}
-          {showControls && (
-            <div className="ds-terminal-controls flex gap-2 text-[var(--ds-terminal-dim)]">
-              <span className="hover:text-[var(--ds-terminal-fg)] cursor-pointer">[-]</span>
-              <span className="hover:text-[var(--ds-terminal-fg)] cursor-pointer">[□]</span>
-              <span className="hover:text-[var(--ds-agent-error)] cursor-pointer">[×]</span>
-            </div>
-          )}
+          <span className="text-[var(--ds-terminal-bright)] font-mono font-bold">
+            {title}
+          </span>
         </div>
       )}
       
@@ -215,10 +208,12 @@ export function DSTerminalCard({
         {children}
       </div>
       
-      {/* ASCII Border Bottom */}
-      <div className="ds-terminal-border-bottom text-[var(--ds-terminal-dim)] text-xs font-mono">
-        ╚══════════════════════════════════════════════════════════════╝
-      </div>
+      {/* ASCII Border Bottom - only show if explicitly requested */}
+      {showBorders && (
+        <div className="ds-terminal-border-bottom text-[var(--ds-terminal-dim)] text-xs font-mono">
+          ╚══════════════════════════════════════════════════════════════╝
+        </div>
+      )}
     </div>
   );
 }

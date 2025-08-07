@@ -50,10 +50,10 @@ export interface StatusDisplayConfig {
 export const statusConfig: Record<DetailedAgentStatus, StatusDisplayConfig> = {
   standby: { 
     text: 'Standby', 
-    icon: '◊', 
+    icon: '⚉', 
     animated: false,
     animationType: 'none',
-    agentState: 'thinking'
+    agentState: 'thinking'  // Keep as thinking for now since 'standby' is not a valid AgentState
   },
   initial_planning: { 
     text: 'Initial Planning...', 
@@ -71,7 +71,7 @@ export const statusConfig: Record<DetailedAgentStatus, StatusDisplayConfig> = {
   },
   thinking: { 
     text: 'Thinking...', 
-    icon: '◊', 
+    icon: '𐅡', 
     animated: true,
     animationType: 'thought',
     agentState: 'thinking'

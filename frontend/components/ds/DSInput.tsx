@@ -135,7 +135,6 @@ export const DSTextarea = forwardRef<HTMLTextAreaElement, DSTextareaProps>(
     ref
   ) => {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const [isFocused, setIsFocused] = useState(false);
     
     useEffect(() => {
       const textarea = ref || textareaRef.current;
@@ -191,17 +190,10 @@ export const DSTextarea = forwardRef<HTMLTextAreaElement, DSTextareaProps>(
             )}
             disabled={disabled}
             onChange={handleChange}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
             rows={minRows}
             {...props}
           />
           
-          {isFocused && (
-            <span className="ds-textarea-cursor absolute bottom-2 right-3 text-[var(--ds-terminal-fg)] animate-pulse pointer-events-none">
-              _
-            </span>
-          )}
         </div>
         
         {hint && !error && (

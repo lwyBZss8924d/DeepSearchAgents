@@ -23,7 +23,7 @@ interface DSAgentTerminalContainerProps {
  */
 export function DSAgentTerminalContainer({ 
   children,
-  title = 'HAL-9000™ Terminal',
+  title = 'HAL-9000™ CONSOLE',
   showHeader = true,
   className,
   headerContent,

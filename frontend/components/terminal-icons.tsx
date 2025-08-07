@@ -38,9 +38,9 @@ interface TerminalIconProps {
 const iconMap: Record<IconName, string> = {
   send: '→',
   loader: '◌',
-  monitor: '◾',
-  code: '</>',
-  terminal: '>_',
+  monitor: '☸',
+  code: '⌘',
+  terminal: '֎',
   wifi: '◉',
   'wifi-off': '◎',
   'chevron-down': '▼',

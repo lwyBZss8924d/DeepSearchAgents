@@ -21,19 +21,19 @@ export function DSAgentTUILogo({
   animate = true 
 }: DSAgentTUILogoProps) {
   
-  // Full ASCII art logo using Unicode block characters like Crush
+  // Full ASCII art logo with internal shadow effect like opencode
   const fullLogo = `╱╱╱╱╱╱                                                        ╱╱╱╱╱╱
       █▀▀▄  ▄▀▀▀  ▄▀▀▀  ▄▀▀▄                                      
-      █  █  ▀▀▀▄  █     █▀▀█   DeepResearch CodeAct Agent  v0.3.3 
+      █░░█  ▀▀▀▄  █     █▀▀█   DeepResearch Code-Act Agent  v0.3.3 
       ▀▀▀   ▀▀▀▀  ▀▀▀▀  ▀  ▀                                      
-                                                                    
-╱╱╱╱╱╱  Code is Action!  ╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱
+                                                                                                       
+╱╱╱╱╱╱  CODE as ACTION is ALL YOU NEED  ╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱
                                                                     
   ◐ Large Task     ○ Small Task                                    
                                                                     
-  ▶ Type your query below to start searching                       
-  ▶ Agent will process your request step by step                   
-  ▶ Real-time streaming shows agent's thinking                     
+  ▶ Type your query to start task                       
+  ▶ Code-Act Agent plans first and then executes step by step                   
+  ▶ Real-time shows agent's planning, thinking, code_actions ...                     
                                                                     
 ╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱╱`;
 
@@ -96,7 +96,7 @@ export function DSAgentTUILogoLoading({ className }: { className?: string }) {
       setFrame((f) => (f + 1) % frames.length);
     }, 200);
     return () => clearInterval(interval);
-  }, []);
+  }, [frames.length]);
 
   return (
     <div className={cn('font-mono flex items-center gap-2', className)}>

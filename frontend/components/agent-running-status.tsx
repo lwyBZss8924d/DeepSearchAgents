@@ -12,7 +12,7 @@ import {
 
 export default function AgentRunningStatus() {
   const { state } = useAppContext();
-  const { currentAgentStatus, isGenerating } = state;
+  const { currentAgentStatus, isGenerating, currentStep, messages } = state;
 
   // Get display configuration from the current status
   // Simplified: No animation, just accurate status display
@@ -32,6 +32,15 @@ export default function AgentRunningStatus() {
   const { agentStartTime } = state;
   const isActive = !!agentStartTime;
   
+  // Calculate max step from messages
+  const maxStep = Math.max(
+    ...messages.map(m => m.step_number || 0),
+    currentStep || 0
+  );
+  
+  // Show step indicator only when agent is running (not standby)
+  const showStepIndicator = isActive && status !== 'standby';
+  
   return (
     <div className="ds-agent-running-status">
       <DSAgentStateBadge
@@ -41,6 +50,11 @@ export default function AgentRunningStatus() {
         isAnimated={shouldAnimate}   // Enable animation for divining
         className="text-sm"
       />
+      {showStepIndicator && maxStep > 0 && (
+        <span className="ds-step-indicator text-xs opacity-60 ml-2">
+          [Step {maxStep}]
+        </span>
+      )}
       <DSAgentRandomMatrix 
         isActive={isActive}
         className="text-xs opacity-70"

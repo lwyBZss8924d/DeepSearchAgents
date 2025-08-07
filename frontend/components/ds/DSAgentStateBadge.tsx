@@ -18,7 +18,7 @@ interface DSAgentStateBadgeProps {
 // State icons following the design specification
 const stateIcons: Record<AgentState, string> = {
   planning: '◆',
-  thinking: '◊',
+  thinking: '𐅡',
   coding: '▶',
   running: '■',
   final: '✓',
@@ -86,7 +86,7 @@ export function DSAgentStateBadge({
       )}
       {shouldShowStaticIcon && (
         <span className="ds-state-icon" aria-hidden="true">
-          {stateIcons[state]}
+          {displayText === 'Standby' ? '⚉' : stateIcons[state]}
         </span>
       )}
       <span className="ds-state-text">{displayText}</span>

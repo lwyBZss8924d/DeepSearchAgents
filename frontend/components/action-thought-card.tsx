@@ -1,10 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { 
-  DSAgentMessageCard,
-  DSAgentStateBadge,
-  DSAgentStreamingText
+  DSAgentMessageCard
 } from "@/components/ds";
 
 interface ActionThoughtCardProps {
@@ -16,65 +13,28 @@ interface ActionThoughtCardProps {
 
 export default function ActionThoughtCard({ 
   content, 
-  stepNumber, 
   className = "",
   metadata
 }: ActionThoughtCardProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  
   // Use thoughts_content from metadata if available, otherwise truncate
-  const truncatedContent = metadata?.thoughts_content || content.substring(0, 60);
-  const fullContent = content;
-  const isStreaming = metadata?.streaming === true;
+  // Backend now includes ellipsis in thoughts_content when truncated
+  const truncatedContent = metadata?.thoughts_content || 
+    (content && content.length > 120 ? content.substring(0, 120) + "..." : content);
   
   // Terminal-style display
-  const collapsedDisplay = `Thinking🤔...${truncatedContent}...and Action Running[⚡]...`;
+  const finalContent = String(truncatedContent || "");
   
   return (
     <DSAgentMessageCard 
       type="action" 
-      state={isStreaming ? "streaming" : "idle"}
+      state="idle"
       className={className}
     >
-      {/* Header with expand/collapse */}
-      <div 
-        className="ds-action-header"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <DSAgentStateBadge 
-          state="thinking" 
-          text={stepNumber ? `Step ${stepNumber} Thinking` : 'Agent Thinking'}
-          showSpinner={isStreaming}
-          isAnimated={false}
-        />
-        <button 
-          className="ds-expand-toggle"
-          aria-label={isExpanded ? "Collapse" : "Expand"}
-        >
-          {isExpanded ? '[-]' : '[+]'}
-        </button>
-      </div>
-      
       {/* Content */}
       <div className="ds-action-content">
-        {isExpanded ? (
-          <div className="ds-action-full">
-            <DSAgentStreamingText
-              text={fullContent}
-              isStreaming={isStreaming}
-              showCursor={isStreaming}
-              profile="thinking"
-            />
-          </div>
-        ) : (
-          <div className="ds-action-collapsed">
-            <DSAgentStreamingText
-              text={collapsedDisplay}
-              isStreaming={isStreaming}
-              showCursor={false}
-            />
-          </div>
-        )}
+        <div className="ds-action-full">
+          <span className="ds-action-text">{finalContent.startsWith('Thought:') ? finalContent : `Thought: ${finalContent}`}</span>
+        </div>
       </div>
     </DSAgentMessageCard>
   );

@@ -269,7 +269,7 @@ def process_planning_step(
             "is_active": False,
             "status": "done",
             "streaming": False,
-            "thoughts_content": plan_content[:60],  # First 60 chars
+            "thoughts_content": (plan_content[:120] + "...") if len(plan_content) > 120 else plan_content,  # First 120 chars with ellipsis
             "content_length": len(plan_content),
         }
 
@@ -444,7 +444,7 @@ def process_action_step(
                 "is_active": False,
                 "status": "done",
                 "is_raw_thought": True,  # Indicate raw content
-                "thoughts_content": model_output[:60],  # First 60 chars
+                "thoughts_content": (model_output[:120] + "...") if len(model_output) > 120 else model_output,  # First 120 chars with ellipsis
                 "full_thought_length": len(model_output),
             }
 
@@ -470,9 +470,9 @@ def process_action_step(
             f"with ID: {stream_id}, step: {step_number}"
         )
         
-        # Get first 60 chars for preview
+        # Get first 120 chars for preview
         model_output = _clean_model_output(step_log.model_output)
-        thoughts_preview = model_output[:60] if model_output else "Thinking..."
+        thoughts_preview = (model_output[:120] + "...") if len(model_output) > 120 else model_output if model_output else "Thinking..."
         
         yield DSAgentRunMessage(
             role=MessageRole.ASSISTANT,

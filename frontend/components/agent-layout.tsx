@@ -2,7 +2,7 @@
 
 // Main layout component for DeepSearchAgents with DS components
 import { useEffect, useState } from "react";
-import { MonitorIcon, CodeIcon, TerminalIconComponent } from "@/components/terminal-icons";
+import { MonitorIcon, CodeIcon } from "@/components/terminal-icons";
 import { useAppContext } from "@/context/app-context";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useSession } from "@/hooks/use-session";
@@ -12,7 +12,6 @@ import AgentQuestionInput from "@/components/agent-question-input";
 import CodeEditor from "@/components/code-editor-wrapper";
 import Terminal from "@/components/terminal-wrapper";
 import Browser from "@/components/browser";
-import { StepNavigator } from "@/components/step-navigator";
 import SessionStateIndicator from "@/components/session-state-indicator";
 import AgentRunningStatus from "@/components/agent-running-status";
 // Removed toast import - using console.error for now
@@ -140,7 +139,7 @@ export default function AgentLayoutV2() {
           <div className="flex-1 overflow-y-auto">
             <AgentChat />
           </div>
-          <div className="border-t border-[var(--ds-border-default)]">
+          <div>
             <AgentQuestionInput
               onSubmit={handleSendQuery}
               isRunning={state.isGenerating}
@@ -154,17 +153,17 @@ export default function AgentLayoutV2() {
           {/* Upper Section - Code Editor/Browser tabs (50% height) */}
           <div className="h-1/2 flex flex-col border-b border-[var(--ds-border-default)]">
             <DSTabs defaultValue="code" className="h-full flex flex-col">
-              <DSTabsList className="px-4">
-                <DSTabsTrigger value="code" icon={<CodeIcon size={16} />}>
-                  Code
+              <DSTabsList className="px-2 py-1 h-8">
+                <DSTabsTrigger value="code" icon={<CodeIcon size={14} />} className="text-xs py-0.5">
+                  ACTIONS CODE
                 </DSTabsTrigger>
-                <DSTabsTrigger value="browser" icon={<MonitorIcon size={16} />}>
-                  Browser
+                <DSTabsTrigger value="browser" icon={<MonitorIcon size={14} />} className="text-xs py-0.5">
+                  AGENT BROWSER
                 </DSTabsTrigger>
               </DSTabsList>
               
               <DSTabsContent value="code" className="flex-1 overflow-hidden">
-                <CodeEditor />
+                <CodeEditor className="h-full" />
               </DSTabsContent>
               
               <DSTabsContent value="browser" className="flex-1 overflow-hidden">
@@ -175,25 +174,9 @@ export default function AgentLayoutV2() {
 
           {/* Lower Section - Terminal (50% height) */}
           <div className="h-1/2 flex flex-col">
-            <div className="flex items-center gap-2 px-4 py-2 border-b border-[var(--ds-border-default)] bg-[var(--ds-bg-elevated)]">
-              <TerminalIconComponent size={16} className="text-[var(--ds-terminal-dim)]" />
-              <span className="text-sm font-mono text-[var(--ds-terminal-fg)]">Terminal</span>
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <Terminal />
-            </div>
+            <Terminal className="h-full" />
           </div>
 
-          {/* Step Navigator - fixed at bottom */}
-          {state.maxStep > 0 && (
-            <div className="border-t border-[var(--ds-border-default)]">
-              <StepNavigator
-                currentStep={state.currentStep}
-                maxStep={state.maxStep}
-                onStepChange={(step) => dispatch({ type: 'SET_CURRENT_STEP', payload: step })}
-              />
-            </div>
-          )}
         </div>
       </div>
       

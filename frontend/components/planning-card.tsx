@@ -53,7 +53,7 @@ export default function PlanningCard({
       {/* Planning Content with Terminal-style Markdown */}
       <div className="ds-planning-content">
         <ReactMarkdown
-          remarkPlugins={[remarkGfm, remarkMath]}
+          remarkPlugins={[[remarkGfm, {singleTilde: false, strikethrough: false}], remarkMath]}
           rehypePlugins={[rehypeHighlight, rehypeRaw, rehypeMathJax, rehypeKatex]}
           components={{
             // Terminal-style paragraphs

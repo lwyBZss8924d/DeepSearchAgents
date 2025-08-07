@@ -3,14 +3,10 @@
 import { useState, useEffect } from "react";
 import Markdown from "@/components/markdown";
 import { 
-  DSCard,
-  DSCardHeader,
-  DSCardTitle,
-  DSCardContent,
   DSCardFooter,
   DSTerminalCard 
 } from "@/components/ds";
-import { CheckCircle2, Link2 } from "lucide-react";
+import { Link2 } from "lucide-react";
 
 interface FinalAnswerDisplayProps {
   content: string;
@@ -18,7 +14,7 @@ interface FinalAnswerDisplayProps {
   className?: string;
 }
 
-export default function FinalAnswerDisplayV2({ content, metadata, className = "" }: FinalAnswerDisplayProps) {
+export default function FinalAnswerDisplay({ content, metadata, className = "" }: FinalAnswerDisplayProps) {
   const [title, setTitle] = useState<string>("Final Answer");
   const [answerContent, setAnswerContent] = useState<string>("");
   const [sources, setSources] = useState<string[]>([]);
@@ -35,16 +31,24 @@ export default function FinalAnswerDisplayV2({ content, metadata, className = ""
       metadataKeys: metadata ? Object.keys(metadata) : []
     });
     
-    // Parse structured data from metadata if available
-    if (metadata?.has_structured_data && metadata?.answer_title) {
-      setTitle(metadata.answer_title as string);
-    } else {
-      setTitle("Final Answer");
+    // First check if we have structured data in metadata
+    if (metadata?.has_structured_data && metadata?.answer_format === "json") {
+      // Use structured data directly from metadata
+      const newTitle = (metadata.answer_title as string) || "Final Answer";
+      const newContent = (metadata.answer_content as string) || content;
+      const newSources = (metadata.answer_sources as string[]) || [];
+      
+      setTitle(newTitle);
+      setAnswerContent(newContent);
+      setSources(newSources);
+      
+      console.log("[FinalAnswerDisplay] Using structured data from metadata");
+      return;
     }
     
     // Extract content and sources
-    if (metadata?.answer_format === "structured") {
-      // If structured, use the content directly
+    if (metadata?.answer_format === "json") {
+      // If JSON format, use the content directly
       setAnswerContent(content);
       
       // Extract sources from metadata if available
@@ -73,6 +77,20 @@ export default function FinalAnswerDisplayV2({ content, metadata, className = ""
         setSources(sourceList);
       }
     }
+    
+    // If no structured metadata, try to parse content as JSON
+    if (content && content.trim().startsWith("{") && content.trim().endsWith("}")) {
+      try {
+        const parsed = JSON.parse(content);
+        if (parsed.title) setTitle(parsed.title);
+        if (parsed.content) setAnswerContent(parsed.content);
+        if (parsed.sources) setSources(parsed.sources);
+        console.log("[FinalAnswerDisplay] Parsed JSON content successfully");
+      } catch {
+        console.log("[FinalAnswerDisplay] Failed to parse JSON content, using as-is");
+        // If parsing fails, the content has already been set above
+      }
+    }
   }, [content, metadata]);
 
   const renderSources = () => {
@@ -95,43 +113,15 @@ export default function FinalAnswerDisplayV2({ content, metadata, className = ""
     );
   };
 
-  // Use terminal card for enhanced visual style
-  if (metadata?.use_terminal_style) {
-    return (
-      <DSTerminalCard
-        title={title}
-        className={className}
-      >
-        <Markdown>{answerContent}</Markdown>
-        {renderSources()}
-      </DSTerminalCard>
-    );
-  }
-
-  // Default card style
+  // Always use terminal card for consistent WebTUI style
   return (
-    <DSCard
-      variant="elevated"
-      border="single"
+    <DSTerminalCard
+      title={title}
       className={className}
     >
-      <DSCardHeader>
-        <DSCardTitle icon={<CheckCircle2 className="text-[var(--ds-agent-final)]" size={20} />}>
-          {title}
-        </DSCardTitle>
-      </DSCardHeader>
-      
-      <DSCardContent>
-        <Markdown>{answerContent}</Markdown>
-      </DSCardContent>
-      
+      <Markdown>{answerContent}</Markdown>
       {renderSources()}
-    </DSCard>
+    </DSTerminalCard>
   );
 }
 
-// Export a wrapper component that maintains compatibility
-export function FinalAnswerWrapper(props: FinalAnswerDisplayProps) {
-  // If children contains the old final-answer-display, replace with v2
-  return <FinalAnswerDisplayV2 {...props} />;
-}

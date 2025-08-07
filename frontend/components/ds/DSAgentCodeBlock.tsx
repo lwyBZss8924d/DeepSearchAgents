@@ -19,6 +19,8 @@ interface DSAgentCodeBlockProps {
   onExecute?: () => void | Promise<void>
   executionResult?: ExecutionResult
   className?: string
+  showHeader?: boolean
+  onCopy?: () => void
 }
 
 /**
@@ -36,7 +38,9 @@ export function DSAgentCodeBlock({
   executable = false,
   onExecute,
   executionResult,
-  className 
+  className,
+  showHeader = true,
+  onCopy
 }: DSAgentCodeBlockProps) {
   const [isCopied, setIsCopied] = useState(false)
   const [isExecuting, setIsExecuting] = useState(false)
@@ -49,6 +53,7 @@ export function DSAgentCodeBlock({
       await navigator.clipboard.writeText(code)
       setIsCopied(true)
       setTimeout(() => setIsCopied(false), 2000)
+      onCopy?.()
     } catch (err) {
       console.error('Failed to copy:', err)
     }
@@ -68,29 +73,31 @@ export function DSAgentCodeBlock({
   return (
     <div className={cn('ds-code-block-container neovim-style', className)}>
       {/* Header */}
-      <div className="ds-code-header">
-        <span className="ds-code-language text-[var(--ds-terminal-dim)]">{language}</span>
-        <div className="ds-code-actions">
-          <button
-            onClick={handleCopy}
-            className="ds-code-action-btn"
-            data-copied={isCopied}
-            aria-label="Copy code"
-          >
-            {isCopied ? '[✓]' : '[⧉]'}
-          </button>
-          {executable && onExecute && (
+      {showHeader && (
+        <div className="ds-code-header">
+          <span className="ds-code-language text-[var(--ds-terminal-dim)]">{language}</span>
+          <div className="ds-code-actions">
             <button
-              onClick={handleExecute}
+              onClick={handleCopy}
               className="ds-code-action-btn"
-              disabled={isExecuting}
-              aria-label="Run code"
+              data-copied={isCopied}
+              aria-label="Copy code"
             >
-              {isExecuting ? '[◐]' : '[▶]'}
+              {isCopied ? '[✓]' : '[⧉]'}
             </button>
-          )}
+            {executable && onExecute && (
+              <button
+                onClick={handleExecute}
+                className="ds-code-action-btn"
+                disabled={isExecuting}
+                aria-label="Run code"
+              >
+                {isExecuting ? '[◐]' : '[▶]'}
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
       
       {/* Code Content */}
       <div
