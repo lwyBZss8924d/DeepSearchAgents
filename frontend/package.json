@@ -1,6 +1,6 @@
 {
   "name": "deepsearchagents-webui",
-  "version": "1.0.0",
+  "version": "0.3.3",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack --port 3000",

@@ -1,6 +1,6 @@
 [project]
 name = "DeepSearchAgents"
-version = "0.3.3.dev"
+version = "0.3.3"
 description = "🤗 Awesome CodeAct Deep Web Search Agents framework"
 authors = [
     {name = "ArthurWang", email = "deepsearchagent4dev@gpt4coursera.com"},
