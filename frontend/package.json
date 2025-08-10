@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack --port 3000",
+    "dev:sw-bridge": "npx stagewise@latest -b -w . -p 3100 -a 3000 -- next dev --port 3000",
+    "start:sw-bridge": "npx stagewise@latest -b -w . -p 3100 -a 3000 -- next start --port 3000",
     "build": "next build",
     "start": "next start --port 3000",
     "lint": "next lint"
