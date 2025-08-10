@@ -79,7 +79,8 @@
       "WebFetch(domain:deepwiki.com)",
       "Bash(open:*)",
       "Bash(npm run:*)",
-      "Bash(yarn install)"
+      "Bash(yarn install)",
+      "Bash(git cherry-pick:*)"
     ],
     "deny": []
   }

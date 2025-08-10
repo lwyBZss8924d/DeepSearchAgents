@@ -244,6 +244,8 @@ debug-archive/logs/
 debug-archive/test-results/*.png
 debug-archive/test-results/*.json
 debug-archive/test-results/*.log
+final_answer_messages.json
+server.log
 
 # Test outputs
 test_*.png
