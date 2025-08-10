@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Streaming Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h1, h2 {
+            margin-top: 0;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        input, select, button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 12px;
+        }
+        
+        .message {
+            margin-bottom: 8px;
+            padding: 8px;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+        
+        .message.streaming {
+            background: #e3f2fd;
+            border-left: 3px solid #2196f3;
+        }
+        
+        .message.complete {
+            background: #f1f8f4;
+            border-left: 3px solid #4caf50;
+        }
+        
+        .message.error {
+            background: #ffebee;
+            border-left: 3px solid #f44336;
+        }
+        
+        .timestamp {
+            color: #666;
+            font-size: 11px;
+        }
+        
+        .content {
+            margin-top: 4px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        
+        .metadata {
+            margin-top: 4px;
+            font-size: 11px;
+            color: #888;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .stat {
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        #timeline {
+            margin-top: 20px;
+            height: 100px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            position: relative;
+            background: white;
+        }
+        
+        .timeline-bar {
+            position: absolute;
+            height: 20px;
+            background: #007bff;
+            opacity: 0.7;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 WebSocket Streaming Test</h1>
+    
+    <div class="controls">
+        <select id="endpoint">
+            <option value="test">Test Backend (Mock)</option>
+            <option value="real">Real API</option>
+        </select>
+        
+        <select id="scenario">
+            <option value="default">Default Scenario</option>
+            <option value="fast">Fast Streaming</option>
+            <option value="slow">Slow Streaming</option>
+            <option value="error">Error Scenario</option>
+            <option value="delayed">Delayed Messages</option>
+        </select>
+        
+        <input type="text" id="sessionId" placeholder="Session ID (for real API)" style="display: none;">
+        
+        <button id="connectBtn" onclick="toggleConnection()">Connect</button>
+        <button id="sendBtn" onclick="sendQuery()" disabled>Send Query</button>
+        <button id="clearBtn" onclick="clearMessages()">Clear</button>
+    </div>
+    
+    <div class="status disconnected" id="status">
+        Disconnected
+    </div>
+    
+    <div class="container">
+        <div class="panel">
+            <h2>📥 Messages</h2>
+            <div class="messages" id="messages"></div>
+            
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="totalMessages">0</div>
+                    <div class="stat-label">Total Messages</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="streamingMessages">0</div>
+                    <div class="stat-label">Streaming</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="avgInterval">0ms</div>
+                    <div class="stat-label">Avg Interval</div>
+                </div>
+            </div>
+            
+            <div id="timeline"></div>
+        </div>
+        
+        <div class="panel">
+            <h2>📊 Analysis</h2>
+            <div class="messages" id="analysis"></div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let messages = [];
+        let messageTimes = [];
+        let startTime = 0;
+        let streamingMessages = {};
+        
+        function log(message, type = 'info') {
+            const analysisDiv = document.getElementById('analysis');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `message ${type}`;
+            entry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
+            analysisDiv.appendChild(entry);
+            analysisDiv.scrollTop = analysisDiv.scrollHeight;
+        }
+        
+        function toggleConnection() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                disconnect();
+            } else {
+                connect();
+            }
+        }
+        
+        function connect() {
+            const endpoint = document.getElementById('endpoint').value;
+            const scenario = document.getElementById('scenario').value;
+            const sessionId = document.getElementById('sessionId').value;
+            
+            let url;
+            if (endpoint === 'test') {
+                url = `ws://localhost:8001/test/ws/${scenario}`;
+            } else {
+                if (!sessionId) {
+                    alert('Please enter a session ID for real API');
+                    return;
+                }
+                url = `ws://localhost:8000/api/v2/ws/${sessionId}`;
+            }
+            
+            log(`Connecting to: ${url}`);
+            
+            ws = new WebSocket(url);
+            
+            ws.onopen = () => {
+                log('Connected successfully', 'complete');
+                updateStatus(true);
+                document.getElementById('sendBtn').disabled = false;
+                document.getElementById('connectBtn').textContent = 'Disconnect';
+                
+                // Reset stats
+                messages = [];
+                messageTimes = [];
+                streamingMessages = {};
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                const receiveTime = Date.now();
+                const elapsed = startTime ? (receiveTime - startTime) / 1000 : 0;
+                
+                messages.push(data);
+                messageTimes.push(elapsed);
+                
+                // Log detailed info
+                log(`Message #${messages.length} at ${elapsed.toFixed(3)}s - ` +
+                    `streaming: ${data.metadata?.streaming || false}, ` +
+                    `step: ${data.step_number || 0}, ` +
+                    `length: ${data.content?.length || 0}`);
+                
+                // Track streaming messages
+                if (data.metadata?.streaming) {
+                    const step = data.step_number || 0;
+                    if (!streamingMessages[step]) {
+                        streamingMessages[step] = [];
+                    }
+                    streamingMessages[step].push({
+                        time: elapsed,
+                        length: data.content?.length || 0
+                    });
+                }
+                
+                // Display message
+                displayMessage(data, elapsed);
+                
+                // Update stats
+                updateStats();
+            };
+            
+            ws.onerror = (error) => {
+                log(`WebSocket error: ${error}`, 'error');
+            };
+            
+            ws.onclose = () => {
+                log('Connection closed', 'error');
+                updateStatus(false);
+                document.getElementById('sendBtn').disabled = true;
+                document.getElementById('connectBtn').textContent = 'Connect';
+                
+                // Final analysis
+                performAnalysis();
+            };
+        }
+        
+        function disconnect() {
+            if (ws) {
+                ws.close();
+            }
+        }
+        
+        function sendQuery() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert('Not connected');
+                return;
+            }
+            
+            const query = prompt('Enter query:', 'Test streaming functionality');
+            if (!query) return;
+            
+            clearMessages();
+            startTime = Date.now();
+            
+            const message = {
+                type: 'query',
+                query: query
+            };
+            
+            log(`Sending query: ${query}`);
+            ws.send(JSON.stringify(message));
+        }
+        
+        function displayMessage(data, elapsed) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            
+            let className = 'message';
+            if (data.metadata?.streaming) {
+                className += ' streaming';
+            } else if (data.metadata?.is_final_answer) {
+                className += ' complete';
+            }
+            
+            messageDiv.className = className;
+            
+            const content = data.content || '';
+            const preview = content.length > 200 ? content.substring(0, 200) + '...' : content;
+            
+            messageDiv.innerHTML = `
+                <div class="timestamp">[${elapsed.toFixed(3)}s] Step ${data.step_number || 0}</div>
+                <div class="content">${escapeHtml(preview)}</div>
+                <div class="metadata">Role: ${data.role || 'unknown'} | 
+                    Streaming: ${data.metadata?.streaming || false} | 
+                    Length: ${content.length}</div>
+            `;
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        function updateStats() {
+            document.getElementById('totalMessages').textContent = messages.length;
+            
+            const streamingCount = messages.filter(m => m.metadata?.streaming).length;
+            document.getElementById('streamingMessages').textContent = streamingCount;
+            
+            if (messageTimes.length > 1) {
+                const intervals = [];
+                for (let i = 1; i < messageTimes.length; i++) {
+                    intervals.push((messageTimes[i] - messageTimes[i-1]) * 1000);
+                }
+                const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+                document.getElementById('avgInterval').textContent = avgInterval.toFixed(0) + 'ms';
+            }
+            
+            // Update timeline
+            updateTimeline();
+        }
+        
+        function updateTimeline() {
+            const timeline = document.getElementById('timeline');
+            timeline.innerHTML = '';
+            
+            if (messageTimes.length === 0) return;
+            
+            const maxTime = Math.max(...messageTimes);
+            const width = timeline.offsetWidth;
+            
+            messageTimes.forEach((time, i) => {
+                const bar = document.createElement('div');
+                bar.className = 'timeline-bar';
+                bar.style.left = (time / maxTime * width) + 'px';
+                bar.style.width = '2px';
+                bar.style.background = messages[i].metadata?.streaming ? '#2196f3' : '#4caf50';
+                bar.title = `Message #${i+1} at ${time.toFixed(3)}s`;
+                timeline.appendChild(bar);
+            });
+        }
+        
+        function performAnalysis() {
+            log('=== STREAMING ANALYSIS ===', 'info');
+            
+            if (messages.length === 0) {
+                log('No messages received', 'error');
+                return;
+            }
+            
+            // Check for message bunching
+            const intervals = [];
+            for (let i = 1; i < messageTimes.length; i++) {
+                intervals.push(messageTimes[i] - messageTimes[i-1]);
+            }
+            
+            const bunchedCount = intervals.filter(i => i < 0.01).length;
+            if (bunchedCount > intervals.length * 0.5) {
+                log(`⚠️ Message bunching detected: ${bunchedCount}/${intervals.length} messages arrived within 10ms`, 'error');
+            } else {
+                log(`✅ Good message distribution: only ${bunchedCount}/${intervals.length} bunched`, 'complete');
+            }
+            
+            // Check for long delays
+            const longDelays = intervals.filter(i => i > 1.0).length;
+            if (longDelays > 0) {
+                log(`⚠️ Long delays detected: ${longDelays} gaps > 1s`, 'error');
+            } else {
+                log(`✅ No long delays detected`, 'complete');
+            }
+            
+            // Streaming analysis
+            Object.entries(streamingMessages).forEach(([step, msgs]) => {
+                if (msgs.length > 1) {
+                    const times = msgs.map(m => m.time);
+                    const duration = times[times.length - 1] - times[0];
+                    log(`Step ${step}: ${msgs.length} streaming messages over ${duration.toFixed(3)}s`);
+                }
+            });
+        }
+        
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+            document.getElementById('analysis').innerHTML = '';
+            messages = [];
+            messageTimes = [];
+            streamingMessages = {};
+            updateStats();
+        }
+        
+        function updateStatus(connected) {
+            const status = document.getElementById('status');
+            if (connected) {
+                status.textContent = 'Connected';
+                status.className = 'status connected';
+            } else {
+                status.textContent = 'Disconnected';
+                status.className = 'status disconnected';
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Show/hide session ID input based on endpoint selection
+        document.getElementById('endpoint').addEventListener('change', (e) => {
+            const sessionIdInput = document.getElementById('sessionId');
+            if (e.target.value === 'real') {
+                sessionIdInput.style.display = 'inline-block';
+            } else {
+                sessionIdInput.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

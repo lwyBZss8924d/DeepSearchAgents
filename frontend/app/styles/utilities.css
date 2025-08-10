@@ -1,0 +1,298 @@
+/* Custom Utilities */
+
+@layer utilities {
+  /* Text Utilities */
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Gradient Utilities */
+  .bg-gradient-skyblue-lavender {
+    background: linear-gradient(
+      0deg,
+      hsla(193, 65%, 83%, 1) 24%,
+      hsla(284, 71%, 82%, 1) 80%
+    );
+  }
+  
+  /* Additional Gradient Presets */
+  .bg-gradient-primary {
+    background: linear-gradient(
+      135deg,
+      var(--primary) 0%,
+      var(--primary-foreground) 100%
+    );
+  }
+  
+  .bg-gradient-brand {
+    background: linear-gradient(
+      135deg,
+      var(--color-brand-primary) 0%,
+      var(--color-brand-secondary) 100%
+    );
+  }
+  
+  .bg-gradient-dark {
+    background: linear-gradient(
+      180deg,
+      var(--background) 0%,
+      var(--muted) 100%
+    );
+  }
+  
+  /* Scrollbar Styling */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--muted-foreground) transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: var(--muted-foreground);
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: var(--foreground);
+  }
+  
+  /* Focus Utilities */
+  .focus-ring:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
+  }
+  
+  /* Container Utilities */
+  .container-prose {
+    max-width: 65ch;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  /* Aspect Ratio Utilities */
+  .aspect-video {
+    aspect-ratio: 16 / 9;
+  }
+  
+  .aspect-square {
+    aspect-ratio: 1 / 1;
+  }
+  
+  .aspect-portrait {
+    aspect-ratio: 3 / 4;
+  }
+  
+  /* Glass Morphism Effect */
+  .glassmorphism {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .glassmorphism-dark {
+    background: rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Loading States */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--muted) 25%,
+      var(--muted-foreground) 50%,
+      var(--muted) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  
+  
+  /* Planning Type Badges */
+  .planning-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.625rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+  
+  .planning-badge-initial {
+    background-color: rgb(219, 234, 254);
+    color: rgb(30, 64, 175);
+  }
+  
+  .dark .planning-badge-initial {
+    background-color: rgba(30, 58, 138, 0.3);
+    color: rgb(147, 197, 253);
+  }
+  
+  .planning-badge-update {
+    background-color: rgb(233, 213, 255);
+    color: rgb(91, 33, 182);
+  }
+  
+  .dark .planning-badge-update {
+    background-color: rgba(91, 33, 182, 0.3);
+    color: rgb(196, 181, 253);
+  }
+  
+  /* Action Thought Styles */
+  .action-thought {
+    color: rgb(209, 213, 219);
+    font-style: italic;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Planning Card Component Styles */
+  .planning-card {
+    margin: 1rem 0;
+    border-radius: 0.75rem;
+    background-color: rgba(59, 130, 246, 0.03);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    padding: 1.25rem;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .dark .planning-card {
+    background-color: rgba(59, 130, 246, 0.05);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+  
+  .planning-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  
+  .planning-step-number {
+    font-size: 0.75rem;
+    color: rgb(156, 163, 175);
+    font-weight: 500;
+  }
+  
+  /* Planning Content Wrapper - Avoids markdown-body conflicts */
+  .planning-content-wrapper {
+    font-size: 0.875rem;
+    line-height: 1.7;
+    color: inherit;
+  }
+  
+  /* Planning Typography */
+  .planning-paragraph {
+    margin-bottom: 1rem;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+  }
+  
+  .planning-heading {
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: inherit;
+  }
+  
+  .planning-h1 {
+    font-size: 1.5rem;
+  }
+  
+  .planning-h2 {
+    font-size: 1.25rem;
+  }
+  
+  .planning-h3 {
+    font-size: 1.125rem;
+  }
+  
+  /* Planning Lists */
+  .planning-list {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+    list-style: disc;
+  }
+  
+  .planning-list-ordered {
+    list-style: decimal;
+  }
+  
+  .planning-list li {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+  }
+  
+  /* Planning Code Blocks - Preserved styling */
+  .planning-code-block {
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin: 1rem 0;
+    overflow-x: auto;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+  
+  .dark .planning-code-block {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+  
+  .planning-inline-code {
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.85em;
+  }
+  
+  .dark .planning-inline-code {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Planning Links */
+  .planning-link {
+    color: rgb(59, 130, 246);
+    text-decoration: underline;
+    transition: color 0.2s;
+  }
+  
+  .planning-link:hover {
+    color: rgb(37, 99, 235);
+  }
+  
+  .dark .planning-link {
+    color: rgb(96, 165, 250);
+  }
+  
+  .dark .planning-link:hover {
+    color: rgb(147, 197, 253);
+  }
+  
+  /* Planning Separator */
+  .planning-separator {
+    position: absolute;
+    bottom: 0;
+    left: 1.25rem;
+    right: 1.25rem;
+    height: 3px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(59, 130, 246, 0.3),
+      transparent
+    );
+  }
+}

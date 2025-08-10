@@ -1,0 +1,670 @@
+openapi: 3.1.0
+info:
+  title: DeepSearchAgents Web API v2
+  description: |
+    REST and WebSocket API for DeepSearchAgents with direct agent event processing.
+    
+    This API processes agent events from smolagents (PlanningStep, ActionStep, 
+    FinalAnswerStep, ChatMessageStreamDelta) and transforms them into DSAgentRunMessage 
+    format with extensive metadata for frontend routing.
+    
+    Key features:
+    - Direct event processing via web_ui.py
+    - Metadata-driven component routing (chat/webide/terminal)
+    - Real-time WebSocket streaming with initial → delta → final pattern
+    - Session-based agent management
+  version: 2.0.0
+  contact:
+    name: DeepSearchAgents Team
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://api.deepsearchagents.com
+    description: Production server
+
+tags:
+  - name: v2
+    description: API endpoints for v2
+  - name: Sessions
+    description: Session management endpoints
+  - name: WebSocket
+    description: Real-time streaming endpoints
+  - name: Health
+    description: System health monitoring
+
+paths:
+  /api/v2/sessions:
+    post:
+      summary: Create a new agent session
+      description: Use the returned WebSocket URL to connect and send queries.
+      operationId: createSession
+      tags:
+        - v2
+        - Sessions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateSessionResponse'
+    get:
+      summary: Get list of active sessions
+      operationId: listSessions
+      tags:
+        - v2
+        - Sessions
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+  /api/v2/sessions/{session_id}:
+    get:
+      summary: Get session information
+      operationId: getSession
+      tags:
+        - v2
+        - Sessions
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+          description: Session ID to retrieve
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionState'
+        '404':
+          description: Session not found
+    delete:
+      summary: Delete a session
+      operationId: deleteSession
+      tags:
+        - v2
+        - Sessions
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+          description: Session ID to delete
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Deletion message
+        '404':
+          description: Session not found
+  /api/v2/sessions/{session_id}/messages:
+    get:
+      summary: Get messages from a session
+      operationId: getSessionMessages
+      tags:
+        - v2
+        - Sessions
+      parameters:
+        - in: path
+          name: session_id
+          required: true
+          schema:
+            type: string
+          description: Session ID to retrieve messages from
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 100
+          description: Maximum messages to return
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    type: string
+                    description: Session ID
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DSAgentRunMessage'
+                  total:
+                    type: integer
+                    description: Total number of messages
+  /api/v2/health:
+    get:
+      summary: Health check endpoint
+      operationId: healthCheck
+      tags:
+        - v2
+        - Health
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/v2/ws/{session_id}:
+    get:
+      summary: WebSocket endpoint for real-time agent interaction
+      description: |
+        WebSocket endpoint for real-time agent interaction.
+
+        ## Message Flow
+        The API processes 4 main event types from smolagents:
+        1. **PlanningStep** → planning_header, planning_content, planning_footer
+        2. **ActionStep** → action_header, action_thought, tool_call, execution_logs
+        3. **FinalAnswerStep** → final_answer (with structured data)
+        4. **ChatMessageStreamDelta** → streaming deltas with appropriate message_type
+
+        ## Protocol
+        - Client sends: {"type": "query", "query": "..."}
+        - Server streams: DSAgentRunMessage objects with extensive metadata
+        - Client sends: {"type": "ping"} (keepalive)
+        - Server sends: {"type": "pong"}
+        - Client sends: {"type": "get_messages", "limit": 100}
+        - Server sends: Multiple DSAgentRunMessage objects
+        - Client sends: {"type": "get_state"}
+        - Server sends: {"type": "state", "state": {...}}
+        
+        ## Streaming Pattern
+        For streaming content (e.g., action thoughts, final answers):
+        1. Initial message with is_initial_stream=true, streaming=true
+        2. Delta messages with is_delta=true, delta_content="..."
+        3. Final message with streaming=false, full content
+      operationId: agentWebsocket
+      tags:
+        - v2
+        - WebSocket
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Session ID for the WebSocket connection
+        - name: agent_type
+          in: query
+          schema:
+            type: string
+            default: codact
+          description: Agent type (react/codact)
+      responses:
+        '101':
+          description: WebSocket connection established
+
+components:
+  schemas:
+    CreateSessionRequest:
+      type: object
+      properties:
+        agent_type:
+          type: string
+          default: codact
+          description: Agent type (react/codact)
+        max_steps:
+          type: integer
+          nullable: true
+          description: Maximum steps for agent
+      description: Request body for creating a new session
+    CreateSessionResponse:
+      type: object
+      properties:
+        session_id:
+          type: string
+          description: Created session ID
+        agent_type:
+          type: string
+          description: Agent type
+        websocket_url:
+          type: string
+          description: WebSocket URL for this session
+      required:
+        - session_id
+        - agent_type
+        - websocket_url
+      description: Response body for session creation
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          default: healthy
+        timestamp:
+          type: string
+          format: date-time
+        active_sessions:
+          type: integer
+          description: Number of active sessions
+        version:
+          type: string
+          default: 2.0.0
+      required:
+        - status
+        - timestamp
+        - active_sessions
+        - version
+      description: Response body for health check endpoint
+    DSAgentRunMessage:
+      type: object
+      required:
+        - role
+        - content
+        - message_id
+        - timestamp
+      properties:
+        role:
+          type: string
+          enum:
+            - user
+            - assistant
+            - system
+          description: Message role
+        content:
+          type: string
+          description: Message content (markdown, code blocks, etc.)
+        name:
+          type: string
+          nullable: true
+          description: Optional name for the message
+        metadata:
+          type: object
+          description: Extensive metadata for frontend routing and rendering
+          properties:
+            message_type:
+              type: string
+              description: Frontend routing type determining which component renders this message
+              enum:
+                - planning_header
+                - planning_content
+                - planning_footer
+                - action_header
+                - action_thought
+                - action_code
+                - tool_call
+                - tool_invocation
+                - execution_logs
+                - final_answer
+                - error
+                - system
+            action_type:
+              type: string
+              description: Type of action being performed (e.g., "thinking", "searching", "reading_url")
+            language:
+              type: string
+              description: Programming language for code blocks (e.g., "python", "javascript")
+            streaming:
+              type: boolean
+              description: Whether this message is part of a streaming sequence
+            is_delta:
+              type: boolean
+              description: Whether this is a delta update for streaming content
+            is_initial_stream:
+              type: boolean
+              description: Whether this is the initial message in a streaming sequence
+            stream_id:
+              type: string
+              description: Unique identifier linking messages in a streaming sequence
+            delta_content:
+              type: string
+              description: Incremental content update for streaming deltas
+            parent_id:
+              type: string
+              description: Parent message ID for grouping related messages
+            tool_name:
+              type: string
+              description: Name of the tool being used (e.g., "search", "readurl", "final_answer")
+            tool_parameters:
+              type: object
+              description: Parameters passed to the tool
+              additionalProperties: true
+            status:
+              type: string
+              description: Execution status
+              enum: [pending, running, completed, failed, streaming]
+            code_output:
+              type: string
+              description: Output from code execution
+            return_code:
+              type: integer
+              description: Return code from execution (0 = success)
+            final_answer_data:
+              type: object
+              description: Structured final answer data
+              properties:
+                answer:
+                  type: string
+                  description: The final answer text
+                sources:
+                  type: array
+                  description: Source citations
+                  items:
+                    type: object
+                    properties:
+                      text:
+                        type: string
+                        description: Source text excerpt
+                      url:
+                        type: string
+                        description: Source URL
+                      score:
+                        type: number
+                        description: Relevance score
+                      title:
+                        type: string
+                        description: Source title
+            error:
+              type: boolean
+              description: Whether this is an error message
+            error_type:
+              type: string
+              description: Type of error (e.g., "tool_error", "agent_error")
+            show_raw:
+              type: boolean
+              description: Whether to show raw output without formatting
+            search_results:
+              type: array
+              description: Search results for rendering
+              items:
+                type: object
+                properties:
+                  title:
+                    type: string
+                  url:
+                    type: string
+                  snippet:
+                    type: string
+            css_class:
+              type: string
+              description: CSS class for styling the message
+            icon:
+              type: string
+              description: Icon identifier for UI (e.g., "🔍", "🌐", "💭")
+            duration_seconds:
+              type: number
+              description: Execution duration in seconds
+            thinking_duration:
+              type: number
+              description: Time spent in planning/thinking
+            token_usage:
+              type: object
+              description: Token usage statistics
+              properties:
+                completion_tokens:
+                  type: integer
+                prompt_tokens:
+                  type: integer
+                total_tokens:
+                  type: integer
+            logs:
+              type: array
+              description: Execution logs
+              items:
+                type: string
+            timestamp_start:
+              type: string
+              format: date-time
+              description: Start time of execution
+            timestamp_end:
+              type: string
+              format: date-time
+              description: End time of execution
+        message_id:
+          type: string
+          description: Unique message identifier (UUID)
+        timestamp:
+          type: string
+          format: date-time
+          description: Message creation timestamp
+        session_id:
+          type: string
+          nullable: true
+          description: Session identifier
+        step_number:
+          type: integer
+          nullable: true
+          description: Agent execution step number
+      description: |
+        DeepSearchAgent message format with extensive metadata.
+        
+        The metadata field drives frontend component routing:
+        - planning_* types → PlanningCard component
+        - action_thought → ActionThoughtCard with streaming support
+        - action_code/tool_call → WebIDE component
+        - execution_logs → Terminal component
+        - final_answer → FinalAnswerDisplay with structured data
+    QueryRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - query
+          description: Message type
+        query:
+          type: string
+          description: User query to process
+      required:
+        - type
+        - query
+      description: WebSocket query request
+    PingMessage:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - ping
+          description: Message type
+      description: WebSocket ping message for keepalive
+    PongMessage:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - pong
+          description: Message type
+      required:
+        - type
+      description: WebSocket pong response
+    ErrorMessage:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - error
+          description: Message type
+        message:
+          type: string
+          description: Error message
+        error_code:
+          type: string
+          nullable: true
+          description: Optional error code
+      required:
+        - type
+        - message
+      description: WebSocket error message
+    SessionState:
+      type: object
+      properties:
+        session_id:
+          type: string
+          description: Session ID
+        agent_type:
+          type: string
+          description: Agent type
+        state:
+          type: string
+          description: Session state
+          enum:
+            - idle
+            - processing
+            - completed
+            - error
+            - expired
+        created_at:
+          type: string
+          format: date-time
+        last_activity:
+          type: string
+          format: date-time
+        message_count:
+          type: integer
+          description: Message count
+      required:
+        - session_id
+        - agent_type
+        - state
+        - created_at
+        - last_activity
+        - message_count
+      description: Session state information
+    GetMessagesRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - get_messages
+          description: Message type
+        limit:
+          type: integer
+          default: 100
+          description: Maximum messages to retrieve
+      required:
+        - type
+      description: WebSocket request for retrieving message history
+    GetStateRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - get_state
+          description: Message type
+      required:
+        - type
+      description: WebSocket request for getting session state
+    StateResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - state
+          description: Message type
+        state:
+          $ref: '#/components/schemas/SessionState'
+      required:
+        - type
+        - state
+      description: WebSocket response containing session state
+    
+    # Example Messages
+    ExamplePlanningMessage:
+      type: object
+      description: Example planning step message
+      example:
+        role: assistant
+        content: "I'll help you search for information about quantum computing..."
+        message_id: "123e4567-e89b-12d3-a456-426614174000"
+        timestamp: "2024-01-01T12:00:00Z"
+        session_id: "session-123"
+        step_number: 1
+        metadata:
+          message_type: "planning_content"
+          action_type: "planning"
+          streaming: false
+          icon: "🎯"
+          
+    ExampleActionThoughtMessage:
+      type: object
+      description: Example action thought message with streaming
+      example:
+        role: assistant
+        content: "Let me search for the latest research papers on quantum computing..."
+        message_id: "223e4567-e89b-12d3-a456-426614174000"
+        timestamp: "2024-01-01T12:00:05Z"
+        session_id: "session-123"
+        step_number: 2
+        metadata:
+          message_type: "action_thought"
+          action_type: "thinking"
+          streaming: true
+          is_initial_stream: true
+          stream_id: "stream-001"
+          icon: "💭"
+          
+    ExampleToolCallMessage:
+      type: object
+      description: Example tool call message
+      example:
+        role: assistant
+        content: "search(query='quantum computing latest research 2024')"
+        message_id: "323e4567-e89b-12d3-a456-426614174000"
+        timestamp: "2024-01-01T12:00:10Z"
+        session_id: "session-123"
+        step_number: 2
+        metadata:
+          message_type: "tool_call"
+          tool_name: "search"
+          tool_parameters:
+            query: "quantum computing latest research 2024"
+          status: "running"
+          language: "python"
+          icon: "🔍"
+          
+    ExampleFinalAnswerMessage:
+      type: object
+      description: Example final answer message with structured data
+      example:
+        role: assistant
+        content: "Based on my research, quantum computing has made significant advances..."
+        message_id: "423e4567-e89b-12d3-a456-426614174000"
+        timestamp: "2024-01-01T12:00:30Z"
+        session_id: "session-123"
+        step_number: 5
+        metadata:
+          message_type: "final_answer"
+          final_answer_data:
+            answer: "Based on my research, quantum computing has made significant advances..."
+            sources:
+              - text: "Recent breakthrough in quantum error correction..."
+                url: "https://arxiv.org/papers/quantum-2024"
+                score: 0.95
+                title: "Quantum Error Correction Breakthrough"
+          streaming: false
+          icon: "✅"
+          token_usage:
+            prompt_tokens: 1500
+            completion_tokens: 350
+            total_tokens: 1850

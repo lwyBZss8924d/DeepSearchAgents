@@ -1,0 +1,99 @@
+/* Neovim-style editor aesthetics */
+@layer ds.components {
+  /* Empty state styling */
+  .ds-code-editor-empty.neovim-style {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+    background: var(--ds-terminal-bg);
+    color: var(--ds-terminal-fg);
+    position: relative;
+  }
+
+  .ds-code-editor-empty.neovim-style pre {
+    color: var(--ds-terminal-dim);
+    line-height: 1.4;
+    margin: 0;
+  }
+
+  /* Neovim-style code block enhancements */
+  .ds-code-block.neovim-style {
+    background: var(--ds-terminal-bg);
+    border: none;
+    position: relative;
+  }
+
+  /* Line numbers like Neovim */
+  .ds-code-block.neovim-style .line-numbers {
+    background: var(--ds-bg-elevated);
+    color: var(--ds-terminal-dim);
+    border-right: 1px solid var(--ds-border-default);
+    padding-right: 0.5rem;
+    text-align: right;
+    user-select: none;
+  }
+
+  /* Status bar */
+  .neovim-status-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--ds-bg-elevated);
+    border-top: 1px solid var(--ds-border-default);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    color: var(--ds-terminal-dim);
+    font-family: var(--ds-font-mono);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* Cursor styles */
+  .neovim-cursor {
+    display: inline-block;
+    width: 0.5em;
+    height: 1.2em;
+    background: var(--ds-terminal-fg);
+    animation: neovim-blink 1s step-end infinite;
+  }
+
+  @keyframes neovim-blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  /* Tilde for empty lines */
+  .neovim-empty-line::before {
+    content: "~";
+    color: var(--ds-terminal-dim);
+    opacity: 0.5;
+  }
+
+  /* Theme-specific Neovim colors */
+  [data-theme="matrix"] .ds-code-editor-empty.neovim-style pre {
+    color: #004400;
+  }
+
+  [data-theme="synthwave"] .ds-code-editor-empty.neovim-style {
+    background: #0f0e17;
+  }
+
+  [data-theme="synthwave"] .neovim-status-bar {
+    background: #1a1625;
+    border-top-color: #ff006e;
+  }
+
+  /* Highlight current line */
+  .neovim-current-line {
+    background: var(--ds-bg-elevated);
+  }
+
+  /* Search highlight */
+  .neovim-search-highlight {
+    background: var(--ds-agent-thinking);
+    color: var(--ds-terminal-bg);
+  }
+}

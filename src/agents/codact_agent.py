@@ -17,7 +17,6 @@ import yaml
 from smolagents import (
     CodeAgent, Tool, PromptTemplates
 )
-from smolagents.local_python_executor import BASE_PYTHON_TOOLS
 from .prompt_templates.codact_prompts import (
     CODACT_SYSTEM_EXTENSION, PLANNING_TEMPLATES,
     FINAL_ANSWER_EXTENSION, MANAGED_AGENT_TEMPLATES,
@@ -136,7 +135,6 @@ class CodeActAgent(BaseAgent):
 
         self.verbosity_level = verbosity_level
         self.use_structured_outputs_internally = use_structured_outputs_internally
-        self.step_callbacks = step_callbacks or []
 
         # call parent class constructor
         super().__init__(
@@ -152,6 +150,7 @@ class CodeActAgent(BaseAgent):
             description=description,
             managed_agents=managed_agents,
             cli_console=cli_console,
+            step_callbacks=step_callbacks,
             **kwargs
         )
 
@@ -245,7 +244,8 @@ class CodeActAgent(BaseAgent):
         return merge_prompt_templates(
             base_templates=base_prompts,
             extensions=extension_content,
-            current_time=current_time
+            current_time=current_time,
+            use_structured_outputs=self.use_structured_outputs_internally
         )
 
     def _get_authorized_imports(self):
@@ -255,17 +255,17 @@ class CodeActAgent(BaseAgent):
             List[str]: List of authorized import modules
         """
         # Set default allowed import modules with security restrictions
-
-        base_python_tools = BASE_PYTHON_TOOLS
+        # Note: BASE_PYTHON_TOOLS contains built-in functions (bool, str, int, etc.)
+        # which are automatically available and should not be in authorized imports
 
         default_authorized_imports = [
             "logging", "json", "re", "time", "datetime",
             "copy", "requests", "aiohttp", "asyncio",
             "bs4", "urllib", "html",
-            "math", "csv", "pandas", "numpy", "tabulate",
-            "arxiv", "wikipedia",
+            "sympy", "math", "csv", "pandas", "numpy", "tabulate2",
+            "arxiv", "wikipediaapi",
             "pymupdf", "markitdown",
-            "file", "input", "raw_input", "open", "dotenv",
+            "dotenv",
         ]
         # Security: PROD MUST Removed Dev dangerous imports like 'os', 'sys', 'dotenv'
         # These can be used for file system access or environment manipulation
@@ -282,22 +282,22 @@ class CodeActAgent(BaseAgent):
             if len(safe_additions) < len(self.additional_authorized_imports):
                 blocked_imports = (
                     set(self.additional_authorized_imports) -
-                    set(safe_additions) -
-                    set(base_python_tools.keys())
+                    set(safe_additions)
                 )
                 logger.warning(
                     f"Some requested imports were blocked for security: "
                     f"{blocked_imports}"
                 )
             # Merge and deduplicate import module lists
+            # Do NOT include BASE_PYTHON_TOOLS as they are built-in functions
             all_imports = (
-                list(base_python_tools.keys()) +
                 default_authorized_imports +
                 safe_additions
             )
             return list(set(all_imports))
         else:
-            return list(base_python_tools.keys()) + default_authorized_imports
+            # Do NOT include BASE_PYTHON_TOOLS as they are built-in functions
+            return default_authorized_imports
 
     def create_agent(self):
         """Create CodeAct agent instance
@@ -349,42 +349,23 @@ class CodeActAgent(BaseAgent):
         # Disable streaming processing, use CodeAgent directly
         # Note: Even if enable_streaming=True is passed, non-streaming mode
         # will be used
-        if self.enable_streaming:
-            # Use normal agent, but output warning only in verbose mode
-            if self.verbosity_level >= 2:
-                print("Warning: Streaming mode is temporarily disabled in "
-                      "this version.")
-            agent = CodeAgent(
-                tools=self.tools,
-                model=model_router,  # Use model router here
-                prompt_templates=extended_prompt_templates,
-                additional_authorized_imports=authorized_imports,
-                executor_type=self.executor_type,
-                executor_kwargs=self.executor_kwargs,
-                max_steps=self.max_steps,
-                verbosity_level=self.verbosity_level,
-                grammar=json_grammar if not self.use_structured_outputs_internally else None,
-                planning_interval=self.planning_interval,
-                step_callbacks=self.step_callbacks,
-                use_structured_outputs_internally=self.use_structured_outputs_internally,
-                managed_agents=self.managed_agents
-            )
-        else:
-            agent = CodeAgent(
-                tools=self.tools,
-                model=model_router,  # Use model router here
-                prompt_templates=extended_prompt_templates,
-                additional_authorized_imports=authorized_imports,
-                executor_type=self.executor_type,
-                executor_kwargs=self.executor_kwargs,
-                max_steps=self.max_steps,
-                verbosity_level=self.verbosity_level,
-                grammar=json_grammar if not self.use_structured_outputs_internally else None,
-                planning_interval=self.planning_interval,
-                step_callbacks=self.step_callbacks,
-                use_structured_outputs_internally=self.use_structured_outputs_internally,
-                managed_agents=self.managed_agents
-            )
+        # Create agent with streaming support
+        agent = CodeAgent(
+            tools=self.tools,
+            model=model_router,  # Use model router here
+            prompt_templates=extended_prompt_templates,
+            additional_authorized_imports=authorized_imports,
+            executor_type=self.executor_type,
+            executor_kwargs=self.executor_kwargs,
+            max_steps=self.max_steps,
+            verbosity_level=self.verbosity_level,
+            grammar=json_grammar if not self.use_structured_outputs_internally else None,
+            planning_interval=self.planning_interval,
+            step_callbacks=self.step_callbacks,
+            use_structured_outputs_internally=self.use_structured_outputs_internally,
+            managed_agents=self.managed_agents,
+            stream_outputs=self.enable_streaming  # Enable streaming based on configuration
+        )
 
         # Initialize agent state
         agent.state.update(self.initial_state)
@@ -419,22 +400,12 @@ class CodeActAgent(BaseAgent):
                     "internal agent communication"
                 )
 
-        # ensure callbacks can be accessed and debugged
-        if self.step_callbacks and len(self.step_callbacks) > 0:
-            logger.info(f"There are {len(self.step_callbacks)} step callbacks "
-                        f"when initializing the agent")
-            for i, callback in enumerate(self.step_callbacks):
-                logger.info(f"Step callback #{i+1}: "
-                            f"{callback.__class__.__name__}")
-        else:
-            logger.warning("Warning: No step callbacks provided!")
+        # Log callback registration status
+        if self.step_callbacks:
+            logger.info(f"Registered {len(self.step_callbacks)} step callbacks")
 
-        # add extra logs to confirm step callbacks
-        # this will check if the wrapped agent retains callbacks
-        if hasattr(agent, 'step_callbacks') and agent.step_callbacks:
-            logger.info(f"Agent created, has {len(agent.step_callbacks)} "
-                        f"step callbacks")
-        else:
-            logger.warning("Warning: Agent created without step callbacks!")
+        # Check if callbacks were properly registered in the agent
+        if hasattr(agent, 'step_callbacks') and hasattr(agent.step_callbacks, '_callbacks'):
+            logger.debug("Step callbacks successfully registered with CallbackRegistry")
 
         return agent

@@ -75,8 +75,9 @@ class AgentStepCallback:
         # Common tool names used in both React and CodeAct modes
         self.known_tools = [
             "search_links", "search_fast", "read_url", "chunk_text",
-            "embed_texts", "rerank_texts", "wolfram", "final_answer",
-            "xcom_deep_qa", "github_repo_qa", "python_interpreter"
+            "embed_texts", "rerank_texts", "wolfram", "academic_retrieval",
+            "final_answer", "xcom_deep_qa", "github_repo_qa",
+            "python_interpreter"
         ]
 
         # use smolagents' Monitor to track token

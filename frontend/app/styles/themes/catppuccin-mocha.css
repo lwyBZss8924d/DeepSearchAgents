@@ -1,0 +1,118 @@
+/* Catppuccin Mocha Theme for DeepSearchAgents */
+@layer ds.tokens {
+  [data-theme="catppuccin-mocha"],
+  .theme-catppuccin-mocha {
+    /* Base colors */
+    --ds-terminal-bg: #1e1e2e;
+    --ds-terminal-fg: #cdd6f4;
+    --ds-terminal-bright: #f5e0dc;
+    --ds-terminal-dim: #a6adc8;
+    
+    /* Catppuccin palette */
+    --ds-terminal-black: #45475a;
+    --ds-terminal-red: #f38ba8;
+    --ds-terminal-green: #a6e3a1;
+    --ds-terminal-yellow: #f9e2af;
+    --ds-terminal-blue: #89b4fa;
+    --ds-terminal-magenta: #f5c2e7;
+    --ds-terminal-cyan: #94e2d5;
+    --ds-terminal-white: #bac2de;
+    
+    /* Agent State Colors */
+    --ds-agent-planning: #89b4fa;
+    --ds-agent-thinking: #f9e2af;
+    --ds-agent-coding: #a6e3a1;
+    --ds-agent-running: #94e2d5;
+    --ds-agent-final: #a6e3a1;
+    --ds-agent-error: #f38ba8;
+    
+    /* UI Colors */
+    --ds-border-default: #313244;
+    --ds-border-muted: #282838;
+    --ds-border-active: #89b4fa;
+    --ds-bg-primary: #1e1e2e;
+    --ds-bg-elevated: #232334;
+    --ds-bg-code: #181825;
+    
+    /* Surface colors */
+    --ds-surface-0: #313244;
+    --ds-surface-1: #45475a;
+    --ds-surface-2: #585b70;
+    
+    /* Overlay colors */
+    --ds-overlay-0: #6c7086;
+    --ds-overlay-1: #7f849c;
+    --ds-overlay-2: #9399b2;
+    
+    /* Special colors */
+    --ds-lavender: #b4befe;
+    --ds-rosewater: #f5e0dc;
+    --ds-flamingo: #f2cdcd;
+    --ds-pink: #f5c2e7;
+    --ds-mauve: #cba6f7;
+    --ds-peach: #fab387;
+    --ds-teal: #94e2d5;
+    --ds-sky: #89dceb;
+    --ds-sapphire: #74c7ec;
+  }
+  
+  /* Theme-specific overrides */
+  [data-theme="catppuccin-mocha"] {
+    /* Softer shadows */
+    .ds-message-card {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .ds-message-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Softer code highlighting */
+    .ds-code-line-highlighted {
+      background: color-mix(in oklch, var(--ds-mauve) 15%, transparent);
+    }
+    
+    /* Accent colors for badges */
+    .ds-state-badge[data-state="planning"] {
+      background: color-mix(in oklch, var(--ds-sapphire) 20%, var(--ds-bg-primary));
+      color: var(--ds-sapphire);
+      border-color: var(--ds-sapphire);
+    }
+    
+    .ds-state-badge[data-state="thinking"] {
+      background: color-mix(in oklch, var(--ds-peach) 20%, var(--ds-bg-primary));
+      color: var(--ds-peach);
+      border-color: var(--ds-peach);
+    }
+    
+    .ds-state-badge[data-state="final"] {
+      background: color-mix(in oklch, var(--ds-teal) 20%, var(--ds-bg-primary));
+      color: var(--ds-teal);
+      border-color: var(--ds-teal);
+    }
+    
+    /* Smooth cursor animation */
+    .ds-streaming-cursor {
+      background: var(--ds-rosewater);
+      box-shadow: 0 0 8px var(--ds-rosewater);
+    }
+    
+    /* Special effects for streaming */
+    .ds-streaming-active {
+      color: var(--ds-lavender);
+    }
+    
+    /* Button hover effects */
+    .ds-code-action-btn:hover:not(:disabled) {
+      background: color-mix(in oklch, var(--ds-mauve) 15%, transparent);
+      border-color: var(--ds-mauve);
+      color: var(--ds-mauve);
+    }
+    
+    /* Welcome ASCII art styling */
+    .ds-welcome-ascii pre {
+      color: var(--ds-lavender);
+      text-shadow: 0 0 20px color-mix(in oklch, var(--ds-lavender) 50%, transparent);
+    }
+  }
+}

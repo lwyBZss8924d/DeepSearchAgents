@@ -8,7 +8,7 @@ Base Agent class for DeepSearchAgents
 """
 
 from typing import (
-    Dict, Any, List, Literal, Generator, Union
+    Dict, Any, List, Literal, Generator, Union, Optional
 )
 import time
 import sys
@@ -201,8 +201,12 @@ class MultiModelRouter:
                 elif (
                     "final answer to the original question" in content
                     or "final answer" in content.lower()
+                    or "final_answer" in content.lower()
                 ):
                     is_final_answer = True
+                    # Log for debugging
+                    logger.info("MultiModelRouter: Detected final answer context, using orchestrator model")
+                    logger.debug(f"Content that triggered final answer detection: {content[:200]}...")
 
         # Select model based on content
         if is_planning or is_final_answer:
@@ -246,6 +250,7 @@ class BaseAgent:
         managed_agents: List['BaseAgent'] = None,
         # Additional options
         cli_console=None,
+        step_callbacks: Optional[List[Any]] = None,
         **kwargs
     ):
         """Initialize the base agent
@@ -282,6 +287,7 @@ class BaseAgent:
 
         # Additional options
         self.cli_console = cli_console
+        self.step_callbacks = step_callbacks
         self.kwargs = kwargs
 
         # Tools and state from runtime

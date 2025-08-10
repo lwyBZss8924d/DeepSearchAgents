@@ -1,0 +1,148 @@
+/* TUI Logo Styles - Authentic Terminal Aesthetic */
+@layer ds.components {
+  /* Main TUI logo container */
+  .ds-tui-logo {
+    /* Remove any web-style effects */
+    text-shadow: none;
+    background: none;
+    filter: none;
+  }
+
+  /* ASCII art should use terminal colors only */
+  .ds-tui-logo pre {
+    color: var(--ds-terminal-bright);
+    /* Very subtle CRT glow - less than before */
+    text-shadow: 0 0 0.5px currentColor;
+  }
+
+  /* Ensure monospace rendering */
+  .ds-logo-ascii {
+    font-family: var(--ds-font-mono);
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+  }
+
+  /* Subtle pulse animation for default variant */
+  .ds-logo-ascii.animate-pulse {
+    animation: tui-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes tui-pulse {
+    0%, 100% { 
+      opacity: 0.9;
+      filter: brightness(1);
+    }
+    50% { 
+      opacity: 1;
+      filter: brightness(1.1);
+    }
+  }
+
+  /* Inline logo styling */
+  .ds-terminal-title .ds-tui-logo span {
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Theme-specific TUI logo colors */
+  [data-theme="matrix"] .ds-tui-logo {
+    /* Matrix green for all text */
+    --ds-logo-primary: #00ff00;
+    --ds-logo-secondary: #00cc00;
+    --ds-logo-dim: #008800;
+  }
+
+  [data-theme="matrix"] .ds-tui-logo pre {
+    color: var(--ds-logo-primary);
+    text-shadow: 0 0 1px var(--ds-logo-primary);
+  }
+
+  [data-theme="synthwave"] .ds-tui-logo {
+    /* Synthwave neon colors */
+    --ds-logo-primary: #ff006e;
+    --ds-logo-secondary: #00ffff;
+    --ds-logo-dim: #660029;
+  }
+
+  [data-theme="synthwave"] .ds-tui-logo pre {
+    color: var(--ds-logo-primary);
+    text-shadow: 0 0 2px currentColor;
+  }
+
+  [data-theme="cyberpunk"] .ds-tui-logo {
+    /* Cyberpunk yellow/cyan */
+    --ds-logo-primary: #ffd60a;
+    --ds-logo-secondary: #06ffa5;
+    --ds-logo-dim: #fcbf49;
+  }
+
+  [data-theme="cyberpunk"] .ds-tui-logo pre {
+    color: var(--ds-logo-primary);
+    /* Subtle glitch effect */
+    animation: tui-glitch 10s infinite;
+  }
+
+  [data-theme="miami"] .ds-tui-logo {
+    /* Miami sunset colors */
+    --ds-logo-primary: #f72585;
+    --ds-logo-secondary: #4cc9f0;
+    --ds-logo-dim: #b5179e;
+  }
+
+  [data-theme="miami"] .ds-tui-logo pre {
+    color: var(--ds-logo-primary);
+    text-shadow: 0 0 1.5px currentColor;
+  }
+
+  @keyframes tui-glitch {
+    0%, 100% { transform: translate(0); }
+    92% { transform: translate(0); }
+    92.5% { transform: translate(-2px, 0); }
+    93% { transform: translate(2px, 0); }
+    93.5% { transform: translate(0); }
+  }
+
+  /* Remove any gradient or modern effects from logo area */
+  .ds-welcome-container {
+    background: none;
+    box-shadow: none;
+  }
+
+  /* Diagonal line styling - dimmer than main text */
+  .ds-tui-logo .diagonal-lines {
+    color: var(--ds-terminal-dim);
+    opacity: 0.6;
+  }
+
+  /* Letterform coloring */
+  .ds-tui-logo .letterforms {
+    color: var(--ds-terminal-bright);
+    font-weight: normal; /* Block characters are already bold visually */
+  }
+
+  /* Apply color gradients like Crush (via color, not CSS gradients) */
+  .ds-tui-logo[data-gradient="true"] .letterforms {
+    /* This would need JS to apply character-by-character coloring */
+    color: var(--ds-terminal-bright);
+  }
+
+  /* Task selection indicators */
+  .ds-tui-logo .task-indicator {
+    color: var(--ds-terminal-bright);
+  }
+
+  /* Cursor blink for loading */
+  .ds-tui-logo-loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .ds-tui-logo-loading > span:first-child {
+    display: inline-block;
+    width: 1ch;
+    text-align: center;
+    color: var(--ds-agent-running);
+  }
+}

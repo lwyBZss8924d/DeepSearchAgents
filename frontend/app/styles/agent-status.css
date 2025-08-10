@@ -1,0 +1,270 @@
+/**
+ * Agent Status Animations and Styling
+ * 
+ * Styles for agent status indicators with ASCII animations
+ */
+
+/* Agent Status Badge Styling */
+.ds-state-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0.5rem;
+  font-family: var(--ds-font-mono);
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none;
+}
+
+/* Override WebTUI badge styling */
+.ds-state-badge[is-~="badge"] {
+  background-image: none !important;
+  background-color: transparent !important;
+}
+
+/* Hide WebTUI badge pseudo-elements */
+.ds-state-badge[is-~="badge"]::before,
+.ds-state-badge[is-~="badge"]::after {
+  display: none !important;
+}
+
+/* Global override for any WebTUI badge used in agent status */
+[is-~="badge"][agent-badge-="state"] {
+  background-image: none !important;
+  background-color: transparent !important;
+}
+
+[is-~="badge"][agent-badge-="state"]::before,
+[is-~="badge"][agent-badge-="state"]::after {
+  display: none !important;
+}
+
+/* State-specific colors */
+.ds-state-badge.agent-planning {
+  color: var(--ds-agent-planning, #8B5CF6);
+  background-color: transparent !important;
+  border: none;
+}
+
+.ds-state-badge.agent-thinking {
+  color: var(--ds-agent-thinking, #3B82F6);
+  background-color: transparent !important;
+  border: none;
+}
+
+.ds-state-badge.agent-coding {
+  color: var(--ds-agent-coding, #10B981);
+  background-color: transparent !important;
+  border: none;
+}
+
+.ds-state-badge.agent-running {
+  color: var(--ds-agent-running, #F59E0B);
+  background-color: transparent !important;
+  border: none;
+}
+
+.ds-state-badge.agent-final {
+  color: var(--ds-agent-final, #10B981);
+  background-color: transparent !important;
+  border: none;
+}
+
+.ds-state-badge.agent-working {
+  color: var(--ds-agent-working, #6B7280);
+  background-color: transparent !important;
+  border: none;
+}
+
+.ds-state-badge.agent-error {
+  color: var(--ds-agent-error, #EF4444);
+  background-color: transparent !important;
+  border: none;
+}
+
+/* Animated state styling - removed breathing effect for CLI conformity */
+.ds-state-badge.ds-state-animated {
+  /* No animation - CLI style should be static */
+}
+
+/* ASCII spinner container */
+.ds-state-spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  line-height: 1rem;
+  text-align: center;
+}
+
+/* State icon */
+.ds-state-icon {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  line-height: 1rem;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* State text */
+.ds-state-text {
+  font-weight: 500;
+}
+
+/* Fixed-width container for agent status in header */
+.ds-agent-status-container {
+  display: inline-flex;
+  align-items: center;
+  flex: 1;
+  min-height: 1.5rem;
+  white-space: nowrap;
+}
+
+/* Agent running status container */
+.ds-agent-running-status {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+}
+
+/* Status badge - left aligned with natural width */
+.ds-agent-running-status .ds-state-badge {
+  flex: 0 0 auto;
+  min-width: fit-content;
+}
+
+/* Terminal header left section - container for absolute positioning */
+.ds-terminal-header-left {
+  position: relative;
+  flex: 1;
+}
+
+/* Fixed position for random ASCII matrix animation */
+.ds-random-matrix {
+  position: absolute;
+  left: calc(50vw - var(--ds-space-3) - 10ch - 15ch);  /* 50vw - padding - gap - width */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15ch;
+  text-align: center;
+  z-index: 10;
+  
+  /* Cyberpunk gradient effect */
+  background: linear-gradient(
+    90deg,
+    #ff00ff 0%,
+    #ff00aa 20%,
+    #aa00ff 40%,
+    #00ffff 60%,
+    #00aaff 80%,
+    #ff00ff 100%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: cyberpunk-gradient 3s linear infinite;
+  
+  /* Subtle glow effect */
+  filter: drop-shadow(0 0 8px rgba(255, 0, 255, 0.8));
+}
+
+/* Cyberpunk gradient animation */
+@keyframes cyberpunk-gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+/* Fixed position for agent timer */
+.ds-agent-timer {
+  position: absolute;
+  left: calc(50vw - var(--ds-space-3) - 8ch);  /* 50vw - padding - width to align with chat border */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8ch;
+  text-align: right;
+  z-index: 10;
+}
+
+/* Message card state badges */
+.ds-message-header .ds-state-badge {
+  margin-left: 0.5rem;
+}
+
+/* Standby state special styling */
+.ds-state-badge[agent-state-="thinking"][agent-animated-="false"] {
+  opacity: 0.8;
+}
+
+/* ASCII spinner animations */
+.ds-ascii-spinner-container {
+  display: inline-block;
+  font-family: var(--ds-font-mono);
+  vertical-align: middle;
+}
+
+.ds-ascii-spinner-frame {
+  display: inline-block;
+  min-width: 1ch;
+  text-align: center;
+}
+
+/* Smooth transitions for status changes */
+.ds-state-badge {
+  transition: all 0.3s ease;
+}
+
+/* Agent status in title bar */
+.ds-terminal-header .ds-state-badge {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.375rem;
+}
+
+/* Agent status in chat messages */
+.ds-message-content .ds-state-badge {
+  margin-bottom: 0.25rem;
+}
+
+/* Planning header specific styles */
+.ds-planning-header .ds-state-badge {
+  font-size: 0.875rem;
+  padding: 0.25rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Action thought card styles */
+.ds-action-thought {
+  font-style: italic;
+  opacity: 0.9;
+}
+
+/* CSS variables for theme support */
+:root {
+  --ds-agent-planning: #8B5CF6;
+  --ds-agent-thinking: #3B82F6;
+  --ds-agent-coding: #10B981;
+  --ds-agent-running: #F59E0B;
+  --ds-agent-final: #10B981;
+  --ds-agent-working: #6B7280;
+  --ds-agent-error: #EF4444;
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] {
+  --ds-agent-planning: #A78BFA;
+  --ds-agent-thinking: #60A5FA;
+  --ds-agent-coding: #34D399;
+  --ds-agent-running: #FBB040;
+  --ds-agent-final: #34D399;
+  --ds-agent-working: #9CA3AF;
+  --ds-agent-error: #F87171;
+}

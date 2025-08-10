@@ -37,3 +37,37 @@ Hello! Please Web-Search about 1. Open AI —— "[Codex] Software engineering A
 ```bash
 Hi! Please Web Search latest news and twitter(x.com)Trending Top tweets about the deepseek-r1 latest releases version(deepseek-r1-0528) LLM update news and new version multiple-Benchmark(Platforms e.g. coding / Math reasoning / Computer Use / long context comprehension/etc.). Get all you need deep-search info for analysis. End of research job summary output with a fulltable report with MUST use Zh(中文) for me --- CURRENT_TIME: {{ CURRENT_TIME: 2025-05-29 }} ---
 ```
+
+## Academic Retrieval Test Cases
+
+### Test Case 1: Search Academic Papers
+
+```bash
+Use the academic_retrieval tool to search AI-LLM Agent papers about [ReAct] agent methodology and find the Top 20 papers on derived methods. --- Current time: {{ CURRENT_TIME: 2025-05-30 }}
+```
+
+### Test Case 2: Deep Academic Research
+
+```bash
+Use the academic_retrieval tool with operation="research" to search, read, and research the paper about "HiRA" (a hierarchical framework that decouples strategic planning from specialized execution in deep search tasks). Summarize the paper core work about "Decoupled Planning and Execution: A Hierarchical Reasoning(HiRA) Framework for Deep Search":
+- "HiRA" Framework architecture;
+- "HiRA" Framework base pipeline & workflow (mermaid Flowchart & sequenceDiagram);
+- "HiRA" Framework CORE methods & algorithm principles;
+Output: End of your research job output result research report MUST be in Zh(最终报告用中文) for me, BUT you reasoning process MUST be in English (EN). --- Current time: {{ CURRENT_TIME: 2025-05-30 }}
+```
+
+### Test Case 3: Combined Academic Search and Analysis
+
+```bash
+First, use academic_retrieval to search for papers about "Large Language Model agent architectures CodeAct ReAct". Then analyze the results and compare these methodologies. Finally, provide a comprehensive analysis with a summary table in Chinese (用中文总结). --- Current time: {{ CURRENT_TIME: 2025-05-30 }}
+```
+
+### Test Case 4: Multi-Query Academic Search
+
+```bash
+Use academic_retrieval to search for multiple topics:
+1. "Transformer architecture optimization techniques"
+2. "Multi-agent reinforcement learning"
+3. "Neural architecture search methods"
+Provide a comparative analysis of the findings across these three areas. --- Current time: {{ CURRENT_TIME: 2025-05-30 }}
+```

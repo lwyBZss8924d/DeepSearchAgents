@@ -1,0 +1,122 @@
+/* Design Tokens - Centralized color and spacing system */
+
+/* Base Design Tokens */
+:root {
+  /* Semantic Color Tokens */
+  --color-white: oklch(1 0 0);
+  --color-black: oklch(0 0 0);
+
+  /* Gray Scale */
+  --color-gray-50: oklch(0.985 0 0);
+  --color-gray-100: oklch(0.97 0 0);
+  --color-gray-200: oklch(0.922 0 0);
+  --color-gray-300: oklch(0.708 0 0);
+  --color-gray-400: oklch(0.556 0 0);
+  --color-gray-500: oklch(0.439 0 0);
+  --color-gray-600: oklch(0.269 0 0);
+  --color-gray-700: oklch(0.205 0 0);
+  --color-gray-800: oklch(0.145 0 0);
+  --color-gray-900: oklch(0.05 0 0);
+
+  /* Brand Colors */
+  --color-brand-primary: oklch(0.488 0.243 264.376);
+  --color-brand-secondary: oklch(0.696 0.17 162.48);
+
+  /* Semantic Colors */
+  --color-danger-light: oklch(0.637 0.237 25.331);
+  --color-danger-dark: oklch(0.577 0.245 27.325);
+  --color-danger-darker: oklch(0.396 0.141 25.723);
+
+  --color-warning-light: oklch(0.828 0.189 84.429);
+  --color-warning-dark: oklch(0.769 0.188 70.08);
+
+  --color-info-light: oklch(0.6 0.118 184.704);
+  --color-info-dark: oklch(0.488 0.243 264.376);
+
+  --color-success-light: oklch(0.696 0.17 162.48);
+  --color-success-dark: oklch(0.398 0.07 227.392);
+
+  /* Spacing */
+  --spacing-base: 0.625rem;
+  --radius-sm: calc(var(--spacing-base) - 4px);
+  --radius-md: calc(var(--spacing-base) - 2px);
+  --radius-lg: var(--spacing-base);
+  --radius-xl: calc(var(--spacing-base) + 4px);
+
+  /* Typography */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Light Theme Mapping */
+:root {
+  /* Core UI Colors */
+  --background: var(--color-white);
+  --foreground: var(--color-gray-800);
+
+  /* Component Colors */
+  --card: var(--color-white);
+  --card-foreground: var(--color-gray-800);
+
+  --popover: var(--color-white);
+  --popover-foreground: var(--color-gray-800);
+
+  --primary: var(--color-gray-700);
+  --primary-foreground: var(--color-gray-50);
+
+  --secondary: var(--color-gray-100);
+  --secondary-foreground: var(--color-gray-700);
+
+  --muted: var(--color-gray-100);
+  --muted-foreground: var(--color-gray-400);
+
+  --accent: var(--color-gray-100);
+  --accent-foreground: var(--color-gray-700);
+
+  /* Semantic Colors */
+  --destructive: var(--color-danger-dark);
+  --destructive-foreground: var(--color-danger-dark);
+
+  /* Form & Interactive */
+  --border: var(--color-gray-200);
+  --input: var(--color-gray-200);
+  --ring: var(--color-gray-300);
+
+  /* Layout */
+  --radius: var(--spacing-base);
+}
+
+/* Dark Theme Mapping */
+.dark {
+  /* Core UI Colors */
+  --background: var(--color-gray-800);
+  --foreground: var(--color-gray-50);
+
+  /* Component Colors */
+  --card: var(--color-gray-800);
+  --card-foreground: var(--color-gray-50);
+
+  --popover: var(--color-gray-800);
+  --popover-foreground: var(--color-gray-50);
+
+  --primary: var(--color-gray-50);
+  --primary-foreground: var(--color-gray-700);
+
+  --secondary: var(--color-gray-600);
+  --secondary-foreground: var(--color-gray-50);
+
+  --muted: var(--color-gray-600);
+  --muted-foreground: var(--color-gray-300);
+
+  --accent: var(--color-gray-600);
+  --accent-foreground: var(--color-gray-50);
+
+  /* Semantic Colors */
+  --destructive: var(--color-danger-darker);
+  --destructive-foreground: var(--color-danger-light);
+
+  /* Form & Interactive */
+  --border: var(--color-gray-600);
+  --input: var(--color-gray-600);
+  --ring: var(--color-gray-500);
+}

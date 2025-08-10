@@ -1,0 +1,326 @@
+/* DeepSearchAgents Theme Collection */
+
+/* Import all theme files */
+@import "./catppuccin-mocha.css";
+@import "./nord.css";
+@import "./solarized-dark.css";
+
+/* Theme utilities */
+@layer ds.tokens {
+  /* Theme transition animations */
+  [data-theme] {
+    transition: 
+      background-color 300ms ease,
+      color 300ms ease,
+      border-color 300ms ease;
+  }
+  
+  /* High contrast mode */
+  [data-theme="high-contrast"] {
+    --ds-terminal-bg: #000000;
+    --ds-terminal-fg: #ffffff;
+    --ds-terminal-bright: #ffffff;
+    --ds-terminal-dim: #cccccc;
+    --ds-terminal-green: #00ff00;
+    --ds-terminal-red: #ff0000;
+    --ds-terminal-yellow: #ffff00;
+    --ds-terminal-cyan: #00ffff;
+    --ds-terminal-magenta: #ff00ff;
+    --ds-terminal-blue: #0080ff;
+    
+    --ds-border-default: #ffffff;
+    --ds-border-muted: #808080;
+    --ds-border-active: #00ff00;
+    --ds-bg-primary: #000000;
+    --ds-bg-elevated: #0a0a0a;
+    --ds-bg-code: #000000;
+    
+    /* Maximum contrast */
+    --ds-agent-planning: #0080ff;
+    --ds-agent-thinking: #ffff00;
+    --ds-agent-coding: #00ff00;
+    --ds-agent-running: #00ffff;
+    --ds-agent-final: #00ff00;
+    --ds-agent-error: #ff0000;
+  }
+  
+  /* Matrix theme */
+  [data-theme="matrix"] {
+    --ds-terminal-bg: #000000;
+    --ds-terminal-fg: #00ff00;
+    --ds-terminal-bright: #33ff33;
+    --ds-terminal-dim: #00cc00;
+    --ds-terminal-green: #00ff00;
+    --ds-terminal-red: #ff0000;
+    --ds-terminal-yellow: #ffff00;
+    --ds-terminal-cyan: #00ffff;
+    --ds-terminal-magenta: #ff00ff;
+    --ds-terminal-blue: #0033ff;
+    
+    --ds-border-default: #003300;
+    --ds-border-muted: #002200;
+    --ds-border-active: #00ff00;
+    --ds-bg-primary: #000000;
+    --ds-bg-elevated: #001100;
+    --ds-bg-code: #000500;
+    
+    --ds-agent-planning: #00ccff;
+    --ds-agent-thinking: #ccff00;
+    --ds-agent-coding: #00ff00;
+    --ds-agent-running: #00ffcc;
+    --ds-agent-final: #00ff00;
+    --ds-agent-error: #ff3333;
+  }
+  
+  /* Matrix theme effects */
+  [data-theme="matrix"] {
+    .ds-streaming-cursor {
+      background: #00ff00;
+      box-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00;
+    }
+    
+    .ds-message-card {
+      border-color: #003300;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.1);
+    }
+    
+    .ds-code-line-highlighted {
+      background: rgba(0, 255, 0, 0.1);
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+    }
+    
+    /* Matrix rain effect for loading */
+    .ds-loading-indicator {
+      text-shadow: 0 0 5px #00ff00;
+    }
+    
+    /* Glowing text effects */
+    .ds-terminal-bright,
+    .ds-message-role,
+    .ds-step-label {
+      text-shadow: 0 0 3px currentColor;
+    }
+  }
+  
+  /* Synthwave/Retrowave theme */
+  [data-theme="synthwave"] {
+    --ds-terminal-bg: #0f0e17;
+    --ds-terminal-fg: #ff006e;
+    --ds-terminal-bright: #ff4098;
+    --ds-terminal-dim: #cc0055;
+    --ds-terminal-green: #00ff88;
+    --ds-terminal-red: #ff006e;
+    --ds-terminal-yellow: #ffaa00;
+    --ds-terminal-cyan: #00ffff;
+    --ds-terminal-magenta: #ff00ff;
+    --ds-terminal-blue: #3a86ff;
+    
+    --ds-border-default: #ff006e;
+    --ds-border-muted: #660029;
+    --ds-border-active: #00ffff;
+    --ds-bg-primary: #0f0e17;
+    --ds-bg-elevated: #1a1625;
+    --ds-bg-code: #160f22;
+    
+    --ds-agent-planning: #3a86ff;
+    --ds-agent-thinking: #ffaa00;
+    --ds-agent-coding: #00ff88;
+    --ds-agent-running: #00ffff;
+    --ds-agent-final: #ff00ff;
+    --ds-agent-error: #ff006e;
+    
+    /* Chrome effect gradient */
+    --ds-gradient-start: #ff006e;
+    --ds-gradient-accent: #00ffff;
+    --ds-gradient-end: #ff00ff;
+  }
+  
+  /* Synthwave theme effects */
+  [data-theme="synthwave"] {
+    /* Neon glow for all borders */
+    .ds-message-card {
+      border-color: var(--ds-border-default);
+      box-shadow: 
+        0 0 20px rgba(255, 0, 110, 0.5),
+        inset 0 0 20px rgba(255, 0, 110, 0.1);
+    }
+    
+    /* Animated gradient borders */
+    [agent-state-="active"] {
+      animation: border-dance 4s ease-in-out infinite;
+    }
+    
+    /* Enhanced glow for badges */
+    .ds-tool-badge,
+    .ds-agent-state-badge {
+      text-shadow: 
+        0 0 10px currentColor,
+        0 0 20px currentColor,
+        0 0 30px currentColor;
+    }
+    
+    /* Chrome text effect */
+    .ds-terminal-bright,
+    h1, h2, h3 {
+      background: linear-gradient(
+        135deg,
+        var(--ds-gradient-start) 0%,
+        var(--ds-gradient-accent) 50%,
+        var(--ds-gradient-end) 100%
+      );
+      background-size: 200% 200%;
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradient-shift 3s ease infinite;
+    }
+  }
+  
+  /* Cyberpunk theme */
+  [data-theme="cyberpunk"] {
+    --ds-terminal-bg: #000814;
+    --ds-terminal-fg: #ffd60a;
+    --ds-terminal-bright: #ffee32;
+    --ds-terminal-dim: #fcbf49;
+    --ds-terminal-green: #06ffa5;
+    --ds-terminal-red: #ff1053;
+    --ds-terminal-yellow: #ffd60a;
+    --ds-terminal-cyan: #00b4d8;
+    --ds-terminal-magenta: #e01e37;
+    --ds-terminal-blue: #003566;
+    
+    --ds-border-default: #ffd60a;
+    --ds-border-muted: #003566;
+    --ds-border-active: #06ffa5;
+    --ds-bg-primary: #000814;
+    --ds-bg-elevated: #001d3d;
+    --ds-bg-code: #000814;
+    
+    --ds-agent-planning: #00b4d8;
+    --ds-agent-thinking: #ffd60a;
+    --ds-agent-coding: #06ffa5;
+    --ds-agent-running: #00b4d8;
+    --ds-agent-final: #06ffa5;
+    --ds-agent-error: #ff1053;
+    
+    /* Glitch effect colors */
+    --ds-glitch-1: #ff1053;
+    --ds-glitch-2: #06ffa5;
+  }
+  
+  /* Cyberpunk theme effects */
+  [data-theme="cyberpunk"] {
+    /* Glitch effect on headers */
+    h1, h2, h3,
+    .ds-terminal-title-text {
+      position: relative;
+      text-shadow: 
+        0.05em 0 0 rgba(255, 16, 83, 0.75),
+        -0.05em -0.025em 0 rgba(6, 255, 165, 0.75),
+        0.025em 0.05em 0 rgba(0, 180, 216, 0.75);
+      animation: glitch 1s infinite;
+    }
+    
+    @keyframes glitch {
+      0%, 100% { text-shadow: 
+        0.05em 0 0 rgba(255, 16, 83, 0.75),
+        -0.05em -0.025em 0 rgba(6, 255, 165, 0.75),
+        0.025em 0.05em 0 rgba(0, 180, 216, 0.75);
+      }
+      14% { text-shadow: 
+        0.05em 0 0 rgba(255, 16, 83, 0.75),
+        -0.05em -0.025em 0 rgba(6, 255, 165, 0.75),
+        0.025em 0.05em 0 rgba(0, 180, 216, 0.75);
+      }
+      15% { text-shadow: 
+        -0.05em -0.025em 0 rgba(255, 16, 83, 0.75),
+        0.025em 0.025em 0 rgba(6, 255, 165, 0.75),
+        -0.05em -0.05em 0 rgba(0, 180, 216, 0.75);
+      }
+      49% { text-shadow: 
+        -0.05em -0.025em 0 rgba(255, 16, 83, 0.75),
+        0.025em 0.025em 0 rgba(6, 255, 165, 0.75),
+        -0.05em -0.05em 0 rgba(0, 180, 216, 0.75);
+      }
+      50% { text-shadow: 
+        0.025em 0.05em 0 rgba(255, 16, 83, 0.75),
+        0.05em 0 0 rgba(6, 255, 165, 0.75),
+        0 -0.05em 0 rgba(0, 180, 216, 0.75);
+      }
+      99% { text-shadow: 
+        0.025em 0.05em 0 rgba(255, 16, 83, 0.75),
+        0.05em 0 0 rgba(6, 255, 165, 0.75),
+        0 -0.05em 0 rgba(0, 180, 216, 0.75);
+      }
+    }
+    
+    /* Holographic borders */
+    .ds-message-card {
+      border-image: linear-gradient(
+        45deg,
+        var(--ds-glitch-1),
+        var(--ds-glitch-2),
+        var(--ds-border-default)
+      ) 1;
+    }
+  }
+  
+  /* Miami/Vice theme */
+  [data-theme="miami"] {
+    --ds-terminal-bg: #1a0033;
+    --ds-terminal-fg: #f72585;
+    --ds-terminal-bright: #ff006e;
+    --ds-terminal-dim: #c9184a;
+    --ds-terminal-green: #06ffa5;
+    --ds-terminal-red: #f72585;
+    --ds-terminal-yellow: #ffb700;
+    --ds-terminal-cyan: #4cc9f0;
+    --ds-terminal-magenta: #b5179e;
+    --ds-terminal-blue: #7209b7;
+    
+    --ds-border-default: #f72585;
+    --ds-border-muted: #3a0ca3;
+    --ds-border-active: #06ffa5;
+    --ds-bg-primary: #1a0033;
+    --ds-bg-elevated: #240046;
+    --ds-bg-code: #10002b;
+    
+    --ds-agent-planning: #7209b7;
+    --ds-agent-thinking: #ffb700;
+    --ds-agent-coding: #06ffa5;
+    --ds-agent-running: #4cc9f0;
+    --ds-agent-final: #06ffa5;
+    --ds-agent-error: #f72585;
+    
+    /* Palm tree gradient */
+    --ds-gradient-start: #f72585;
+    --ds-gradient-accent: #4cc9f0;
+    --ds-gradient-end: #06ffa5;
+  }
+  
+  /* Miami theme effects */
+  [data-theme="miami"] {
+    /* Soft neon glow */
+    .ds-message-card,
+    .ds-tool-badge,
+    .ds-agent-state-badge {
+      box-shadow: 
+        0 0 40px rgba(247, 37, 133, 0.3),
+        inset 0 0 40px rgba(76, 201, 240, 0.1);
+    }
+    
+    /* Sunset gradient backgrounds */
+    .ds-terminal-header {
+      background: linear-gradient(
+        180deg,
+        rgba(247, 37, 133, 0.1) 0%,
+        rgba(76, 201, 240, 0.05) 100%
+      );
+    }
+    
+    /* Wave animation for active states */
+    [agent-state-="active"] {
+      animation: wave 2s ease-in-out infinite;
+    }
+  }
+}

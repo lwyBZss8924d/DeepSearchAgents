@@ -149,6 +149,7 @@ class AgentRuntime:
             "wolfram_app_id": settings.get_api_key("WOLFRAM_ALPHA_APP_ID"),
             "litellm_base_url": settings.get_api_key("LITELLM_BASE_URL"),
             "xai_api_key": settings.get_api_key("XAI_API_KEY"),
+            # "futurehouse_api_key": settings.get_api_key("FUTUREHOUSE_API_KEY"),
         }
 
     def _validate_api_keys(self) -> bool:
@@ -177,6 +178,10 @@ class AgentRuntime:
         if not self.api_keys.get("xai_api_key"):
             print("Warning: XAI_API_KEY is missing, "
                   "SearchLinksTool with X.com search will not work")
+
+        # if not self.api_keys.get("futurehouse_api_key"):
+        #     print("Warning: FUTUREHOUSE_API_KEY is missing, "
+        #           "AcademicRetrieval tool will not work")
 
         return valid_keys
 
@@ -572,9 +577,12 @@ class AgentRuntime:
         """
         if agent_type.lower() == "react":
             if self.react_agent:
-                # Reset step callbacks if provided
-                if step_callback and hasattr(self.react_agent, 'agent'):
-                    self.react_agent.agent.step_callbacks = [step_callback]
+                # Recreate agent with step callback if provided
+                if step_callback:
+                    return self.create_react_agent(
+                        step_callback=step_callback,
+                        debug_mode=debug_mode
+                    )
 
                 # Ensure agent object has Gradio UI needed properties
                 if not hasattr(self.react_agent, 'name'):
@@ -653,9 +661,12 @@ class AgentRuntime:
 
         elif agent_type.lower() == "codact":
             if self.code_agent:
-                # Reset step callbacks if provided
-                if step_callback and hasattr(self.code_agent, 'agent'):
-                    self.code_agent.agent.step_callbacks = [step_callback]
+                # Recreate agent with step callback if provided
+                if step_callback:
+                    return self.create_codact_agent(
+                        step_callback=step_callback,
+                        debug_mode=debug_mode
+                    )
 
                 # Ensure agent object has Gradio UI needed properties
                 if not hasattr(self.code_agent, 'name'):

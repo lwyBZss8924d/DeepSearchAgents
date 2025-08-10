@@ -1,0 +1,165 @@
+/* CSS Layer Architecture for WebTUI + DeepSearchAgents */
+@layer webtui.base, webtui.utils, webtui.components,
+       glamour.base, glamour.animations, glamour.effects,
+       ds.base, ds.tokens, ds.components, ds.utilities, ds.overrides;
+
+/* Tailwind Base Imports */
+@import "tailwindcss";
+
+/* WebTUI CSS Library Imports */
+@import "@webtui/css/base.css" layer(webtui.base);
+@import "@webtui/css/utils/box.css" layer(webtui.utils);
+@import "@webtui/css/components/badge.css" layer(webtui.components);
+@import "@webtui/css/components/button.css" layer(webtui.components);
+@import "@webtui/css/components/input.css" layer(webtui.components);
+@import "@webtui/css/components/typography.css" layer(webtui.components);
+
+/* Design System Imports */
+@import "./styles/fonts.css" layer(ds.base);
+@import "./styles/design-tokens.css" layer(ds.tokens);
+@import "./styles/terminal-theme.css" layer(ds.tokens);
+@import "./styles/animations.css" layer(ds.components);
+@import "./styles/glamour-animations.css" layer(glamour.animations);
+@import "./styles/tui-logo.css" layer(ds.components);
+@import "./styles/neovim-editor.css" layer(ds.components);
+@import "./styles/themes/index.css" layer(ds.tokens);
+@import "./styles/utilities.css" layer(ds.utilities);
+@import "./styles/agent-status.css" layer(ds.components);
+@import "./styles/compatibility-layer.css" layer(ds.overrides);
+@import "./styles/layout-fixes.css" layer(ds.overrides);
+
+/* Tailwind Plugins */
+@plugin "tailwindcss-animate";
+
+/* Font Configuration */
+@theme {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Dark Mode Configuration - Using Tailwind's built-in class strategy */
+/* This is handled by the design-tokens.css file using .dark class */
+
+/* Base Layer Styles */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Typography Base Styles */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-sans font-semibold;
+  }
+
+  h1 {
+    @apply text-4xl;
+  }
+
+  h2 {
+    @apply text-3xl;
+  }
+
+  h3 {
+    @apply text-2xl;
+  }
+
+  h4 {
+    @apply text-xl;
+  }
+
+  h5 {
+    @apply text-lg;
+  }
+
+  h6 {
+    @apply text-base;
+  }
+
+  /* Link Styles */
+  a {
+    @apply transition-colors hover:text-primary;
+  }
+
+  /* Code Styles */
+  code {
+    @apply font-mono text-sm;
+  }
+
+  pre {
+    @apply font-mono text-sm overflow-x-auto;
+  }
+
+  /* Selection Styles */
+  ::selection {
+    @apply bg-primary text-primary-foreground;
+  }
+}
+
+/* Tailwind Theme Extension for Color Variables */
+@theme inline {
+  /* Map CSS variables to Tailwind theme colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Radius Tokens */
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+}
+
+/* DeepSearchAgents Base Layer */
+@layer ds.base {
+  :root {
+    /* TX-02-Trial as primary, Berkeley Mono as fallback */
+    --ds-font-mono: 'TX-02-Trial', 'Berkeley Mono', 'SF Mono', 'Monaco', 
+                    'Inconsolata', 'Fira Code', monospace;
+    
+    /* Map to WebTUI's system */
+    --webtui-font-family: var(--ds-font-mono);
+    
+    /* Remove conflicting variables by mapping them */
+    --font-mono: var(--ds-font-mono);
+    --font-mono-stack: var(--ds-font-mono);
+    --font-mono-berkeley: var(--ds-font-mono);
+  }
+
+  /* Override body to use terminal font */
+  body {
+    font-family: var(--ds-font-mono);
+    font-size: 14px;
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+  }
+  
+  /* Global font-mono class override */
+  .font-mono {
+    font-family: var(--ds-font-mono) !important;
+  }
+}

@@ -1,0 +1,127 @@
+/* Solarized Dark Theme for DeepSearchAgents */
+@layer ds.tokens {
+  [data-theme="solarized-dark"],
+  .theme-solarized-dark {
+    /* Base colors */
+    --ds-terminal-bg: #002b36;
+    --ds-terminal-fg: #839496;
+    --ds-terminal-bright: #93a1a1;
+    --ds-terminal-dim: #657b83;
+    
+    /* Solarized palette */
+    --ds-terminal-black: #073642;
+    --ds-terminal-red: #dc322f;
+    --ds-terminal-green: #859900;
+    --ds-terminal-yellow: #b58900;
+    --ds-terminal-blue: #268bd2;
+    --ds-terminal-magenta: #d33682;
+    --ds-terminal-cyan: #2aa198;
+    --ds-terminal-white: #eee8d5;
+    
+    /* Agent State Colors */
+    --ds-agent-planning: #268bd2;
+    --ds-agent-thinking: #b58900;
+    --ds-agent-coding: #859900;
+    --ds-agent-running: #2aa198;
+    --ds-agent-final: #859900;
+    --ds-agent-error: #dc322f;
+    
+    /* UI Colors */
+    --ds-border-default: #073642;
+    --ds-border-muted: #002b36;
+    --ds-border-active: #268bd2;
+    --ds-bg-primary: #002b36;
+    --ds-bg-elevated: #073642;
+    --ds-bg-code: #001f27;
+    
+    /* Solarized base colors */
+    --ds-base03: #002b36;
+    --ds-base02: #073642;
+    --ds-base01: #586e75;
+    --ds-base00: #657b83;
+    --ds-base0: #839496;
+    --ds-base1: #93a1a1;
+    --ds-base2: #eee8d5;
+    --ds-base3: #fdf6e3;
+    
+    /* Solarized accent colors */
+    --ds-orange: #cb4b16;
+    --ds-violet: #6c71c4;
+  }
+  
+  /* Theme-specific overrides */
+  [data-theme="solarized-dark"] {
+    /* Precise shadows */
+    .ds-message-card {
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+    
+    .ds-message-card:hover {
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+    
+    /* Code highlighting */
+    .ds-code-line-highlighted {
+      background: color-mix(in oklch, var(--ds-base01) 30%, transparent);
+    }
+    
+    /* Scientific precision for text */
+    .ds-message-content {
+      color: var(--ds-base0);
+    }
+    
+    .ds-message-role {
+      color: var(--ds-base1);
+    }
+    
+    /* Badge styling */
+    .ds-state-badge[data-state="planning"] {
+      background: color-mix(in oklch, var(--ds-terminal-blue) 15%, var(--ds-bg-primary));
+      color: var(--ds-terminal-blue);
+      border-color: var(--ds-terminal-blue);
+    }
+    
+    .ds-state-badge[data-state="thinking"] {
+      background: color-mix(in oklch, var(--ds-terminal-yellow) 15%, var(--ds-bg-primary));
+      color: var(--ds-terminal-yellow);
+      border-color: var(--ds-terminal-yellow);
+    }
+    
+    .ds-state-badge[data-state="final"] {
+      background: color-mix(in oklch, var(--ds-terminal-green) 15%, var(--ds-bg-primary));
+      color: var(--ds-terminal-green);
+      border-color: var(--ds-terminal-green);
+    }
+    
+    /* Cursor styling */
+    .ds-streaming-cursor {
+      background: var(--ds-terminal-cyan);
+      box-shadow: 0 0 4px var(--ds-terminal-cyan);
+    }
+    
+    /* Code editor colors */
+    .ds-code-language {
+      color: var(--ds-violet);
+    }
+    
+    .ds-code-line-number {
+      color: var(--ds-base01);
+    }
+    
+    /* Button effects */
+    .ds-code-action-btn:hover:not(:disabled) {
+      background: color-mix(in oklch, var(--ds-orange) 10%, transparent);
+      border-color: var(--ds-orange);
+      color: var(--ds-orange);
+    }
+    
+    /* Terminal specific */
+    [data-role="user"] .ds-message-role {
+      color: var(--ds-terminal-green);
+    }
+    
+    [data-role="agent"] .ds-message-role {
+      color: var(--ds-terminal-cyan);
+    }
+  }
+}

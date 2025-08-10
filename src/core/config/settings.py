@@ -108,6 +108,7 @@ class Settings(BaseSettings):
     jina_api_key: Optional[str] = None
     xai_api_key: Optional[str] = None
     wolfram_alpha_app_id: Optional[str] = None
+    # futurehouse_api_key: Optional[str] = None
     hf_token: Optional[str] = None  # Hugging Face token for private repos
 
     model_config = {

@@ -1,0 +1,209 @@
+(.venv) arthur@Fqqs-MacBook ~/d/MathJourney-AItutor-Agents> python tests/test_jina/jina_grounding/test_grounding_retriever.py                 (base) 
+🚀 Starting Jina Grounding Retriever Tests
+================================================================================
+
+================================================================================
+🧪 Test 1: Basic Fact-Checking
+================================================================================
+
+🔍 Checking: Is the latest version of Jina AI's embeddings model `jina-embeddings-v3`?
+------------------------------------------------------------
+✅ Factuality Score: 0.20
+📊 Result: FALSE
+📑 References found: 16
+
+First Reference:
+  Quote: We introduce jina-embeddings-v4, a 3.8 billion parameter multimodal embedding model that unifies text and image representations through a novel...
+  Source: https://arxiv.org/abs/2506.18902
+  Supportive: False
+
+
+================================================================================
+🧪 Test 2: Fact-Checking with Trusted References
+================================================================================
+
+🔍 Checking with trusted scientific sources: Is the latest version of gemini-cli is `v1.1.0`?
+------------------------------------------------------------
+
+================================================================================
+📚 Top 3 References
+================================================================================
+
+📄 Document 1:
+Content: Release v0.1.9-nightly.250704.23eea823
+
+Metadata:
+  source: https://github.com/google-gemini/gemini-cli/releases
+  statement: Is the latest version of gemini-cli is `v1.1.0`?
+  is_supportive: False
+  factuality_score: 0.2
+  grounding_result: False
+  is_summary: False
+  token_usage: 2992
+  reason: The references provide conflicting information regarding the latest version of the Gemini CLI. The npm package lists version 0.1.9 as the latest. The GitHub repository mentions a nightly release v0.1....
+
+📄 Document 2:
+Content: Latest version: 0.1.9, last published: a day ago
+
+Metadata:
+  source: https://www.npmjs.com/package/@google/gemini-cli
+  statement: Is the latest version of gemini-cli is `v1.1.0`?
+  is_supportive: False
+  factuality_score: 0.2
+  grounding_result: False
+  is_summary: False
+  token_usage: 2992
+
+📄 Document 3:
+Content: Gemini CLI Removal The Gemini CLI provider has been reverted while we work with Google on an implementation that does not violate their TOS
+
+Metadata:
+  source: https://www.reddit.com/r/RooCode/comments/1lnmnad/no_more_gemini_cli_access_for_now_roo_code_3225
+  statement: Is the latest version of gemini-cli is `v1.1.0`?
+  is_supportive: False
+  factuality_score: 0.2
+  grounding_result: False
+  is_summary: False
+  token_usage: 2992
+
+
+================================================================================
+🧪 Test 3: Metadata Extraction
+================================================================================
+
+🔍 Checking: Jina AI released jina-embeddings-v3 as their latest embedding model
+------------------------------------------------------------
+
+📊 Metadata Analysis:
+Total documents: 17
+Supportive references: 12
+Contradicting references: 5
+
+💭 Reasoning:
+Multiple sources confirm the release of jina-embeddings-v3 by Jina AI. However, several other sources indicate that Jina AI has also released jina-embeddings-v4, and claim it is their latest and most advanced model. Therefore, the statement that jina-embeddings-v3 is Jina AI's latest embedding model is likely incorrect, as jina-embeddings-v4 appears to be a more recent release.
+
+🔢 Total tokens used: 22,083
+
+
+================================================================================
+🧪 Test 5: LangChain Chain Integration with Structured Output
+================================================================================
+
+🔗 Testing Fact-Checking Chain:
+------------------------------------------------------------
+
+❓ Statement: SpaceX-Starship space program Flight Test Missions As of FT-8 on 2025-07-05, the ninth test has successfully achieved manned flight testing of STARSHIP.
+❌ Error: 1 validation error for Generation
+text
+  Input should be a valid string [type=string_type, input_value=FactCheckResult(statement...e and loss of vehicle']), input_type=test_langchain_integration.<locals>.FactCheckResult]
+    For further information visit https://errors.pydantic.dev/2.11/v/string_type
+Traceback (most recent call last):
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/tests/test_jina/jina_grounding/test_grounding_retriever.py", line 306, in test_langchain_integration
+    chain_result = qa_chain.invoke({"query": statement})
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain/chains/base.py", line 167, in invoke
+    raise e
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain/chains/base.py", line 157, in invoke
+    self._call(inputs, run_manager=run_manager)
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain/chains/retrieval_qa/base.py", line 154, in _call
+    answer = self.combine_documents_chain.run(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain_core/_api/deprecation.py", line 189, in warning_emitting_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain/chains/base.py", line 608, in run
+    return self(kwargs, callbacks=callbacks, tags=tags, metadata=metadata)[
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain_core/_api/deprecation.py", line 189, in warning_emitting_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain/chains/base.py", line 386, in __call__
+    return self.invoke(
+           ^^^^^^^^^^^^
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain/chains/base.py", line 167, in invoke
+    raise e
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain/chains/base.py", line 157, in invoke
+    self._call(inputs, run_manager=run_manager)
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain/chains/combine_documents/base.py", line 138, in _call
+    output, extra_return_dict = self.combine_docs(
+                                ^^^^^^^^^^^^^^^^^^
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain/chains/combine_documents/stuff.py", line 259, in combine_docs
+    return self.llm_chain.predict(callbacks=callbacks, **inputs), {}
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain/chains/llm.py", line 319, in predict
+    return self(kwargs, callbacks=callbacks)[self.output_key]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain_core/_api/deprecation.py", line 189, in warning_emitting_wrapper
+    return wrapped(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain/chains/base.py", line 386, in __call__
+    return self.invoke(
+           ^^^^^^^^^^^^
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain/chains/base.py", line 167, in invoke
+    raise e
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain/chains/base.py", line 157, in invoke
+    self._call(inputs, run_manager=run_manager)
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain/chains/llm.py", line 127, in _call
+    response = self.generate([inputs], run_manager=run_manager)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain/chains/llm.py", line 154, in generate
+    generations.append([Generation(text=res)])
+                        ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/langchain_core/load/serializable.py", line 130, in __init__
+    super().__init__(*args, **kwargs)
+  File "/Users/arthur/dev-space/MathJourney-AItutor-Agents/.venv/lib/python3.11/site-packages/pydantic/main.py", line 253, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 1 validation error for Generation
+text
+  Input should be a valid string [type=string_type, input_value=FactCheckResult(statement...e and loss of vehicle']), input_type=test_langchain_integration.<locals>.FactCheckResult]
+    For further information visit https://errors.pydantic.dev/2.11/v/string_type
+
+
+================================================================================
+🧪 Test 6: Edge Cases and Error Handling
+================================================================================
+
+📝 Test: Empty statement
+❌ Should have raised an error for empty statement
+
+📝 Test: Very long statement
+✅ Handled long statement, got 25 documents
+
+📝 Test: Invalid API key
+✅ Correctly caught error: RuntimeError
+
+📝 Test: Ambiguous statement
+✅ Handled ambiguous statement, factuality score: 0.40
+   (Expected low score for unpredictable statement)
+
+
+🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄🔄
+
+
+================================================================================
+🧪 Test 4: Async Operations
+================================================================================
+
+🚀 Checking 1 statements concurrently...
+------------------------------------------------------------
+⏱️  Completed in 46.56 seconds
+
+📝 Statement: SpaceX-Starship space program Flight Test Missions As of FT-9 on 2025-07-05, the ninth test has successfully achieved manned flight testing of STARSHIP.
+   ✅ Factuality: 0.00 - Result: FALSE
+   📑 References: 19
+
+
+🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯
+
+✅ All tests completed!
+
+Key Findings:
+1. Jina Grounding API works well as a LangChain Retriever
+2. Each reference becomes a Document with rich metadata
+3. Factuality scores and reasoning are preserved
+4. Async operations enable efficient batch fact-checking
+5. Integration with LangChain chains is seamless
+
+🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯🎯
+(.venv) arthur@Fqqs-MacBook ~/d/MathJourney-AItutor-Agents>                                                                                   (base) 

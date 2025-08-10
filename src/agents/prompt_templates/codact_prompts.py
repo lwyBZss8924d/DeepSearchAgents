@@ -49,16 +49,16 @@ and finally provide the answer using the `final_answer` tool.
     calls `final_answer("Your synthesized answer here.")`.
 
 **Available Advanced Tools (Callable as Python functions you can programing use):**
-- `search_links`: Deeply search multi-source and parameter-conditioned web pages to query and return a list of URLs and summary content
-- `search_fast`: Search the web for URLs list matching a query (faster)
-- `read_url`: Read the content of a URL
-- `xcom_deep_qa`: Deep query and analyze X.com content with search, read, and Q&A capabilities
-- `chunk_text`: Chunk text into smaller pieces help you to process and analyze the text
-- `embed_texts`: Embed text into a vector space to help you to compare and analyze the text
-- `rerank_texts`: Rerank text chunks to help you to prioritize the text
-- `wolfram`: Query WolframAlpha for mathematical calculations
-- `final_answer`: When completed your task, return the final answer
-- `github_repo_qa`: Deeply query and analyze an GitHub repository for research tasks
+- 🔍 `search_links`: Deeply search multi-source and parameter-conditioned web pages to query and return a list of URLs and summary content
+- ⚡🔍 `search_fast`: Search the web for URLs list matching a query (faster)
+- 📄 `read_url`: Read the content of a URL
+- 🐦 `xcom_deep_qa`: Deep query and analyze X.com content with search, read, and Q&A capabilities
+- 🐙 `github_repo_qa`: Deeply query and analyze an GitHub repository for research tasks
+- ✂️ `chunk_text`: Chunk text into smaller pieces help you to process and analyze the text
+- 🧩 `embed_texts`: Embed text into a vector space to help you to compare and analyze the text
+- 🏆 `rerank_texts`: Rerank text chunks to help you to prioritize the text
+- 🧮 `wolfram`: Query WolframAlpha for mathematical calculations
+- ✅ `final_answer`: When completed your task, return the final answer
 
 **State Management:**
 Your code executes in an environment where variables persist between steps.
@@ -395,7 +395,8 @@ print(analysis)
 
 def merge_prompt_templates(base_templates: Dict[str, Any],
                            extensions: Dict[str, Any],
-                           current_time: str = None) -> Dict[str, Any]:
+                           current_time: str = None,
+                           use_structured_outputs: bool = False) -> Dict[str, Any]:
     """
     Merge base templates with extensions, correctly handling TypedDict
     structures
@@ -426,6 +427,18 @@ def merge_prompt_templates(base_templates: Dict[str, Any],
     # Replace CURRENT_TIME in all templates if provided
     if current_time:
         system_prompt = system_prompt.replace("{{ CURRENT_TIME }}", current_time)
+    
+    # For structured outputs, use simpler prompts to avoid verbose planning
+    if use_structured_outputs:
+        # Override planning templates with simpler versions
+        simple_planning = {
+            "initial_plan": "Think step by step about the task: {{task}}",
+            "update_plan_pre_messages": "Review the task and history, then plan next steps.",
+            "update_plan_post_messages": "Based on the above, what should we do next?"
+        }
+        planning_templates = simple_planning
+    else:
+        planning_templates = PLANNING_TEMPLATES
 
     # Helper function to replace CURRENT_TIME in template string
     def replace_current_time(template_str: Optional[str]) -> str:
@@ -441,19 +454,19 @@ def merge_prompt_templates(base_templates: Dict[str, Any],
             system_prompt
         ),
 
-        # Planning templates: preserving base structure
+        # Planning templates: use simpler versions for structured outputs
         "planning": {
-            "initial_plan": replace_current_time(PLANNING_TEMPLATES.get(
+            "initial_plan": replace_current_time(planning_templates.get(
                 "initial_plan",
                 base_templates.get("planning", {}).get("initial_plan", "")
             )),
-            "update_plan_pre_messages": replace_current_time(PLANNING_TEMPLATES.get(
+            "update_plan_pre_messages": replace_current_time(planning_templates.get(
                 "update_plan_pre_messages",
                 base_templates.get("planning", {}).get(
                     "update_plan_pre_messages", ""
                 )
             )),
-            "update_plan_post_messages": replace_current_time(PLANNING_TEMPLATES.get(
+            "update_plan_post_messages": replace_current_time(planning_templates.get(
                 "update_plan_post_messages",
                 base_templates.get("planning", {}).get(
                     "update_plan_post_messages", ""

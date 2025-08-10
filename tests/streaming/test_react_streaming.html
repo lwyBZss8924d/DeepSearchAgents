@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Streaming Test - Minimal</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: 600px;
+            overflow-y: auto;
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 8px 16px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f8f9fa;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .message.streaming {
+            background: #e3f2fd;
+            border-left: 3px solid #2196f3;
+        }
+        
+        .message.complete {
+            background: #f1f8f4;
+            border-left: 3px solid #4caf50;
+        }
+        
+        .log-entry {
+            font-family: monospace;
+            font-size: 11px;
+            margin-bottom: 4px;
+            color: #666;
+        }
+        
+        .log-entry.important {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+        
+        .stats {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .render-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background: #4caf50;
+            color: white;
+            border-radius: 4px;
+            animation: flash 0.5s;
+        }
+        
+        @keyframes flash {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useReducer, useEffect, useRef, useCallback } = React;
+        
+        // Logging utility
+        const logger = {
+            logs: [],
+            listeners: [],
+            
+            log(message, important = false) {
+                const timestamp = new Date().toISOString().split('T')[1];
+                const entry = { timestamp, message, important };
+                this.logs.push(entry);
+                this.listeners.forEach(fn => fn(entry));
+                console.log(`[${timestamp}] ${message}`);
+            },
+            
+            subscribe(fn) {
+                this.listeners.push(fn);
+                return () => {
+                    this.listeners = this.listeners.filter(f => f !== fn);
+                };
+            }
+        };
+        
+        // Mimic the real app's reducer
+        function appReducer(state, action) {
+            logger.log(`Reducer: ${action.type}`, action.type === 'ADD_MESSAGE');
+            
+            switch (action.type) {
+                case 'ADD_MESSAGE':
+                    return {
+                        ...state,
+                        messages: [...state.messages, action.payload],
+                        lastUpdate: Date.now()
+                    };
+                    
+                case 'UPDATE_MESSAGE':
+                    return {
+                        ...state,
+                        messages: state.messages.map(msg =>
+                            msg.message_id === action.payload.message_id
+                                ? action.payload
+                                : msg
+                        ),
+                        lastUpdate: Date.now()
+                    };
+                    
+                case 'SET_CONNECTED':
+                    return { ...state, isConnected: action.payload };
+                    
+                case 'CLEAR_MESSAGES':
+                    return { ...state, messages: [] };
+                    
+                default:
+                    return state;
+            }
+        }
+        
+        const initialState = {
+            messages: [],
+            isConnected: false,
+            lastUpdate: Date.now()
+        };
+        
+        function TestApp() {
+            const [state, dispatch] = useReducer(appReducer, initialState);
+            const [logs, setLogs] = useState([]);
+            const [renderCount, setRenderCount] = useState(0);
+            const [sessionId, setSessionId] = useState('');
+            const wsRef = useRef(null);
+            const streamingMessagesRef = useRef(new Map());
+            
+            // Track renders
+            useEffect(() => {
+                setRenderCount(prev => prev + 1);
+                logger.log(`Component rendered #${renderCount + 1}`);
+            });
+            
+            // Subscribe to logs
+            useEffect(() => {
+                const unsubscribe = logger.subscribe(entry => {
+                    setLogs(prev => [...prev.slice(-100), entry]);
+                });
+                return unsubscribe;
+            }, []);
+            
+            // Log state changes
+            useEffect(() => {
+                logger.log(`State updated: ${state.messages.length} messages`);
+            }, [state.lastUpdate]);
+            
+            const createSession = async () => {
+                logger.log('Creating session...', true);
+                
+                try {
+                    const response = await fetch('http://localhost:8000/api/v2/sessions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ agent_type: 'codact' })
+                    });
+                    
+                    const data = await response.json();
+                    setSessionId(data.session_id);
+                    logger.log(`Session created: ${data.session_id}`, true);
+                } catch (error) {
+                    logger.log(`Error creating session: ${error}`, true);
+                }
+            };
+            
+            const connect = () => {
+                if (!sessionId) {
+                    alert('Create a session first');
+                    return;
+                }
+                
+                logger.log(`Connecting to WebSocket...`, true);
+                
+                const ws = new WebSocket(`ws://localhost:8000/api/v2/ws/${sessionId}`);
+                wsRef.current = ws;
+                
+                ws.onopen = () => {
+                    logger.log('WebSocket connected', true);
+                    dispatch({ type: 'SET_CONNECTED', payload: true });
+                };
+                
+                ws.onmessage = (event) => {
+                    const receiveTime = Date.now();
+                    const data = JSON.parse(event.data);
+                    
+                    logger.log(
+                        `WS message: streaming=${data.metadata?.streaming}, ` +
+                        `step=${data.step_number}, content=${data.content?.length || 0} chars`
+                    );
+                    
+                    // Handle streaming messages
+                    if (data.metadata?.streaming === true) {
+                        const step = data.step_number || 0;
+                        let existingMessage = streamingMessagesRef.current.get(step);
+                        
+                        if (!existingMessage) {
+                            // New streaming message
+                            const messageId = `msg-${Date.now()}-${Math.random()}`;
+                            const newMessage = {
+                                ...data,
+                                message_id: messageId,
+                                _receiveTime: receiveTime
+                            };
+                            
+                            streamingMessagesRef.current.set(step, newMessage);
+                            
+                            logger.log(`ADD streaming message for step ${step}`, true);
+                            dispatch({ type: 'ADD_MESSAGE', payload: newMessage });
+                        } else {
+                            // Update existing
+                            const updatedMessage = {
+                                ...existingMessage,
+                                content: data.content,
+                                _updateTime: receiveTime
+                            };
+                            
+                            streamingMessagesRef.current.set(step, updatedMessage);
+                            
+                            logger.log(`UPDATE streaming message for step ${step}`);
+                            dispatch({ type: 'UPDATE_MESSAGE', payload: updatedMessage });
+                        }
+                    } else {
+                        // Complete message
+                        const step = data.step_number || 0;
+                        const streamingMsg = streamingMessagesRef.current.get(step);
+                        
+                        if (streamingMsg) {
+                            // Replace streaming with complete
+                            logger.log(`REPLACE streaming with complete for step ${step}`, true);
+                            dispatch({
+                                type: 'UPDATE_MESSAGE',
+                                payload: {
+                                    ...data,
+                                    message_id: streamingMsg.message_id,
+                                    _completeTime: receiveTime
+                                }
+                            });
+                            streamingMessagesRef.current.delete(step);
+                        } else {
+                            // New complete message
+                            logger.log(`ADD complete message for step ${step}`, true);
+                            dispatch({
+                                type: 'ADD_MESSAGE',
+                                payload: {
+                                    ...data,
+                                    message_id: `msg-${Date.now()}-${Math.random()}`,
+                                    _receiveTime: receiveTime
+                                }
+                            });
+                        }
+                    }
+                };
+                
+                ws.onerror = (error) => {
+                    logger.log(`WebSocket error: ${error}`, true);
+                };
+                
+                ws.onclose = () => {
+                    logger.log('WebSocket closed', true);
+                    dispatch({ type: 'SET_CONNECTED', payload: false });
+                };
+            };
+            
+            const sendQuery = () => {
+                if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+                    alert('Not connected');
+                    return;
+                }
+                
+                dispatch({ type: 'CLEAR_MESSAGES' });
+                streamingMessagesRef.current.clear();
+                
+                const query = 'What is 2 + 2? Just the number.';
+                logger.log(`Sending query: ${query}`, true);
+                
+                wsRef.current.send(JSON.stringify({
+                    type: 'query',
+                    query: query
+                }));
+            };
+            
+            return (
+                <div>
+                    <h1>React Streaming Test - Minimal Implementation</h1>
+                    
+                    <div className="controls">
+                        <button onClick={createSession} disabled={sessionId}>
+                            Create Session
+                        </button>
+                        <button onClick={connect} disabled={!sessionId || state.isConnected}>
+                            Connect
+                        </button>
+                        <button onClick={sendQuery} disabled={!state.isConnected}>
+                            Send Query
+                        </button>
+                        <button onClick={() => dispatch({ type: 'CLEAR_MESSAGES' })}>
+                            Clear
+                        </button>
+                        
+                        {sessionId && <span style={{marginLeft: 20}}>Session: {sessionId}</span>}
+                    </div>
+                    
+                    <div className="stats">
+                        <strong>Stats:</strong> 
+                        Connected: {state.isConnected ? 'Yes' : 'No'} | 
+                        Messages: {state.messages.length} | 
+                        Renders: {renderCount} | 
+                        Streaming: {streamingMessagesRef.current.size}
+                    </div>
+                    
+                    <div className="container">
+                        <div className="panel">
+                            <h3>Messages (What User Sees)</h3>
+                            {state.messages.map((msg, idx) => (
+                                <div 
+                                    key={msg.message_id} 
+                                    className={`message ${msg.metadata?.streaming ? 'streaming' : 'complete'}`}
+                                >
+                                    <div>#{idx + 1} | Step {msg.step_number || 0} | {msg.role}</div>
+                                    <div>{msg.content?.substring(0, 100)}...</div>
+                                    <div style={{fontSize: '10px', color: '#999'}}>
+                                        ID: {msg.message_id} | 
+                                        Streaming: {msg.metadata?.streaming ? 'Yes' : 'No'}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <div className="panel">
+                            <h3>Debug Logs</h3>
+                            {logs.map((log, idx) => (
+                                <div 
+                                    key={idx} 
+                                    className={`log-entry ${log.important ? 'important' : ''}`}
+                                >
+                                    [{log.timestamp}] {log.message}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {renderCount > 0 && <div className="render-indicator">Render #{renderCount}</div>}
+                </div>
+            );
+        }
+        
+        // Render the app
+        ReactDOM.render(<TestApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
