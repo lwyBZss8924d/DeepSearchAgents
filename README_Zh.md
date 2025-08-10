@@ -10,7 +10,7 @@
 
 ![LiteLLM](https://img.shields.io/badge/LiteLLM-1.68.1+-orange.svg) 🚅
 
-![Jina AI](https://img.shields.io/badge/Jina%20AI-blue.svg) <img src="static/Jina-white.png" alt="Jina AI" height="25">
+![Jina AI](https://img.shields.io/badge/Jina%20AI-blue.svg) <img src="public/Jina-white.png" alt="Jina AI" height="25">
 
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.00+-009688.svg?logo=fastapi&logoColor=white)
 
@@ -22,19 +22,25 @@
 
 </h2>
 
-> 自开源 正是此道
+> Come From Open Source, This is the Way
 
 [EN](README.md)
 
-文档更新日期: `2025-07-29`
+文档更新日期: `2025-08-10`
 
-[`v0.3.3.dev`] 开发状态: `"新版 Web 前端集成进行中"`
+[`v0.3.3.dev`] 开发状态: `"✅ 完成DSCA前端Alpha版本的开发与集成"`
 
 ## 1. 项目介绍 | Introduction
 
+### 🚀 **CODE ACT IS ALL YOU NEED**
+
+![CODE ACT IS ALL YOU NEED](public/CODE_ACT_IS_ALL_YOU_NEED.gif)
+
+DeepSearchAgent 项目体现了 **代码即行动** 是 AI 智能体最强大范式的理念。通过将代码生成和执行作为与世界交互的主要手段，我们在自主系统中解锁了前所未有的灵活性和能力。
+
 DeepSearchAgent 项目是一个基于 ReAct（Reasoning + Acting）推理行动框架和 CodeAct（"代码即行动" 的 AI专员）理念的AI专员系统，旨在以 DeepSearch 多步骤网络深度搜索的基础能力, 实现更广泛任务推理 & 执行的 "DeepResearch" `DR-Multi-Agent` 。它利用 AI 语言模型（LLM）的推理能力以及工具箱集合与 Python packges 沙盒的编程动作调用能力，能够通过多步深度搜索、多模态网页文本处理、阅读和多步骤推理处理既宽又深的复杂网络搜索任务，并提供可溯源的参考资料。该项目基于 Hugging Face 的 smolagents 框架，实现了既可以调用预定义工具箱又可以编写动作代码(实现了 "生成基于任务 Plan 的专用动态 DSL" & "AI 自我创造的动态一次性专用工具") 的双模式AI专员系统。
 
-项目支持终端命令行运行的 CLI TUI界面, 标准的 FastAPI 服务，和 FastMCP MCP服务器，以及配套展示 CodeAct Agent 长程多步骤运行任务的 Web GUI 服务(v0.3.2.rc2 已提供配套的 web api, web前端正在集成调试中)，方便广大开发者开发实验和在各种系统中集成和使用。是一个面向 VIBER 新手友好的 Code Agent 体验/学习和扩展的开源项目。
+项目支持终端命令行运行的 CLI TUI界面, 标准的 FastAPI 服务，FastMCP MCP服务器，以及现代化的 WebTUI 前端界面。WebTUI (v0.3.3) 采用终端风格美学设计，提供实时 WebSocket 流式传输、赛博朋克风格设计系统，以及优化的性能表现，完美展示 CodeAct Agent 长程多步骤运行任务。方便广大开发者开发实验和在各种系统中集成和使用。是一个面向 VIBER 新手友好的 Code Agent 体验/学习和扩展的开源项目。
 
 ## 2. ✨ 特性 | Features
 
@@ -62,6 +68,13 @@ DeepSearchAgent 项目是一个基于 ReAct（Reasoning + Acting）推理行动�
 - 💾 **增强的内存管理** (v0.2.9)：AI专员内存重置和摘要功能，适用于长时间运行的会话
 
 **参考用例** (待更新 v0.3.1+)
+
+*WebTUI Demo:*
+
+![DSCA-WebTUI](public/DSCA-WebTUI.png)
+
+<video src="public/DSCA-web-demo.mp4" controls="controls" style="max-width: 100%;">
+</video>
 
 - **CodeAct Mode Example**: Full CLI run showing multi-step deep search process.
   - Start:
@@ -248,6 +261,16 @@ Agent (React/CodeAct) → stream_agent_messages() → DSAgentMessageProcessor �
 - **实时流式传输**：实时观察AI专员推理、工具执行和结果
 - **会话管理**：支持多轮对话的会话隔离
 - **组件路由**：根据内容将消息路由到聊天、代码编辑器或终端
+
+*后端 WebAPI WebSocket 事件：*
+  - **直接事件处理**：处理来自 DeepSearchAgent 后端 WebAPI 的4种主要事件类型：
+  - `PlanningStep`：代理规划及策略更新
+  - `ActionStep`：工具执行，包含思考过程和结果
+  - `FinalAnswerStep`：结构化最终答案
+  - `ChatMessageStreamDelta`：实时流式更新
+  - **基于元数据的路由**：通过消息元数据选择前端组件
+  - **会话管理**：多轮对话与会话隔离
+  - **组件路由**：根据内容将消息路由至聊天、WebIDE或终端
 
 **快速开始：**
 ```javascript
@@ -909,23 +932,6 @@ src/
 ├── cli.py                    # 命令行版本界面
 └── main.py                   # FastAPI 主入口
 
-frontend/                     # Next.js Web 前端 (v0.3.2)
-├── app/                      # Next.js App Router
-│   ├── api/v2/sessions/      # 前端 API 路由
-│   ├── page.tsx              # 主入口页面
-│   └── layout.tsx            # 根布局
-├── components/               # React 组件
-│   ├── agent-chat.tsx        # 主聊天界面
-│   ├── action-thought-card.tsx  # AI专员推理显示
-│   ├── planning-card.tsx     # 规划步骤显示
-│   ├── final-answer-display.tsx # 结构化答案
-│   ├── code-editor.tsx       # Monaco 编辑器包装
-│   ├── terminal.tsx          # XTerm.js 终端
-│   └── ui/                   # Radix UI 组件
-├── hooks/                    # React hooks
-│   ├── use-websocket.tsx     # WebSocket 连接
-│   └── use-session.tsx       # 会话管理
-├── typings/                  # TypeScript 类型
-│   └── dsagent.ts            # DSAgentRunMessage 类型
-└── package.json              # 前端依赖
+frontend/                     # Next.js WebTUI 前端工程 (v0.3.3)
+
 ```

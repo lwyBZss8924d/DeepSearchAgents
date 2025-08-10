@@ -10,7 +10,7 @@ VIBE 🖖 Build with 💖 for Humanity with AI
 
 ![LiteLLM](https://img.shields.io/badge/LiteLLM-1.68.1+-orange.svg) 🚅
 
-![Jina AI](https://img.shields.io/badge/Jina%20AI-blue.svg) <img src="static/Jina-white.png" alt="Jina AI" height="25">
+![Jina AI](https://img.shields.io/badge/Jina%20AI-blue.svg) <img src="public/Jina-white.png" alt="Jina AI" height="25">
 
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115.00+-009688.svg?logo=fastapi&logoColor=white)
 
@@ -22,19 +22,25 @@ VIBE 🖖 Build with 💖 for Humanity with AI
 
 </h2>
 
-> **Come From Open Source, This is the Way**
+> Come From Open Source, This is the Way
 
 [中文版](README_Zh.md)
 
-README Update Date: `2025-07-29`
+README Update Date: `2025-08-10`
 
-[`v0.3.3.dev`] Dev Status: `"New version of Web frontend integration in progress"`
+[`v0.3.3.dev`] Dev Status: `"✅ Complete the development and integration of the DSCA front-end Alpha version"`
 
 ## 1. Introduction
 
-The DeepSearchAgent project is an intelligent agent system based on the ReAct (Reasoning + Acting) reasoning and action framework and the CodeAct ("Code as Action") AI agent concept. It aims to realize broader task reasoning and execution through "DeepResearch" `DR-Multi-Agent`, leveraging DeepSearch’s multi-step network deep search foundational capabilities. It utilizes the reasoning power of AI language models (LLMs), along with a toolbox collection and programming action invocation abilities within a Python packages sandbox, enabling it to handle complex web search tasks that are both broad and deep via multi-step deep search, multimodal webpage text processing, reading, and multi-step reasoning. The system also provides traceable reference materials. Built upon Hugging Face’s smolagents framework, this project implements a dual-mode intelligent agent system capable of invoking predefined toolboxes as well as writing action code—realizing both "generation of dedicated dynamic DSLs based on task plans" and "AI self-created dynamic one-time dedicated tools.
+### 🚀 **CODE ACT IS ALL YOU NEED**
 
-The project supports a CLI TUI interface for terminal command-line operation, a standard FastAPI service, the FastMCP MCP server, and an accompanying Web GUI frontend service that showcases CodeAct Agent's long-running multi-step task execution. (v0.3.2.rc2 has provided a supporting web API, and the web frontend is currently being integrated and debugged) suitable for displaying the CodeAct Agent Run process. It facilitates developers in experimentation, integration, and usage across various systems. This is an open-source project aimed at providing VIBER beginners with a friendly Code Agent experience, learning opportunities, and extensibility.
+![CODE ACT IS ALL YOU NEED](public/CODE_ACT_IS_ALL_YOU_NEED.gif)
+
+The DeepSearchAgent project embodies the philosophy that **executable code as action** is the most powerful paradigm for AI agents. By treating code generation and execution as the primary means of interaction with the world, we unlock unprecedented flexibility and capability in autonomous systems.
+
+The DeepSearchAgent project is an intelligent agent system based on the ReAct (Reasoning + Acting) reasoning and action framework and the CodeAct ("Code as Action") AI agent concept. It aims to realize broader task reasoning and execution through "DeepResearch" `DR-Multi-Agent`, leveraging DeepSearch's multi-step network deep search foundational capabilities. It utilizes the reasoning power of AI language models (LLMs), along with a toolbox collection and programming action invocation abilities within a Python packages sandbox, enabling it to handle complex web search tasks that are both broad and deep via multi-step deep search, multimodal webpage text processing, reading, and multi-step reasoning. The system also provides traceable reference materials. Built upon Hugging Face's smolagents framework, this project implements a dual-mode intelligent agent system capable of invoking predefined toolboxes as well as writing action code—realizing both "generation of dedicated dynamic DSLs based on task plans" and "AI self-created dynamic one-time dedicated tools.
+
+The project supports a CLI TUI interface for terminal command-line operation, a standard FastAPI service, the FastMCP MCP server, and a modern WebTUI frontend with terminal-style aesthetics. The WebTUI (v0.3.3) features real-time WebSocket streaming, a cyberpunk-inspired design system, and optimized performance for displaying the CodeAct Agent Run process. It facilitates developers in experimentation, integration, and usage across various systems. This is an open-source project aimed at providing VIBER beginners with a friendly Code Agent experience, learning opportunities, and extensibility.
 
 ## 2. ✨ Features
 
@@ -62,6 +68,13 @@ The project supports a CLI TUI interface for terminal command-line operation, a 
 - 💾 **Enhanced Memory Management** (v0.2.9): Agent memory reset and summary capabilities for long-running sessions.
 
 **Reference Use Cases** (To be updated v0.3.1+)
+
+*WebTUI Demo:*
+
+![DSCA-WebTUI](public/DSCA-WebTUI.png)
+
+<video src="public/DSCA-web-demo.mp4" controls="controls" style="max-width: 100%;">
+</video>
 
 - **CodeAct Mode Example**: Full CLI run showing multi-step deep search process.
   - Start:
@@ -228,23 +241,32 @@ curl -X POST http://localhost:8000/run_deepsearch_agent \
 
 *(Replace `localhost:8000` with the actual host and port if changed in `config.toml`)*
 
-### (3) Using the Web API v2
+### (3) Using the Web API v2 with WebTUI Frontend
 
-The Web API v2 provides real-time WebSocket streaming for web frontend integration. This major refactoring (v0.3.2) delivers a clean, maintainable architecture that processes agent events directly through the `web_ui.py` module.
+The Web API v2 provides real-time WebSocket streaming for the WebTUI frontend integration. This major refactoring (v0.3.2-v0.3.3) delivers a clean, maintainable architecture that processes agent events directly through the `web_ui.py` module, paired with a modern terminal-style web interface.
 
 **Architecture Overview:**
 ```
 Agent (React/CodeAct) → stream_agent_messages() → DSAgentMessageProcessor → WebSocket → Frontend
 ```
 
-**Key Features:**
-- **Direct Event Processing**: Handles 4 main event types from smolagents:
+**WebTUI Frontend Features:**
+- **Terminal-Style Interface**: Cyberpunk-inspired design with terminal aesthetics
+- **Real-time Streaming**: Watch agent reasoning, tool execution, and results as they happen
+- **Design System Components**: Custom DS components for consistent terminal-style UI
+- **Performance Optimized**: 40% CSS reduction, 80% animation CPU reduction (v0.3.3)
+- **Three Display Modes**:
+  - Chat Interface: Message display with thought truncation and markdown rendering
+  - Code Editor: Monaco-based syntax-highlighted code viewing
+  - Terminal Output: Real-time execution logs and results
+
+*Backend WebAPI WebSocket Event:*  
+- **Direct Event Processing**: Handles 4 main event types from DeepSearchAgent WebAPI:
   - `PlanningStep`: Agent planning with strategy updates
   - `ActionStep`: Tool execution with thoughts and results
   - `FinalAnswerStep`: Structured final answers
   - `ChatMessageStreamDelta`: Real-time streaming updates
 - **Metadata-Driven Routing**: Frontend components selected via message metadata
-- **Real-time Streaming**: Watch agent reasoning, tool execution, and results as they happen
 - **Session Management**: Multi-turn conversations with session isolation
 - **Component Routing**: Messages routed to chat, webide, or terminal based on content
 
@@ -277,6 +299,29 @@ ws.send(JSON.stringify({type: 'query', query: 'Your question here'}));
 - Streaming support with initial → delta → final pattern
 
 See `src/api/v2/README.md` for comprehensive documentation, `src/api/v2/STREAM_EVENTS.md` for event flow details, and `src/api/v2/examples/` for example implementations.
+
+**Starting the WebTUI Frontend:**
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# The WebTUI will be available at http://localhost:3000
+```
+
+For production deployment:
+```bash
+npm run build
+npm start
+```
+
+See `frontend/README.md` for detailed frontend documentation and configuration options.
 
 ### (4) Running the MCP Server (MCP Tools `deepsearch_tool`)
 
@@ -890,23 +935,5 @@ src/
 ├── cli.py                    # Command-line interface version
 └── main.py                   # FastAPI main entry
 
-frontend/                     # Next.js web frontend (v0.3.2)
-├── app/                      # Next.js App Router
-│   ├── api/v2/sessions/      # Frontend API routes
-│   ├── page.tsx              # Main entry page
-│   └── layout.tsx            # Root layout
-├── components/               # React components
-│   ├── agent-chat.tsx        # Main chat interface
-│   ├── action-thought-card.tsx  # Agent reasoning display
-│   ├── planning-card.tsx     # Planning step display
-│   ├── final-answer-display.tsx # Structured answers
-│   ├── code-editor.tsx       # Monaco editor wrapper
-│   ├── terminal.tsx          # XTerm.js terminal
-│   └── ui/                   # Radix UI components
-├── hooks/                    # React hooks
-│   ├── use-websocket.tsx     # WebSocket connection
-│   └── use-session.tsx       # Session management
-├── typings/                  # TypeScript types
-│   └── dsagent.ts            # DSAgentRunMessage types
-└── package.json              # Frontend dependencies
+frontend/                     # Next.js web frontend for DSCA WebTUI (v0.3.3)
 ```

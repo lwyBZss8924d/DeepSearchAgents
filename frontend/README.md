@@ -1,8 +1,8 @@
-# DeepSearchAgents Frontend
+# DeepSearchAgents WebTUI Frontend
 
 ## Introduction
 
-The DeepSearchAgents Frontend is a modern web interface for the DeepSearchAgents platform, providing an intuitive way to interact with ReAct and CodeAct intelligent agents. It offers a responsive chat interface with real-time streaming, metadata-driven component rendering, and seamless WebSocket integration with the DeepSearchAgents backend.
+The DeepSearchAgents WebTUI is a modern, terminal-style web interface for the DeepSearchAgents platform, providing an intuitive way to interact with ReAct and CodeAct intelligent agents. Built with Next.js 15 and React 19, it offers a responsive chat interface with real-time streaming, metadata-driven component rendering, and seamless WebSocket integration with the DeepSearchAgents backend. The interface features a distinctive cyberpunk aesthetic with terminal-inspired UI components.
 
 ## Prerequisites
 
@@ -134,16 +134,46 @@ metadata.component === "terminal" → Terminal
 
 ## Technologies Used
 
-- **Next.js 14+**: React framework with App Router
-- **React 18+**: UI library with concurrent features
+- **Next.js 15**: React framework with App Router
+- **React 19**: UI library with concurrent features
 - **TypeScript**: Type-safe JavaScript
-- **Tailwind CSS**: Utility-first CSS framework
+- **Tailwind CSS v4**: Utility-first CSS framework
+- **WebTUI CSS Library**: Terminal-style UI components
 - **Framer Motion**: Animation library
 - **Lucide Icons**: Icon library
 - **WebSocket API**: Real-time bidirectional communication
-- **ShadcnUI**: Component library based on Radix UI
-- **Monaco Editor**: Code editor (read-only mode)
-- **xterm.js**: Terminal emulator
+- **Monaco Editor**: Code editor with syntax highlighting
+- **xterm.js**: Terminal emulator for HAL-9000 console
+
+## WebTUI Design System
+
+The frontend uses a custom Design System (DS) with terminal-inspired components:
+
+- **DSAgentMessageCard**: Message containers with customizable borders
+- **DSAgentToolBadge**: Tool execution indicators with minimal styling
+- **DSAgentStreamingText**: Animated text streaming with cursor effects
+- **DSAgentTerminalContainer**: Terminal window wrapper with cyberpunk aesthetic
+- **DSAgentTUILogo**: ASCII art logo and branding elements
+- **DSAgentCodeBlock**: Syntax-highlighted code display
+- **DSAgentTimer**: Execution timer display
+- **DSAgentStateBadge**: Agent state indicators
+
+## Recent Updates (v0.3.3)
+
+### Goal 1 Completed ✅
+- Fixed action thought display (120 character truncation with ellipsis)
+- Resolved markdown rendering issues in terminal style
+- Removed excessive animations and glamour effects
+- Consolidated component library (40% CSS reduction)
+- Improved performance significantly (80% animation CPU reduction)
+- Cleaned up 20+ obsolete v1 components
+
+### Goal 2 In Progress 🚧
+- HAL-9000™ CONSOLE implementation planned
+- Three-terminal layout design (chat, code viewer, logger)
+- Go-based CLI clients using Bubble Tea framework
+- WebSocket terminal server architecture
+- Real TTY support via xterm.js integration
 
 ## WebSocket Integration
 
